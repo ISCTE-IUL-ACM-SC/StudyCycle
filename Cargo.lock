@@ -3003,15 +3003,6 @@ dependencies = [
 
 [[package]]
 name = "infer"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc150e5ce2330295b8616ce0e3f53250e53af31759a9dbedad1621ba29151847"
-dependencies = [
- "cfb",
-]
-
-[[package]]
-name = "infer"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a588916bfdfd92e71cacef98a63d9b1f0d74d6599980d11894290e7ddefffcf7"
@@ -3247,7 +3238,7 @@ dependencies = [
  "lemmy_api_crud",
  "lemmy_api_utils",
  "lemmy_apub_objects",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
@@ -3270,7 +3261,7 @@ dependencies = [
  "lemmy_db_views_vote",
  "lemmy_diesel_utils",
  "lemmy_email",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "regex",
  "serde",
@@ -3285,34 +3276,9 @@ dependencies = [
 
 [[package]]
 name = "lemmy_api_common"
-version = "0.19.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44a90f9404d4f377cad644ddf117d4294bb9e603e3447a8722bfb65d94ca6e60"
-dependencies = [
- "anyhow",
- "chrono",
- "enum-map",
- "getrandom 0.2.17",
- "infer 0.16.0",
- "lemmy_db_schema 0.19.16",
- "lemmy_db_views",
- "lemmy_db_views_actor",
- "lemmy_db_views_moderator",
- "lemmy_utils 0.19.16",
- "mime_guess",
- "moka",
- "regex",
- "serde",
- "serde_with",
- "url",
- "urlencoding",
-]
-
-[[package]]
-name = "lemmy_api_common"
 version = "1.0.0-test-arm-qemu.0"
 dependencies = [
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
@@ -3336,7 +3302,7 @@ dependencies = [
  "lemmy_db_views_site",
  "lemmy_db_views_vote",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
 ]
 
 [[package]]
@@ -3354,7 +3320,7 @@ dependencies = [
  "futures-util",
  "lemmy_api_utils",
  "lemmy_apub_objects",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
@@ -3369,7 +3335,7 @@ dependencies = [
  "lemmy_db_views_site",
  "lemmy_diesel_utils",
  "lemmy_email",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "regex",
  "serde",
  "serde_json",
@@ -3386,33 +3352,7 @@ dependencies = [
  "lemmy_api",
  "lemmy_api_crud",
  "lemmy_routes",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
-]
-
-[[package]]
-name = "lemmy_api_routes_v3"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "activitypub_federation",
- "actix-web",
- "chrono",
- "lemmy_api",
- "lemmy_api_common 0.19.16",
- "lemmy_api_crud",
- "lemmy_api_utils",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_local_user",
- "lemmy_db_views_person",
- "lemmy_db_views_post",
- "lemmy_db_views_registration_applications",
- "lemmy_db_views_report_combined",
- "lemmy_db_views_site",
- "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
- "url",
+ "lemmy_utils",
 ]
 
 [[package]]
@@ -3433,9 +3373,9 @@ dependencies = [
  "extism-convert",
  "extism-manifest",
  "futures",
- "infer 0.19.0",
+ "infer",
  "jsonwebtoken",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
@@ -3450,7 +3390,7 @@ dependencies = [
  "lemmy_db_views_site",
  "lemmy_diesel_utils",
  "lemmy_email",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "mime",
  "mime_guess",
  "moka",
@@ -3482,7 +3422,7 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_apub_activities",
  "lemmy_apub_objects",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_community_follower",
  "lemmy_db_views_community_follower_approval",
@@ -3490,7 +3430,7 @@ dependencies = [
  "lemmy_db_views_post",
  "lemmy_db_views_site",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_json",
@@ -3515,7 +3455,7 @@ dependencies = [
  "futures-util",
  "lemmy_api_utils",
  "lemmy_apub_objects",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_community",
  "lemmy_db_views_community_moderator",
@@ -3524,11 +3464,11 @@ dependencies = [
  "lemmy_db_views_private_message",
  "lemmy_db_views_site",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "serde",
  "serde_json",
  "serde_with",
- "strum 0.28.0",
+ "strum",
  "tracing",
  "url",
  "uuid",
@@ -3550,14 +3490,14 @@ dependencies = [
  "html2text",
  "itertools",
  "lemmy_api_utils",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_community_moderator",
  "lemmy_db_views_local_user",
  "lemmy_db_views_private_message",
  "lemmy_db_views_site",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "moka",
  "pretty_assertions",
  "regex",
@@ -3587,11 +3527,11 @@ dependencies = [
  "futures",
  "lemmy_api_utils",
  "lemmy_apub_objects",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_community_follower",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "mockall",
  "moka",
  "reqwest 0.13.2",
@@ -3603,27 +3543,6 @@ dependencies = [
  "tokio-util",
  "tracing",
  "tracing-test",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "lemmy_db_schema"
-version = "0.19.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40ab75cc48d2a2db143345c4faaec3ab9823b550b407971576cdaee9355da51c"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "derive-new",
- "futures-util",
- "moka",
- "serde",
- "serde_with",
- "strum 0.26.3",
- "tracing",
- "typed-builder",
  "url",
  "uuid",
 ]
@@ -3643,13 +3562,13 @@ dependencies = [
  "i-love-jesus",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_json",
  "serde_with",
  "serial_test",
- "strum 0.28.0",
+ "strum",
  "tokio",
  "ts-rs",
  "url",
@@ -3665,33 +3584,8 @@ dependencies = [
  "diesel-uplete",
  "diesel_ltree",
  "serde",
- "strum 0.28.0",
+ "strum",
  "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views"
-version = "0.19.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df4de07624ba0abbdc3ad1f2603b0ed810b02697c84c14232ad5e46ccf65f4bf"
-dependencies = [
- "chrono",
- "lemmy_db_schema 0.19.16",
- "serde",
- "serde_with",
-]
-
-[[package]]
-name = "lemmy_db_views_actor"
-version = "0.19.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b73cdb133d1fe12040d5c366735e539f78308071dd493d334650f7618a0bd74"
-dependencies = [
- "chrono",
- "lemmy_db_schema 0.19.16",
- "serde",
- "serde_with",
- "strum 0.26.3",
 ]
 
 [[package]]
@@ -3703,11 +3597,11 @@ dependencies = [
  "diesel-async",
  "diesel_ltree",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_local_user",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -3723,11 +3617,11 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_community_moderator",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "serde",
  "serde_with",
  "serial_test",
@@ -3743,10 +3637,10 @@ dependencies = [
  "chrono",
  "diesel",
  "diesel-async",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "serde",
  "serde_with",
  "ts-rs",
@@ -3759,10 +3653,10 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "serde",
  "serde_with",
  "serial_test",
@@ -3776,10 +3670,10 @@ version = "1.0.0-test-arm-qemu.0"
 dependencies = [
  "diesel",
  "diesel-async",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "serde",
  "ts-rs",
 ]
@@ -3790,10 +3684,10 @@ version = "1.0.0-test-arm-qemu.0"
 dependencies = [
  "diesel",
  "diesel-async",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "serde",
  "serde_with",
  "ts-rs",
@@ -3806,10 +3700,10 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "serde",
  "serde_with",
  "ts-rs",
@@ -3825,10 +3719,10 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -3838,27 +3732,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "lemmy_db_views_moderator"
-version = "0.19.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "230c15d98d67bd744c8357a3c6d12a53e74f9f96d679da6fea3a18278e51a0bc"
-dependencies = [
- "lemmy_db_schema 0.19.16",
- "serde",
- "serde_with",
-]
-
-[[package]]
 name = "lemmy_db_views_modlog"
 version = "1.0.0-test-arm-qemu.0"
 dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -3875,7 +3758,7 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_comment",
  "lemmy_db_views_modlog",
@@ -3883,7 +3766,7 @@ dependencies = [
  "lemmy_db_views_post",
  "lemmy_db_views_private_message",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -3908,12 +3791,12 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_community",
  "lemmy_db_views_community_moderator",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -3929,12 +3812,12 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_local_user",
  "lemmy_db_views_post_comment_combined",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -3950,12 +3833,12 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_local_user",
  "lemmy_db_views_post_comment_combined",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -3971,12 +3854,12 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_local_user",
  "lemmy_db_views_post_comment_combined",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -3994,12 +3877,12 @@ dependencies = [
  "diesel-async",
  "diesel-uplete",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_community",
  "lemmy_db_views_local_user",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -4017,7 +3900,7 @@ version = "1.0.0-test-arm-qemu.0"
 dependencies = [
  "chrono",
  "diesel",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_views_comment",
  "lemmy_db_views_post",
  "serde",
@@ -4030,10 +3913,10 @@ version = "1.0.0-test-arm-qemu.0"
 dependencies = [
  "diesel",
  "diesel-async",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "serde",
  "ts-rs",
 ]
@@ -4047,10 +3930,10 @@ dependencies = [
  "extism",
  "extism-convert",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -4067,12 +3950,12 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_local_user",
  "lemmy_db_views_report_combined_sql",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -4099,7 +3982,7 @@ dependencies = [
  "extism",
  "extism-convert",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
@@ -4109,7 +3992,7 @@ dependencies = [
  "lemmy_db_views_person",
  "lemmy_db_views_post",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "serde",
  "serde_with",
  "serial_test",
@@ -4125,10 +4008,10 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pretty_assertions",
  "serde",
  "serde_with",
@@ -4156,7 +4039,7 @@ dependencies = [
  "i-love-jesus",
  "itertools",
  "lemmy_db_schema_file",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "pathfinding",
  "pretty_assertions",
  "rustls 0.23.37",
@@ -4178,11 +4061,11 @@ name = "lemmy_email"
 version = "1.0.0-test-arm-qemu.0"
 dependencies = [
  "html2text",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_local_user",
  "lemmy_diesel_utils",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "lettre",
  "rosetta-build",
  "rosetta-i18n",
@@ -4206,7 +4089,7 @@ dependencies = [
  "futures-util",
  "http 1.4.0",
  "lemmy_api_utils",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_community",
  "lemmy_db_views_local_image",
@@ -4218,7 +4101,7 @@ dependencies = [
  "lemmy_db_views_site",
  "lemmy_diesel_utils",
  "lemmy_email",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "percent-encoding",
  "pretty_assertions",
  "prometheus",
@@ -4229,7 +4112,7 @@ dependencies = [
  "rss",
  "serde",
  "serial_test",
- "strum 0.28.0",
+ "strum",
  "tokio",
  "tracing",
  "ts-rs",
@@ -4245,17 +4128,16 @@ dependencies = [
  "clap",
  "lemmy_api",
  "lemmy_api_routes",
- "lemmy_api_routes_v3",
  "lemmy_api_utils",
  "lemmy_apub",
  "lemmy_apub_activities",
  "lemmy_apub_objects",
  "lemmy_apub_send",
- "lemmy_db_schema 1.0.0-test-arm-qemu.0",
+ "lemmy_db_schema",
  "lemmy_db_views_site",
  "lemmy_diesel_utils",
  "lemmy_routes",
- "lemmy_utils 1.0.0-test-arm-qemu.0",
+ "lemmy_utils",
  "mimalloc",
  "reqwest-middleware",
  "reqwest-tracing",
@@ -4264,20 +4146,6 @@ dependencies = [
  "tracing",
  "tracing-actix-web",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "lemmy_utils"
-version = "0.19.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "360fda2d00df95fd4e9fbd48de3985ebda8b3de2f6a6e28f9a7196467e1bce70"
-dependencies = [
- "cfg-if",
- "clearurls",
- "git-version",
- "rosetta-build",
- "serde",
- "strum 0.26.3",
 ]
 
 [[package]]
@@ -4313,7 +4181,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "smart-default",
- "strum 0.28.0",
+ "strum",
  "tokio",
  "tracing",
  "ts-rs",
@@ -6649,33 +6517,11 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "strum"
-version = "0.26.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fec0f0aef304996cf250b31b5a10dee7980c85da9d759361292b8bca5a18f06"
-dependencies = [
- "strum_macros 0.26.4",
-]
-
-[[package]]
-name = "strum"
 version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9628de9b8791db39ceda2b119bbe13134770b56c138ec1d3af810d045c04f9bd"
 dependencies = [
- "strum_macros 0.28.0",
-]
-
-[[package]]
-name = "strum_macros"
-version = "0.26.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c6bee85a5a24955dc440386795aa378cd9cf82acd5f764469152d2270e581be"
-dependencies = [
- "heck 0.5.0",
- "proc-macro2",
- "quote",
- "rustversion",
- "syn 2.0.117",
+ "strum_macros",
 ]
 
 [[package]]
@@ -7429,26 +7275,6 @@ name = "tuplex"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "676ac81d5454c4dcf37955d34fa8626ede3490f744b86ca14a7b90168d2a08aa"
-
-[[package]]
-name = "typed-builder"
-version = "0.19.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a06fbd5b8de54c5f7c91f6fe4cebb949be2125d7758e630bb58b1d831dbce600"
-dependencies = [
- "typed-builder-macro",
-]
-
-[[package]]
-name = "typed-builder-macro"
-version = "0.19.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9534daa9fd3ed0bd911d462a37f172228077e7abf18c18a5f67199d959205f8"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
-]
 
 [[package]]
 name = "typenum"
