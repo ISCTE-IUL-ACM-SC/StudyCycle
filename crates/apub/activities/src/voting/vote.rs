@@ -9,14 +9,14 @@ use activitypub_federation::{
   fetch::object_id::ObjectId,
   traits::{Activity, Object},
 };
-use lemmy_api_utils::{context::LemmyContext, utils::check_bot_account};
-use lemmy_apub_objects::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_bot_account};
+use studycycle_apub_objects::{
   objects::{PostOrComment, community::ApubCommunity, person::ApubPerson},
   utils::{functions::verify_person_in_community, protocol::InCommunity},
 };
-use lemmy_db_schema_file::enums::FederationMode;
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_db_schema_file::enums::FederationMode;
+use studycycle_db_views_site::SiteView;
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use url::Url;
 
 impl Vote {
@@ -25,8 +25,8 @@ impl Vote {
     actor: &ApubPerson,
     community: &ApubCommunity,
     kind: VoteType,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Vote> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<Vote> {
     Ok(Vote {
       actor: actor.id().clone().into(),
       object: object_id,
@@ -39,8 +39,8 @@ impl Vote {
 
 #[async_trait::async_trait]
 impl Activity for Vote {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -50,14 +50,14 @@ impl Activity for Vote {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     let community = self.community(context).await?;
     check_community_deleted_or_removed(&community)?;
     verify_person_in_community(&self.actor, &community, context).await?;
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     let actor = self.actor.dereference(context).await?;
     let object = self.object.dereference(context).await?;
 

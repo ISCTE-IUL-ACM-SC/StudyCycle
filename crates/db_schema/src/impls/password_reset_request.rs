@@ -10,16 +10,16 @@ use diesel::{
   sql_types::Timestamptz,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::password_reset_request;
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_db_schema_file::schema::password_reset_request;
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl PasswordResetRequest {
   pub async fn create(
     pool: &mut DbPool<'_>,
     local_user_id: LocalUserId,
     token_: String,
-  ) -> LemmyResult<PasswordResetRequest> {
+  ) -> StudyCycleResult<PasswordResetRequest> {
     let form = PasswordResetRequestForm {
       local_user_id,
       token: token_.into(),
@@ -29,17 +29,17 @@ impl PasswordResetRequest {
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
-  pub async fn read_and_delete(pool: &mut DbPool<'_>, token_: &str) -> LemmyResult<Self> {
+  pub async fn read_and_delete(pool: &mut DbPool<'_>, token_: &str) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     delete(password_reset_request::table)
       .filter(password_reset_request::token.eq(token_))
       .filter(password_reset_request::published_at.gt(now.into_sql::<Timestamptz>() - 1.days()))
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_studycycle_type(StudyCycleErrorType::Deleted)
   }
 }
 
@@ -52,14 +52,14 @@ mod tests {
     password_reset_request::PasswordResetRequest,
     person::{Person, PersonInsertForm},
   };
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_password_reset() -> LemmyResult<()> {
+  async fn test_password_reset() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

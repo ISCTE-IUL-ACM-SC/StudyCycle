@@ -14,24 +14,24 @@ mod tests {
     group_outbox::GroupOutbox,
     url_collection::UrlCollection,
   };
-  use lemmy_apub_objects::utils::test::{test_json, test_parse_lemmy_item};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_apub_objects::utils::test::{test_json, test_parse_studycycle_item};
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
 
   #[test]
-  fn test_parse_lemmy_collections() -> LemmyResult<()> {
-    test_parse_lemmy_item::<GroupFollowers>("assets/lemmy/collections/group_followers.json")?;
+  fn test_parse_studycycle_collections() -> StudyCycleResult<()> {
+    test_parse_studycycle_item::<GroupFollowers>("assets/studycycle/collections/group_followers.json")?;
     let outbox =
-      test_parse_lemmy_item::<GroupOutbox>("assets/lemmy/collections/group_outbox.json")?;
+      test_parse_studycycle_item::<GroupOutbox>("assets/studycycle/collections/group_outbox.json")?;
     assert_eq!(outbox.ordered_items.len(), outbox.total_items as usize);
-    test_parse_lemmy_item::<GroupFeatured>("assets/lemmy/collections/group_featured_posts.json")?;
-    test_parse_lemmy_item::<GroupModerators>("assets/lemmy/collections/group_moderators.json")?;
-    test_parse_lemmy_item::<UrlCollection>("assets/lemmy/collections/person_outbox.json")?;
+    test_parse_studycycle_item::<GroupFeatured>("assets/studycycle/collections/group_featured_posts.json")?;
+    test_parse_studycycle_item::<GroupModerators>("assets/studycycle/collections/group_moderators.json")?;
+    test_parse_studycycle_item::<UrlCollection>("assets/studycycle/collections/person_outbox.json")?;
     Ok(())
   }
 
   #[test]
-  fn test_parse_mastodon_collections() -> LemmyResult<()> {
+  fn test_parse_mastodon_collections() -> StudyCycleResult<()> {
     test_json::<GroupFeatured>("assets/mastodon/collections/featured.json")?;
     Ok(())
   }

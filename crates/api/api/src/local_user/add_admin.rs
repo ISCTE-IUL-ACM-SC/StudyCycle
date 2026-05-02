@@ -1,21 +1,21 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, notify::notify_mod_action, utils::is_admin};
-use lemmy_db_schema::source::{
+use studycycle_api_utils::{context::StudyCycleContext, notify::notify_mod_action, utils::is_admin};
+use studycycle_db_schema::source::{
   local_user::{LocalUser, LocalUserUpdateForm},
   modlog::{Modlog, ModlogInsertForm},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_person::{
   PersonView,
   api::{AddAdmin, AddAdminResponse},
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn add_admin(
   Json(data): Json<AddAdmin>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<AddAdminResponse>> {
+) -> StudyCycleResult<Json<AddAdminResponse>> {
   let my_person_id = local_user_view.person.id;
 
   // Make sure user is an admin
@@ -34,7 +34,7 @@ pub async fn add_admin(
     )
     .await?;
     if admins.len() == 1 {
-      return Err(LemmyErrorType::CannotLeaveAdmin.into());
+      return Err(StudyCycleErrorType::CannotLeaveAdmin.into());
     }
   }
 

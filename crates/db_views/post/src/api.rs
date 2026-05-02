@@ -1,11 +1,11 @@
 use crate::PostView;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   PostFeatureType,
   newtypes::{CommentId, CommunityId, CommunityTagId, LanguageId, MultiCommunityId, PostId},
 };
-use lemmy_db_schema_file::enums::{ListingType, PostNotificationsMode, PostSortType};
-use lemmy_db_views_community::CommunityView;
-use lemmy_diesel_utils::{dburl::DbUrl, pagination::PaginationCursor};
+use studycycle_db_schema_file::enums::{ListingType, PostNotificationsMode, PostSortType};
+use studycycle_db_views_community::CommunityView;
+use studycycle_diesel_utils::{dburl::DbUrl, pagination::PaginationCursor};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

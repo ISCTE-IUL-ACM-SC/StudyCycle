@@ -14,15 +14,15 @@ use diesel::{
   select,
 };
 use diesel_async::{RunQueryDsl, scoped_futures::ScopedFutureExt};
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   schema::{image_details, local_image, remote_image},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   dburl::DbUrl,
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 use url::Url;
 
 impl LocalImage {
@@ -30,7 +30,7 @@ impl LocalImage {
     pool: &mut DbPool<'_>,
     form: &LocalImageForm,
     image_details_form: &ImageDetailsInsertForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     conn
       .run_transaction(|conn| {
@@ -39,7 +39,7 @@ impl LocalImage {
             .values(form)
             .get_result::<Self>(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntCreate);
+            .with_studycycle_type(StudyCycleErrorType::CouldntCreate);
 
           ImageDetails::create(&mut conn.into(), image_details_form).await?;
 
@@ -54,7 +54,7 @@ impl LocalImage {
     pool: &mut DbPool<'_>,
     alias: &str,
     person_id: PersonId,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
 
     select(exists(
@@ -67,29 +67,29 @@ impl LocalImage {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::NotFound.into())
+    .ok_or(StudyCycleErrorType::NotFound.into())
   }
 
-  pub async fn delete_by_alias(pool: &mut DbPool<'_>, alias: &str) -> LemmyResult<Self> {
+  pub async fn delete_by_alias(pool: &mut DbPool<'_>, alias: &str) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::delete(local_image::table.filter(local_image::pictrs_alias.eq(alias)))
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_studycycle_type(StudyCycleErrorType::Deleted)
   }
 
   /// Delete many aliases. Should be used with a pictrs purge.
-  pub async fn delete_by_aliases(pool: &mut DbPool<'_>, aliases: &[String]) -> LemmyResult<usize> {
+  pub async fn delete_by_aliases(pool: &mut DbPool<'_>, aliases: &[String]) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     diesel::delete(local_image::table.filter(local_image::pictrs_alias.eq_any(aliases)))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_studycycle_type(StudyCycleErrorType::Deleted)
   }
 }
 
 impl RemoteImage {
-  pub async fn create(pool: &mut DbPool<'_>, links: Vec<Url>) -> LemmyResult<usize> {
+  pub async fn create(pool: &mut DbPool<'_>, links: Vec<Url>) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     let forms = links
       .into_iter()
@@ -100,10 +100,10 @@ impl RemoteImage {
       .on_conflict_do_nothing()
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
-  pub async fn validate(pool: &mut DbPool<'_>, link_: DbUrl) -> LemmyResult<()> {
+  pub async fn validate(pool: &mut DbPool<'_>, link_: DbUrl) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
 
     select(exists(
@@ -112,12 +112,12 @@ impl RemoteImage {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::NotFound.into())
+    .ok_or(StudyCycleErrorType::NotFound.into())
   }
 }
 
 impl ImageDetails {
-  pub async fn create(pool: &mut DbPool<'_>, form: &ImageDetailsInsertForm) -> LemmyResult<usize> {
+  pub async fn create(pool: &mut DbPool<'_>, form: &ImageDetailsInsertForm) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(image_details::table)
@@ -125,6 +125,6 @@ impl ImageDetails {
       .on_conflict_do_nothing()
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 }

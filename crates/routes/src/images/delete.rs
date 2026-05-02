@@ -1,27 +1,27 @@
 use super::utils::delete_old_image;
 use actix_web::web::*;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   request::{delete_image_alias, purge_image_from_pictrs},
   utils::{is_admin, is_mod_or_admin},
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::{Community, CommunityUpdateForm},
   images::LocalImage,
   person::{Person, PersonUpdateForm},
   site::{Site, SiteUpdateForm},
 };
-use lemmy_db_views_community::api::CommunityIdQuery;
-use lemmy_db_views_local_image::api::DeleteImageParams;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{SiteView, api::SuccessResponse};
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_community::api::CommunityIdQuery;
+use studycycle_db_views_local_image::api::DeleteImageParams;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{SiteView, api::SuccessResponse};
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn delete_site_icon(
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   let site = SiteView::read_local(&mut context.pool()).await?.site;
   is_admin(&local_user_view)?;
 
@@ -36,9 +36,9 @@ pub async fn delete_site_icon(
   Ok(Json(SuccessResponse::default()))
 }
 pub async fn delete_site_banner(
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   let site = SiteView::read_local(&mut context.pool()).await?.site;
   is_admin(&local_user_view)?;
 
@@ -55,9 +55,9 @@ pub async fn delete_site_banner(
 
 pub async fn delete_community_icon(
   Json(data): Json<CommunityIdQuery>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   let community = Community::read(&mut context.pool(), data.id).await?;
   is_mod_or_admin(&mut context.pool(), &local_user_view, community.id).await?;
 
@@ -74,9 +74,9 @@ pub async fn delete_community_icon(
 
 pub async fn delete_community_banner(
   Json(data): Json<CommunityIdQuery>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   let community = Community::read(&mut context.pool(), data.id).await?;
   is_mod_or_admin(&mut context.pool(), &local_user_view, community.id).await?;
 
@@ -92,9 +92,9 @@ pub async fn delete_community_banner(
 }
 
 pub async fn delete_user_avatar(
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   delete_old_image(&local_user_view.person.avatar, &context).await?;
 
   let form = PersonUpdateForm {
@@ -107,9 +107,9 @@ pub async fn delete_user_avatar(
 }
 
 pub async fn delete_user_banner(
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   delete_old_image(&local_user_view.person.banner, &context).await?;
 
   let form = PersonUpdateForm {
@@ -124,9 +124,9 @@ pub async fn delete_user_banner(
 /// Deletes an image for a specific user.
 pub async fn delete_image(
   Json(data): Json<DeleteImageParams>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   LocalImage::validate_by_alias_and_user(
     &mut context.pool(),
     &data.filename,
@@ -142,9 +142,9 @@ pub async fn delete_image(
 /// Deletes any image, only for admins.
 pub async fn delete_image_admin(
   Json(data): Json<DeleteImageParams>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   is_admin(&local_user_view)?;
 
   // Use purge, since it should remove any other aliases.

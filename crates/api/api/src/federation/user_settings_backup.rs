@@ -2,14 +2,14 @@ use activitypub_federation::{config::Data, fetch::object_id::ObjectId, traits::O
 use actix_web::web::Json;
 use futures::{StreamExt, future::try_join_all};
 use itertools::Itertools;
-use lemmy_api_utils::{context::LemmyContext, utils::check_local_user_valid};
-use lemmy_apub_objects::objects::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_local_user_valid};
+use studycycle_apub_objects::objects::{
   comment::ApubComment,
   community::ApubCommunity,
   person::ApubPerson,
   post::ApubPost,
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     actor_language::LocalUserLanguage,
     comment::{CommentActions, CommentSavedForm},
@@ -23,15 +23,15 @@ use lemmy_db_schema::{
   },
   traits::{Blockable, Followable, Saveable},
 };
-use lemmy_db_schema_file::enums::CommunityFollowerState;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
+use studycycle_db_schema_file::enums::CommunityFollowerState;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{
   api::{SuccessResponse, UserSettingsBackup},
   impls::user_backup_list_to_user_settings_backup,
 };
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
-  error::LemmyResult,
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
+  error::StudyCycleResult,
   spawn_try_task,
   utils::validation::{check_api_elements_count, check_blocking_keywords_are_valid},
 };
@@ -43,8 +43,8 @@ const PARALLELISM: usize = 10;
 
 pub async fn export_user_settings(
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UserSettingsBackup>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<UserSettingsBackup>> {
   let settings =
     user_backup_list_to_user_settings_backup(local_user_view, &mut context.pool()).await?;
 
@@ -54,8 +54,8 @@ pub async fn export_user_settings(
 pub async fn import_user_settings(
   Json(data): Json<UserSettingsBackup>,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<SuccessResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<SuccessResponse>> {
   check_local_user_valid(&local_user_view)?;
   let person_form = PersonUpdateForm {
     display_name: data.display_name.clone().map(Some),
@@ -154,7 +154,7 @@ pub async fn import_user_settings(
         let form =
           CommunityFollowerForm::new(community.id, person_id, CommunityFollowerState::Pending);
         CommunityActions::follow(&mut context.pool(), &form).await?;
-        LemmyResult::Ok(())
+        StudyCycleResult::Ok(())
       },
     )
     .await?;
@@ -171,7 +171,7 @@ pub async fn import_user_settings(
         let post = saved.dereference(&context).await?;
         let form = PostSavedForm::new(post.id, person_id);
         PostActions::save(&mut context.pool(), &form).await?;
-        LemmyResult::Ok(())
+        StudyCycleResult::Ok(())
       },
     )
     .await?;
@@ -188,7 +188,7 @@ pub async fn import_user_settings(
         let comment = saved.dereference(&context).await?;
         let form = CommentSavedForm::new(person_id, comment.id);
         CommentActions::save(&mut context.pool(), &form).await?;
-        LemmyResult::Ok(())
+        StudyCycleResult::Ok(())
       },
     )
     .await?;
@@ -205,7 +205,7 @@ pub async fn import_user_settings(
         let community = blocked.dereference(&context).await?;
         let form = CommunityBlockForm::new(community.id, person_id);
         CommunityActions::block(&mut context.pool(), &form).await?;
-        LemmyResult::Ok(())
+        StudyCycleResult::Ok(())
       },
     )
     .await?;
@@ -222,7 +222,7 @@ pub async fn import_user_settings(
         let target = blocked.dereference(&context).await?;
         let form = PersonBlockForm::new(person_id, target.id);
         PersonActions::block(&mut context.pool(), &form).await?;
-        LemmyResult::Ok(())
+        StudyCycleResult::Ok(())
       },
     )
     .await?;
@@ -235,7 +235,7 @@ pub async fn import_user_settings(
           let instance = Instance::read_or_create(&mut context.pool(), domain).await?;
           let form = InstanceCommunitiesBlockForm::new(person_id, instance.id);
           InstanceActions::block_communities(&mut context.pool(), &form).await?;
-          LemmyResult::Ok(())
+          StudyCycleResult::Ok(())
         }),
     )
     .await?;
@@ -244,7 +244,7 @@ pub async fn import_user_settings(
       let instance = Instance::read_or_create(&mut context.pool(), domain).await?;
       let form = InstancePersonsBlockForm::new(person_id, instance.id);
       InstanceActions::block_persons(&mut context.pool(), &form).await?;
-      LemmyResult::Ok(())
+      StudyCycleResult::Ok(())
     }))
     .await?;
 
@@ -261,13 +261,13 @@ pub async fn import_user_settings(
 
 async fn fetch_and_import<Kind, Fut>(
   objects: Vec<ObjectId<Kind>>,
-  context: &Data<LemmyContext>,
-  import_fn: impl FnMut((ObjectId<Kind>, Data<LemmyContext>)) -> Fut,
-) -> LemmyResult<String>
+  context: &Data<StudyCycleContext>,
+  import_fn: impl FnMut((ObjectId<Kind>, Data<StudyCycleContext>)) -> Fut,
+) -> StudyCycleResult<String>
 where
   Kind: Object + Send + Sync + 'static,
   for<'de2> <Kind as Object>::Kind: Deserialize<'de2>,
-  Fut: Future<Output = LemmyResult<()>>,
+  Fut: Future<Output = StudyCycleResult<()>>,
 {
   let mut failed_items = vec![];
   futures::stream::iter(
@@ -283,7 +283,7 @@ where
   .await
   .into_iter()
   .enumerate()
-  .for_each(|(i, r): (usize, LemmyResult<()>)| {
+  .for_each(|(i, r): (usize, StudyCycleResult<()>)| {
     if r.is_err()
       && let Some(object) = objects.get(i)
     {
@@ -299,8 +299,8 @@ pub(crate) mod tests {
   use super::*;
   use crate::federation::user_settings_backup::{export_user_settings, import_user_settings};
   use actix_web::web::Json;
-  use lemmy_api_utils::context::LemmyContext;
-  use lemmy_db_schema::{
+  use studycycle_api_utils::context::StudyCycleContext;
+  use studycycle_db_schema::{
     newtypes::LanguageId,
     source::{
       community::{Community, CommunityActions, CommunityFollowerForm, CommunityInsertForm},
@@ -309,18 +309,18 @@ pub(crate) mod tests {
     test_data::TestData,
     traits::Followable,
   };
-  use lemmy_db_views_community_follower::CommunityFollowerView;
-  use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_diesel_utils::traits::Crud;
-  use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+  use studycycle_db_views_community_follower::CommunityFollowerView;
+  use studycycle_db_views_local_user::LocalUserView;
+  use studycycle_diesel_utils::traits::Crud;
+  use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
   use serial_test::serial;
   use std::time::Duration;
   use tokio::time::sleep;
 
   #[tokio::test]
   #[serial]
-  async fn test_settings_export_import() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_settings_export_import() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = TestData::create(pool).await?;
 
@@ -390,8 +390,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn disallow_large_backup() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn disallow_large_backup() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = TestData::create(pool).await?;
 
@@ -416,7 +416,7 @@ pub(crate) mod tests {
 
     assert_eq!(
       imported.err().map(|e| e.error_type),
-      Some(LemmyErrorType::TooManyItems)
+      Some(StudyCycleErrorType::TooManyItems)
     );
 
     Person::delete(pool, export_user.person.id).await?;
@@ -427,8 +427,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn import_partial_backup() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn import_partial_backup() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = TestData::create(pool).await?;
 

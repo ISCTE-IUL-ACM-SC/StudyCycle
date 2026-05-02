@@ -1,5 +1,5 @@
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::source::community::{Community, CommunityActions};
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::source::community::{Community, CommunityActions};
 
 pub mod comment;
 pub mod community;
@@ -14,7 +14,7 @@ pub mod user;
 
 /// Only mark new posts/comments to remote community as pending if it has any local followers.
 /// Otherwise it could never get updated to be marked as published.
-async fn community_use_pending(community: &Community, context: &LemmyContext) -> bool {
+async fn community_use_pending(community: &Community, context: &StudyCycleContext) -> bool {
   if community.local {
     return false;
   }

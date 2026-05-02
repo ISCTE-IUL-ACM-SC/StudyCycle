@@ -25,9 +25,9 @@ use activitypub_federation::{
 };
 use chrono::{DateTime, Utc};
 use itertools::Itertools;
-use lemmy_api_utils::{context::LemmyContext, utils::proxy_image_link};
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult, UntranslatedError};
+use studycycle_api_utils::{context::StudyCycleContext, utils::proxy_image_link};
+use studycycle_db_views_site::SiteView;
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult, UntranslatedError};
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_with::skip_serializing_none;
 use url::Url;
@@ -119,7 +119,7 @@ pub enum Attachment {
 impl Attachment {
   pub(crate) fn url(self) -> Url {
     match self {
-      // url as sent by Lemmy (new)
+      // url as sent by StudyCycle (new)
       Attachment::Link(l) => l.href,
       // image sent by lotide
       Attachment::Image(i) => i.url,
@@ -136,7 +136,7 @@ impl Attachment {
     }
   }
 
-  pub(crate) async fn as_markdown(&self, context: &Data<LemmyContext>) -> LemmyResult<String> {
+  pub(crate) async fn as_markdown(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<String> {
     let (url, name, media_type) = match self {
       Attachment::Image(i) => (i.url.clone(), i.name.clone(), Some(String::from("image"))),
       Attachment::Document(d) => (d.url.clone(), d.name.clone(), d.media_type.clone()),
@@ -160,9 +160,9 @@ impl Attachment {
 }
 
 impl Page {
-  pub fn creator(&self) -> LemmyResult<ObjectId<ApubPerson>> {
+  pub fn creator(&self) -> StudyCycleResult<ObjectId<ApubPerson>> {
     match &self.attributed_to {
-      AttributedTo::Lemmy(l) => Ok(l.creator()),
+      AttributedTo::StudyCycle(l) => Ok(l.creator()),
       AttributedTo::Peertube(p) => p
         .iter()
         .find(|a| a.kind == PersonOrGroupType::Person)
@@ -195,8 +195,8 @@ impl Attachment {
 // Used for community outbox, so that it can be compatible with Pleroma/Mastodon.
 #[async_trait::async_trait]
 impl Activity for Page {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
   fn id(&self) -> &Url {
     self.id.inner()
   }
@@ -205,22 +205,22 @@ impl Activity for Page {
     debug_assert!(false);
     self.id.inner()
   }
-  async fn verify(&self, data: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, data: &Data<Self::DataType>) -> StudyCycleResult<()> {
     ApubPost::verify(self, self.id.inner(), data).await
   }
-  async fn receive(self, data: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, data: &Data<Self::DataType>) -> StudyCycleResult<()> {
     ApubPost::from_json(self, data).await?;
     Ok(())
   }
 }
 
 impl InCommunity for Page {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<ApubCommunity> {
     if let Some(audience) = &self.audience {
       return audience.dereference(context).await;
     }
     let community = match &self.attributed_to {
-      AttributedTo::Lemmy(_) => {
+      AttributedTo::StudyCycle(_) => {
         let mut iter = self.to.iter().merge(self.cc.iter());
         loop {
           if let Some(cid) = iter.next() {
@@ -234,7 +234,7 @@ impl InCommunity for Page {
               break c;
             }
           } else {
-            return Err(LemmyErrorType::NotFound.into());
+            return Err(StudyCycleErrorType::NotFound.into());
           }
         }
       }
@@ -242,7 +242,7 @@ impl InCommunity for Page {
         p.iter()
           .find(|a| a.kind == PersonOrGroupType::Group)
           .map(|a| ObjectId::<ApubCommunity>::from(a.id.clone().into_inner()))
-          .ok_or(LemmyErrorType::NotFound)?
+          .ok_or(StudyCycleErrorType::NotFound)?
           .dereference(context)
           .await?
       }
@@ -266,10 +266,10 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::{protocol::page::Page, utils::test::test_parse_lemmy_item};
+  use crate::{protocol::page::Page, utils::test::test_parse_studycycle_item};
 
   #[test]
   fn test_not_parsing_note_as_page() {
-    assert!(test_parse_lemmy_item::<Page>("assets/lemmy/objects/note.json").is_err());
+    assert!(test_parse_studycycle_item::<Page>("assets/studycycle/objects/note.json").is_err());
   }
 }

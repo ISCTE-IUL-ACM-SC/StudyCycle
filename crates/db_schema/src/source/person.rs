@@ -3,9 +3,9 @@ use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::{person, person_actions};
-use lemmy_db_schema_file::{InstanceId, PersonId};
-use lemmy_diesel_utils::{dburl::DbUrl, sensitive::SensitiveString};
+use studycycle_db_schema_file::schema::{person, person_actions};
+use studycycle_db_schema_file::{InstanceId, PersonId};
+use studycycle_diesel_utils::{dburl::DbUrl, sensitive::SensitiveString};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

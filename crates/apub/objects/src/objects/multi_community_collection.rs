@@ -6,11 +6,11 @@ use activitypub_federation::{
   traits::Collection,
 };
 use futures::future::join_all;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::CommunityId,
   source::{
     community::{CommunityActions, CommunityFollowerForm},
@@ -18,9 +18,9 @@ use lemmy_db_schema::{
   },
   traits::Followable,
 };
-use lemmy_db_schema_file::enums::CommunityFollowerState;
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_db_schema_file::enums::CommunityFollowerState;
+use studycycle_db_views_site::SiteView;
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use tracing::info;
 use url::Url;
 
@@ -28,10 +28,10 @@ pub struct ApubFeedCollection;
 
 #[async_trait::async_trait]
 impl Collection for ApubFeedCollection {
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = FeedCollection;
   type Owner = ApubMultiCommunity;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   async fn read_local(
     owner: &Self::Owner,
@@ -49,8 +49,8 @@ impl Collection for ApubFeedCollection {
   async fn verify(
     json: &Self::Kind,
     expected_domain: &Url,
-    _context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    _context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     verify_domains_match(expected_domain, &json.id.clone().into())?;
     Ok(())
   }
@@ -58,8 +58,8 @@ impl Collection for ApubFeedCollection {
   async fn from_json(
     json: Self::Kind,
     owner: &Self::Owner,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Self> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<Self> {
     let communities = join_all(
       json
         .items
@@ -68,7 +68,7 @@ impl Collection for ApubFeedCollection {
     )
     .await
     .into_iter()
-    .flat_map(|c: LemmyResult<CommunityId>| match c {
+    .flat_map(|c: StudyCycleResult<CommunityId>| match c {
       Ok(c) => Some(c),
       Err(e) => {
         info!("Failed to fetch multi-community item: {e}");

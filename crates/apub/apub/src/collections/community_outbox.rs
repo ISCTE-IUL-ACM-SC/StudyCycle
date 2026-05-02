@@ -6,8 +6,8 @@ use activitypub_federation::{
   traits::{Activity, Collection},
 };
 use futures::future::join_all;
-use lemmy_api_utils::{context::LemmyContext, utils::generate_outbox_url};
-use lemmy_apub_activities::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::generate_outbox_url};
+use studycycle_apub_activities::{
   activity_lists::AnnouncableActivities,
   protocol::{
     CreateOrUpdateType,
@@ -15,12 +15,12 @@ use lemmy_apub_activities::{
     create_or_update::page::CreateOrUpdatePage,
   },
 };
-use lemmy_apub_objects::objects::community::ApubCommunity;
-use lemmy_db_schema::utils::FETCH_LIMIT_MAX;
-use lemmy_db_schema_file::enums::PostSortType;
-use lemmy_db_views_post::impls::PostQuery;
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_apub_objects::objects::community::ApubCommunity;
+use studycycle_db_schema::utils::FETCH_LIMIT_MAX;
+use studycycle_db_schema_file::enums::PostSortType;
+use studycycle_db_views_post::impls::PostQuery;
+use studycycle_db_views_site::SiteView;
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use url::Url;
 
 #[derive(Clone, Debug)]
@@ -29,11 +29,11 @@ pub(crate) struct ApubCommunityOutbox(());
 #[async_trait::async_trait]
 impl Collection for ApubCommunityOutbox {
   type Owner = ApubCommunity;
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = GroupOutbox;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
-  async fn read_local(owner: &Self::Owner, data: &Data<Self::DataType>) -> LemmyResult<Self::Kind> {
+  async fn read_local(owner: &Self::Owner, data: &Data<Self::DataType>) -> StudyCycleResult<Self::Kind> {
     let site_view = SiteView::read_local(&mut data.pool()).await?;
 
     let mut post_views = Box::pin(
@@ -83,7 +83,7 @@ impl Collection for ApubCommunityOutbox {
     group_outbox: &GroupOutbox,
     expected_domain: &Url,
     _data: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     verify_domains_match(expected_domain, &group_outbox.id)?;
     Ok(())
   }
@@ -92,7 +92,7 @@ impl Collection for ApubCommunityOutbox {
     apub: Self::Kind,
     _owner: &Self::Owner,
     data: &Data<Self::DataType>,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     // Fetch less posts on new instance to save requests
     let fetch_limit = if is_new_instance(data).await? {
       10
@@ -108,7 +108,7 @@ impl Collection for ApubCommunityOutbox {
     }
 
     // We intentionally ignore errors here. This is because the outbox might contain posts from old
-    // Lemmy versions, or from other software which we cant parse. In that case, we simply skip the
+    // StudyCycle versions, or from other software which we cant parse. In that case, we simply skip the
     // item and only parse the ones that work.
     // process items in parallel, to avoid long delay from fetch_site_metadata() and other
     // processing

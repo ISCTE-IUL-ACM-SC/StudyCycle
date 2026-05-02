@@ -1,18 +1,18 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_registration_applications::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::is_admin};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_registration_applications::{
   RegistrationApplicationView,
   api::{GetRegistrationApplication, RegistrationApplicationResponse},
 };
-use lemmy_utils::error::LemmyResult;
+use studycycle_utils::error::StudyCycleResult;
 
 /// Lists registration applications, filterable by undenied only.
 pub async fn get_registration_application(
   Query(data): Query<GetRegistrationApplication>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<RegistrationApplicationResponse>> {
+) -> StudyCycleResult<Json<RegistrationApplicationResponse>> {
   // Make sure user is an admin
   is_admin(&local_user_view)?;
 

@@ -7,7 +7,7 @@ use crate::{
     announce::AnnounceActivity,
     report::{Report, ReportObject},
   },
-  send_lemmy_activity,
+  send_studycycle_activity,
 };
 use activitypub_federation::{
   config::Data,
@@ -16,15 +16,15 @@ use activitypub_federation::{
   traits::{Activity, Object},
 };
 use either::Either;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{
     check_comment_deleted_or_removed,
     check_community_deleted_removed,
     check_post_deleted_or_removed,
   },
 };
-use lemmy_apub_objects::{
+use studycycle_apub_objects::{
   objects::{
     PostOrComment,
     ReportableObjects,
@@ -34,7 +34,7 @@ use lemmy_apub_objects::{
   },
   utils::functions::{verify_person_in_community, verify_person_in_site_or_community},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     comment_report::{CommentReport, CommentReportForm},
     community::Community,
@@ -44,8 +44,8 @@ use lemmy_db_schema::{
   },
   traits::Reportable,
 };
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use url::Url;
 
 impl Report {
@@ -54,14 +54,14 @@ impl Report {
     actor: &ApubPerson,
     receiver: &Either<ApubSite, ApubCommunity>,
     reason: Option<String>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Self> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<Self> {
     let kind = FlagType::Flag;
     let id = generate_activity_id(kind.clone(), context)?;
     Ok(Report {
       actor: actor.id().clone().into(),
       to: [receiver.id().clone().into()],
-      object: ReportObject::Lemmy(object_id.clone()),
+      object: ReportObject::StudyCycle(object_id.clone()),
       summary: reason,
       content: None,
       kind,
@@ -75,19 +75,19 @@ impl Report {
     actor: &ApubPerson,
     receiver: &Either<ApubSite, ApubCommunity>,
     reason: String,
-    context: Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     let report = Self::new(&object_id, actor, receiver, Some(reason), &context)?;
     let inboxes = report_inboxes(object_id, receiver, actor, &context).await?;
 
-    send_lemmy_activity(&context, report, actor, inboxes, false).await
+    send_studycycle_activity(&context, report, actor, inboxes, false).await
   }
 }
 
 #[async_trait::async_trait]
 impl Activity for Report {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -97,7 +97,7 @@ impl Activity for Report {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     let receiver = self.to[0].dereference(context).await?;
     verify_person_in_site_or_community(&self.actor, &receiver, context).await?;
     match self.object.dereference(context).await? {
@@ -125,7 +125,7 @@ impl Activity for Report {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     let actor = self.actor.dereference(context).await?;
     let reason = self.reason()?;
     match self.object.dereference(context).await? {
@@ -174,7 +174,7 @@ impl Activity for Report {
       let announce = AnnouncableActivities::Report(self);
       let announce = AnnounceActivity::new(announce.try_into()?, community, context)?;
       let inboxes = report_inboxes(object_id, &receiver, &actor, context).await?;
-      send_lemmy_activity(context, announce, community, inboxes.clone(), false).await?;
+      send_studycycle_activity(context, announce, community, inboxes.clone(), false).await?;
     }
 
     Ok(())

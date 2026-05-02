@@ -1,11 +1,11 @@
 mod negotiate_content;
 use actix_web::{Error, HttpRequest, HttpResponse, Result, error::ErrorBadRequest, web};
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{check_private_instance, local_user_view_from_jwt},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   PersonContentType,
   source::{
     community::Community,
@@ -15,16 +15,16 @@ use lemmy_db_schema::{
   },
   traits::ApubActor,
 };
-use lemmy_db_schema_file::enums::{ListingType, ModlogKind, NotificationType, PostSortType};
-use lemmy_db_views_modlog::{ModlogView, impls::ModlogQuery};
-use lemmy_db_views_notification::{NotificationData, NotificationView, impls::NotificationQuery};
-use lemmy_db_views_person_content_combined::impls::PersonContentCombinedQuery;
-use lemmy_db_views_post::{PostView, impls::PostQuery};
-use lemmy_db_views_site::SiteView;
-use lemmy_email::{translations::Lang, user_language};
-use lemmy_utils::{
+use studycycle_db_schema_file::enums::{ListingType, ModlogKind, NotificationType, PostSortType};
+use studycycle_db_views_modlog::{ModlogView, impls::ModlogQuery};
+use studycycle_db_views_notification::{NotificationData, NotificationView, impls::NotificationQuery};
+use studycycle_db_views_person_content_combined::impls::PersonContentCombinedQuery;
+use studycycle_db_views_post::{PostView, impls::PostQuery};
+use studycycle_db_views_site::SiteView;
+use studycycle_email::{translations::Lang, user_language};
+use studycycle_utils::{
   cache_header::cache_1hour,
-  error::LemmyResult,
+  error::StudyCycleResult,
   settings::structs::Settings,
   utils::markdown::markdown_to_html,
 };
@@ -98,7 +98,7 @@ static RSS_NAMESPACE: LazyLock<BTreeMap<String, String>> = LazyLock::new(|| {
 async fn get_all_feed(
   req: HttpRequest,
   web::Query(info): web::Query<Params>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<StudyCycleContext>,
 ) -> Result<HttpResponse, Error> {
   let lang = get_lang_or_negotiate(&req, &context).await?;
 
@@ -115,7 +115,7 @@ async fn get_all_feed(
 async fn get_local_feed(
   req: HttpRequest,
   web::Query(info): web::Query<Params>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<StudyCycleContext>,
 ) -> Result<HttpResponse, Error> {
   let lang = get_lang_or_negotiate(&req, &context).await?;
 
@@ -130,7 +130,7 @@ async fn get_local_feed(
 }
 
 async fn get_feed_data(
-  context: &LemmyContext,
+  context: &StudyCycleContext,
   listing_type: ListingType,
   sort_type: PostSortType,
   limit: i64,
@@ -168,7 +168,7 @@ async fn get_feed_user(
   req: HttpRequest,
   web::Query(info): web::Query<Params>,
   name: web::Path<String>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<StudyCycleContext>,
 ) -> Result<HttpResponse, Error> {
   let (name, domain) = split_name(&name);
 
@@ -220,7 +220,7 @@ async fn get_feed_community(
   req: HttpRequest,
   web::Query(info): web::Query<Params>,
   name: web::Path<String>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<StudyCycleContext>,
 ) -> Result<HttpResponse, Error> {
   let (name, domain) = split_name(&name);
   let community = Community::read_from_name(&mut context.pool(), name, domain, false)
@@ -261,7 +261,7 @@ async fn get_feed_multi_community(
   req: HttpRequest,
   web::Query(info): web::Query<Params>,
   name: web::Path<String>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<StudyCycleContext>,
 ) -> Result<HttpResponse, Error> {
   let (name, domain) = split_name(&name);
   let multi_community = MultiCommunity::read_from_name(&mut context.pool(), name, domain, false)
@@ -297,7 +297,7 @@ async fn get_feed_multi_community(
 async fn get_feed_front(
   req: HttpRequest,
   web::Query(info): web::Query<Params>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<StudyCycleContext>,
 ) -> Result<HttpResponse, Error> {
   let jwt: String = req.match_info().get("jwt").unwrap_or("none").parse()?;
   let site_view = SiteView::read_local(&mut context.pool()).await?;
@@ -351,7 +351,7 @@ fn send_feed_response(
 async fn get_feed_notifs(
   req: HttpRequest,
   _info: web::Query<Params>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<StudyCycleContext>,
 ) -> Result<HttpResponse, Error> {
   let jwt: String = req.match_info().get("jwt").unwrap_or("none").parse()?;
   let site_view = SiteView::read_local(&mut context.pool()).await?;
@@ -380,7 +380,7 @@ async fn get_feed_notifs(
 async fn get_feed_modlog(
   req: HttpRequest,
   _info: web::Query<Params>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<StudyCycleContext>,
 ) -> Result<HttpResponse, Error> {
   let jwt: String = req.match_info().get("jwt").unwrap_or("none").parse()?;
   let site_view = SiteView::read_local(&mut context.pool()).await?;
@@ -407,9 +407,9 @@ async fn get_feed_modlog(
 
 fn create_reply_and_mention_items(
   notifs: Vec<NotificationView>,
-  context: &LemmyContext,
+  context: &StudyCycleContext,
   lang: Lang,
-) -> LemmyResult<Vec<Item>> {
+) -> StudyCycleResult<Vec<Item>> {
   let reply_items: Vec<Item> = notifs
     .iter()
     .flat_map(|v| {
@@ -457,7 +457,7 @@ fn create_reply_and_mention_items(
         NotificationData::ModAction(_) => None,
       }
     })
-    .collect::<LemmyResult<Vec<Item>>>()?;
+    .collect::<StudyCycleResult<Vec<Item>>>()?;
 
   Ok(reply_items)
 }
@@ -466,7 +466,7 @@ fn create_modlog_items(
   modlog: Vec<ModlogView>,
   settings: &Settings,
   lang: Lang,
-) -> LemmyResult<Vec<Item>> {
+) -> StudyCycleResult<Vec<Item>> {
   // All of these go to your modlog url
   let modlog_url = format!(
     "{}/modlog?listing_type=ModeratorView",
@@ -657,7 +657,7 @@ fn create_modlog_items(
         ),
       }
     })
-    .collect::<LemmyResult<Vec<Item>>>()?;
+    .collect::<StudyCycleResult<Vec<Item>>>()?;
 
   Ok(modlog_items)
 }
@@ -667,7 +667,7 @@ fn build_modlog_item<T: Into<String>>(
   url: &str,
   action: T,
   settings: &Settings,
-) -> LemmyResult<Item> {
+) -> StudyCycleResult<Item> {
   let guid = Some(Guid {
     permalink: true,
     value: view.modlog.id.0.to_string(),
@@ -701,7 +701,7 @@ fn build_item(
   notification: &Notification,
   settings: &Settings,
   lang: Lang,
-) -> LemmyResult<Item> {
+) -> StudyCycleResult<Item> {
   let guid = Some(Guid {
     permalink: true,
     value: url.to_owned(),
@@ -735,7 +735,7 @@ fn create_post_items(
   posts: Vec<PostView>,
   settings: &Settings,
   lang: Lang,
-) -> LemmyResult<Vec<Item>> {
+) -> StudyCycleResult<Vec<Item>> {
   let mut items: Vec<Item> = Vec::new();
 
   for p in posts {

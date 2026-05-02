@@ -187,7 +187,7 @@ pub fn run(options: Options, db_url: &str) -> anyhow::Result<Branch> {
   let conn = &mut PgConnection::establish(db_url)?;
 
   // If possible, skip getting a lock and recreating the "r" schema, so
-  // lemmy_server processes in a horizontally scaled setup can start without causing locks
+  // studycycle_server processes in a horizontally scaled setup can start without causing locks
   if !options.revert
     && options.run
     && options.limit.is_none()
@@ -316,7 +316,7 @@ fn run_selected_migrations(
   Ok(())
 }
 
-/// Makes `diesel::migration::Result` work with `anyhow` and `LemmyError`
+/// Makes `diesel::migration::Result` work with `anyhow` and `StudyCycleError`
 fn convert_err(e: Box<dyn std::error::Error + Send + Sync>) -> anyhow::Error {
   anyhow!(e)
 }
@@ -333,7 +333,7 @@ mod tests {
     sql_types,
   };
   use diesel_ltree::Ltree;
-  use lemmy_utils::{error::LemmyResult, settings::SETTINGS};
+  use studycycle_utils::{error::StudyCycleResult, settings::SETTINGS};
   use serial_test::serial;
   // The number of migrations that should be run to set up some test data.
   // Currently, this includes migrations until
@@ -383,7 +383,7 @@ mod tests {
 
   #[test]
   #[serial]
-  fn test_schema_setup() -> LemmyResult<()> {
+  fn test_schema_setup() -> StudyCycleResult<()> {
     let o = Options::default();
     let db_url = SETTINGS.get_database_url();
     let conn = &mut PgConnection::establish(&db_url)?;
@@ -437,11 +437,11 @@ mod tests {
     // on `migrations/2025-10-15-114811-0000_merge-modlog-tables/down.sql`.
     let conn = &mut PgConnection::establish(&db_url)?;
 
-    // This should throw an error saying to use lemmy_server instead of diesel CLI
+    // This should throw an error saying to use studycycle_server instead of diesel CLI
     conn.batch_execute("DROP OWNED BY CURRENT_USER;")?;
     assert!(matches!(
       conn.run_pending_migrations(migrations()),
-      Err(e) if e.to_string().contains("lemmy_server")
+      Err(e) if e.to_string().contains("studycycle_server")
     ));
 
     // Diesel CLI's way of running migrations shouldn't break the custom migration runner
@@ -450,7 +450,7 @@ mod tests {
     Ok(())
   }
 
-  fn insert_test_data(conn: &mut PgConnection) -> LemmyResult<()> {
+  fn insert_test_data(conn: &mut PgConnection) -> StudyCycleResult<()> {
     // Users
     conn.batch_execute(&format!(
       "INSERT INTO user_ (id, name, actor_id, preferred_username, password_encrypted, email, public_key) \
@@ -536,8 +536,8 @@ mod tests {
     Ok(())
   }
 
-  fn check_test_data(conn: &mut PgConnection) -> LemmyResult<()> {
-    use lemmy_db_schema_file::schema::{comment, community, notification, person, post};
+  fn check_test_data(conn: &mut PgConnection) -> StudyCycleResult<()> {
+    use studycycle_db_schema_file::schema::{comment, community, notification, person, post};
 
     // Check users
     let users: Vec<(i32, String, Option<String>, String, String)> = person::table
@@ -657,7 +657,7 @@ mod tests {
 
   const FOREIGN_KEY: &str = "f";
 
-  fn get_foreign_keys_with_missing_indexes(conn: &mut PgConnection) -> LemmyResult<Vec<String>> {
+  fn get_foreign_keys_with_missing_indexes(conn: &mut PgConnection) -> StudyCycleResult<Vec<String>> {
     diesel::table! {
       pg_constraint (table_oid, name, kind, column_numbers) {
         #[sql_name = "conrelid"]

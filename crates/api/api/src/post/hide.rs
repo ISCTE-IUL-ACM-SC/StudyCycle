@@ -1,18 +1,18 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::check_local_user_valid};
-use lemmy_db_schema::source::post::{PostActions, PostHideForm};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_local_user_valid};
+use studycycle_db_schema::source::post::{PostActions, PostHideForm};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::{
   PostView,
   api::{HidePost, PostResponse},
 };
-use lemmy_utils::error::LemmyResult;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn hide_post(
   Json(data): Json<HidePost>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> StudyCycleResult<Json<PostResponse>> {
   check_local_user_valid(&local_user_view)?;
   let person_id = local_user_view.person.id;
   let local_instance_id = local_user_view.person.instance_id;

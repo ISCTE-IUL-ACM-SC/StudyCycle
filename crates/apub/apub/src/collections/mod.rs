@@ -13,14 +13,14 @@ use community_featured::ApubCommunityFeatured;
 use community_follower::ApubCommunityFollower;
 use community_moderators::ApubCommunityModerators;
 use community_outbox::ApubCommunityOutbox;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson},
   protocol::group::Group,
   utils::protocol::{AttributedTo, PersonOrGroupType},
 };
-use lemmy_db_schema::source::{comment::Comment, post::Post};
-use lemmy_utils::{FEDERATION_CONTEXT, error::LemmyResult, spawn_try_task};
+use studycycle_db_schema::source::{comment::Comment, post::Post};
+use studycycle_utils::{FEDERATION_CONTEXT, error::StudyCycleResult, spawn_try_task};
 
 pub(crate) mod community_featured;
 pub(crate) mod community_follower;
@@ -30,7 +30,7 @@ pub(crate) mod community_outbox;
 pub fn fetch_community_collections(
   community: ApubCommunity,
   group: Group,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
 ) {
   spawn_try_task(async move {
     let outbox: CollectionId<ApubCommunityOutbox> = group.outbox.into();
@@ -48,7 +48,7 @@ pub fn fetch_community_collections(
       featured.dereference(&community, &context).await.ok();
     }
     if let Some(moderators) = group.attributed_to {
-      if let AttributedTo::Lemmy(l) = moderators {
+      if let AttributedTo::StudyCycle(l) = moderators {
         let moderators: CollectionId<ApubCommunityModerators> = l.moderators().into();
         moderators.dereference(&community, &context).await.ok();
       } else if let AttributedTo::Peertube(p) = moderators {
@@ -70,8 +70,8 @@ impl UrlCollection {
   pub(crate) async fn new_response(
     post: &Post,
     id: String,
-    context: &LemmyContext,
-  ) -> LemmyResult<HttpResponse> {
+    context: &StudyCycleContext,
+  ) -> StudyCycleResult<HttpResponse> {
     let mut ordered_items = vec![post.ap_id.clone().into()];
     let comments = Comment::read_ap_ids_for_post(post.id, &mut context.pool()).await?;
     ordered_items.extend(comments.into_iter().map(Into::into));
@@ -85,7 +85,7 @@ impl UrlCollection {
   }
 
   /// Empty placeholder outbox used for Person, Instance, which dont implement a proper outbox.
-  pub(crate) fn new_empty_response(id: String) -> LemmyResult<HttpResponse> {
+  pub(crate) fn new_empty_response(id: String) -> StudyCycleResult<HttpResponse> {
     let collection = Self {
       r#type: Default::default(),
       id,

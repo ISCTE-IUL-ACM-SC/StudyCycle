@@ -1,35 +1,35 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_comment_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   notify::NotifyData,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_community_user_action, get_url_blocklist, process_markdown_opt, slur_regex},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   impls::actor_language::validate_post_language,
   source::comment::{Comment, CommentUpdateForm},
 };
-use lemmy_db_views_comment::{
+use studycycle_db_views_comment::{
   CommentView,
   api::{CommentResponse, EditComment},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::validation::is_valid_body_field,
 };
 
 pub async fn edit_comment(
   Json(data): Json<EditComment>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommentResponse>> {
+) -> StudyCycleResult<Json<CommentResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   let comment_id = data.comment_id;
@@ -51,7 +51,7 @@ pub async fn edit_comment(
 
   // Verify that only the creator can edit
   if local_user_view.person.id != orig_comment.creator.id {
-    return Err(LemmyErrorType::NoCommentEditAllowed.into());
+    return Err(StudyCycleErrorType::NoCommentEditAllowed.into());
   }
 
   let slur_regex = slur_regex(&context).await?;

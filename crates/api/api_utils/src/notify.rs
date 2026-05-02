@@ -1,5 +1,5 @@
-use crate::{context::LemmyContext, plugins::plugin_hook_notification};
-use lemmy_db_schema::{
+use crate::{context::StudyCycleContext, plugins::plugin_hook_notification};
+use studycycle_db_schema::{
   source::{
     comment::Comment,
     community::{Community, CommunityActions},
@@ -11,17 +11,17 @@ use lemmy_db_schema::{
   },
   traits::{ApubActor, Blockable},
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   enums::{CommunityNotificationsMode, NotificationType, PostNotificationsMode},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_private_message::PrivateMessageView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{dburl::DbUrl, traits::Crud};
-use lemmy_email::notifications::{NotificationEmailData, send_notification_email};
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_private_message::PrivateMessageView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{dburl::DbUrl, traits::Crud};
+use studycycle_email::notifications::{NotificationEmailData, send_notification_email};
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   spawn_try_task,
   utils::mention::scrape_text_for_mentions,
 };
@@ -70,13 +70,13 @@ impl<'a> Eq for CollectedNotifyData<'a> {}
 impl NotifyData {
   /// Scans the post/comment content for mentions, then sends notifications via db and email
   /// to mentioned users and parent creator. Spawns a task for background processing.
-  pub fn send(self, context: &LemmyContext) {
+  pub fn send(self, context: &StudyCycleContext) {
     let context = context.clone();
     spawn_try_task(self.send_internal(context))
   }
 
   /// Logic for send(), in separate function so it can run serially in tests.
-  pub async fn send_internal(self, context: LemmyContext) -> LemmyResult<()> {
+  pub async fn send_internal(self, context: StudyCycleContext) -> StudyCycleResult<()> {
     // Use set so that notifications are unique per user and object.
     let collected: HashSet<_> = [
       self.notify_parent_creator(&context).await?,
@@ -129,8 +129,8 @@ impl NotifyData {
   async fn check_notifications_allowed(
     &self,
     potential_blocker_id: PersonId,
-    context: &LemmyContext,
-  ) -> LemmyResult<()> {
+    context: &StudyCycleContext,
+  ) -> StudyCycleResult<()> {
     let pool = &mut context.pool();
     // TODO: this needs too many queries for each user
     PersonActions::read_block(pool, potential_blocker_id, self.post.creator_id).await?;
@@ -154,7 +154,7 @@ impl NotifyData {
       || community_notifications == CommunityNotificationsMode::Mute
     {
       // The specific error type is irrelevant
-      return Err(LemmyErrorType::NotFound.into());
+      return Err(StudyCycleErrorType::NotFound.into());
     }
 
     Ok(())
@@ -168,7 +168,7 @@ impl NotifyData {
     }
   }
 
-  fn link(&self, context: &LemmyContext) -> LemmyResult<Url> {
+  fn link(&self, context: &StudyCycleContext) -> StudyCycleResult<Url> {
     if let Some(comment) = self.comment.as_ref() {
       Ok(comment.local_url(context.settings())?)
     } else {
@@ -178,8 +178,8 @@ impl NotifyData {
 
   async fn notify_parent_creator<'a>(
     &'a self,
-    context: &LemmyContext,
-  ) -> LemmyResult<Vec<CollectedNotifyData<'a>>> {
+    context: &StudyCycleContext,
+  ) -> StudyCycleResult<Vec<CollectedNotifyData<'a>>> {
     let Some(comment) = self.comment.as_ref() else {
       return Ok(vec![]);
     };
@@ -208,8 +208,8 @@ impl NotifyData {
 
   async fn notify_mentions<'a>(
     &'a self,
-    context: &LemmyContext,
-  ) -> LemmyResult<Vec<CollectedNotifyData<'a>>> {
+    context: &StudyCycleContext,
+  ) -> StudyCycleResult<Vec<CollectedNotifyData<'a>>> {
     let mentions = if let Some(apub_mentions) = self.apub_mentions.clone() {
       apub_mentions
     } else {
@@ -245,8 +245,8 @@ impl NotifyData {
 
   async fn notify_subscribers<'a>(
     &'a self,
-    context: &LemmyContext,
-  ) -> LemmyResult<Vec<CollectedNotifyData<'a>>> {
+    context: &StudyCycleContext,
+  ) -> StudyCycleResult<Vec<CollectedNotifyData<'a>>> {
     let is_post = self.comment.is_none();
     let subscribers = vec![
       PostActions::list_subscribers(self.post.id, &mut context.pool()).await?,
@@ -282,7 +282,7 @@ impl NotifyData {
   }
 }
 
-pub fn notify_private_message(view: &PrivateMessageView, is_create: bool, context: &LemmyContext) {
+pub fn notify_private_message(view: &PrivateMessageView, is_create: bool, context: &StudyCycleContext) {
   let view = view.clone();
   let context = context.clone();
   spawn_try_task(async move { notify_private_message_internal(&view, is_create, &context).await })
@@ -290,8 +290,8 @@ pub fn notify_private_message(view: &PrivateMessageView, is_create: bool, contex
 async fn notify_private_message_internal(
   view: &PrivateMessageView,
   is_create: bool,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<()> {
   let Ok(local_recipient) =
     LocalUserView::read_person(&mut context.pool(), view.recipient.id).await
   else {
@@ -320,7 +320,7 @@ async fn notify_private_message_internal(
   Ok(())
 }
 
-pub fn notify_mod_action(actions: Vec<Modlog>, context: &LemmyContext) {
+pub fn notify_mod_action(actions: Vec<Modlog>, context: &StudyCycleContext) {
   // Mod actions should notify the target person. If there is no target person then also no
   // notification. This means each mod action can only notify a single person (eg it is not possible
   // to notify all community mods when a community gets removed).
@@ -374,10 +374,10 @@ pub fn notify_mod_action(actions: Vec<Modlog>, context: &LemmyContext) {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use crate::{
-    context::LemmyContext,
+    context::StudyCycleContext,
     notify::{NotifyData, notify_private_message_internal},
   };
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     NotificationTypeFilter,
     assert_length,
     source::{
@@ -391,15 +391,15 @@ mod tests {
     },
     traits::Blockable,
   };
-  use lemmy_db_schema_file::enums::NotificationType;
-  use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_db_views_notification::{NotificationData, NotificationView, impls::NotificationQuery};
-  use lemmy_db_views_private_message::PrivateMessageView;
-  use lemmy_diesel_utils::{
+  use studycycle_db_schema_file::enums::NotificationType;
+  use studycycle_db_views_local_user::LocalUserView;
+  use studycycle_db_views_notification::{NotificationData, NotificationView, impls::NotificationQuery};
+  use studycycle_db_views_private_message::PrivateMessageView;
+  use studycycle_diesel_utils::{
     connection::{DbPool, build_db_pool_for_tests},
     traits::Crud,
   };
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -414,8 +414,8 @@ mod tests {
     timmy_comment: Comment,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
-    let instance = Instance::read_or_create(pool, "lemmy-alpha").await?;
+  async fn init_data(pool: &mut DbPool<'_>) -> StudyCycleResult<Data> {
+    let instance = Instance::read_or_create(pool, "studycycle-alpha").await?;
 
     let timmy = LocalUserView::create_test_user(pool, "timmy_pcv", "", false).await?;
 
@@ -458,15 +458,15 @@ mod tests {
 
   async fn insert_private_message(
     form: PrivateMessageInsertForm,
-    context: &LemmyContext,
-  ) -> LemmyResult<()> {
+    context: &StudyCycleContext,
+  ) -> StudyCycleResult<()> {
     let pool = &mut context.pool();
     let pm = PrivateMessage::create(pool, &form).await?;
     let view = PrivateMessageView::read(pool, pm.id, None).await?;
     notify_private_message_internal(&view, false, context).await?;
     Ok(())
   }
-  async fn setup_private_messages(data: &Data, context: &LemmyContext) -> LemmyResult<()> {
+  async fn setup_private_messages(data: &Data, context: &StudyCycleContext) -> StudyCycleResult<()> {
     let sara_timmy_message_form = PrivateMessageInsertForm::new(
       data.sara.person.id,
       data.timmy.person.id,
@@ -498,7 +498,7 @@ mod tests {
     Ok(())
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
     Instance::delete(pool, data.instance.id).await?;
     Instance::delete(pool, data.timmy.person.instance_id).await?;
 
@@ -507,8 +507,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn replies() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn replies() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = init_data(pool).await?;
 
@@ -516,7 +516,7 @@ mod tests {
     let sara_comment_form = CommentInsertForm::new(
       data.sara.person.id,
       data.timmy_post.id,
-      "@timmy_notify@lemmy-alpha".into(),
+      "@timmy_notify@studycycle-alpha".into(),
     );
     let sara_comment =
       Comment::create(pool, &sara_comment_form, Some(&data.timmy_comment.path)).await?;
@@ -603,7 +603,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn mentions() -> LemmyResult<()> {
+  async fn mentions() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -744,8 +744,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn read_private_messages() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn read_private_messages() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = init_data(pool).await?;
     setup_private_messages(&data, &context).await?;
@@ -793,8 +793,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn ensure_private_message_person_block() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn ensure_private_message_person_block() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = init_data(pool).await?;
     setup_private_messages(&data, &context).await?;
@@ -835,8 +835,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn ensure_private_message_instance_block() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn ensure_private_message_instance_block() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = init_data(pool).await?;
     setup_private_messages(&data, &context).await?;
@@ -881,8 +881,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn private_message_delete_by_recipient() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn private_message_delete_by_recipient() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = init_data(pool).await?;
     setup_private_messages(&data, &context).await?;

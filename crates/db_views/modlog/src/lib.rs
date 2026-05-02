@@ -1,4 +1,4 @@
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   comment::Comment,
   community::Community,
   instance::Instance,
@@ -11,7 +11,7 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{NullableExpressionMethods, Queryable, Selectable, dsl::Nullable},
-  lemmy_db_schema::{Person1AliasAllColumnsTuple, utils::queries::selects::person1_select},
+  studycycle_db_schema::{Person1AliasAllColumnsTuple, utils::queries::selects::person1_select},
 };
 
 pub mod api;

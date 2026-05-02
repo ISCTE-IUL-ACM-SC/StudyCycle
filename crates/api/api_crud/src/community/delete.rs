@@ -1,23 +1,23 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_community_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_community_mod_action, check_local_user_valid, is_top_mod},
 };
-use lemmy_db_schema::source::community::{Community, CommunityUpdateForm};
-use lemmy_db_views_community::api::{CommunityResponse, DeleteCommunity};
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_schema::source::community::{Community, CommunityUpdateForm};
+use studycycle_db_views_community::api::{CommunityResponse, DeleteCommunity};
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn delete_community(
   Json(data): Json<DeleteCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityResponse>> {
+) -> StudyCycleResult<Json<CommunityResponse>> {
   check_local_user_valid(&local_user_view)?;
   // Fetch the community mods
   let community_mods =

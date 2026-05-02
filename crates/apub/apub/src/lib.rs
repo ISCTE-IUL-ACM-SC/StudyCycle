@@ -1,11 +1,11 @@
 use activitypub_federation::{config::UrlVerifier, error::Error as ActivityPubError};
 use async_trait::async_trait;
 use chrono::{Days, Utc};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::utils::functions::{check_apub_id_valid, local_site_data_cached};
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::connection::ActualDbPool;
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult, UntranslatedError};
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::utils::functions::{check_apub_id_valid, local_site_data_cached};
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::connection::ActualDbPool;
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult, UntranslatedError};
 use url::Url;
 
 pub mod collections;
@@ -28,16 +28,16 @@ impl UrlVerifier for VerifyUrlData {
       .map_err(|e| ActivityPubError::Other(format!("Cant read local site data: {e}")))?;
 
     check_apub_id_valid(url, &local_site_data).map_err(|err| match err {
-      LemmyError {
-        error_type: LemmyErrorType::UntranslatedError(Some(FederationDisabled)),
+      StudyCycleError {
+        error_type: StudyCycleErrorType::UntranslatedError(Some(FederationDisabled)),
         ..
       } => ActivityPubError::Other("Federation disabled".into()),
-      LemmyError {
-        error_type: LemmyErrorType::UntranslatedError(Some(DomainBlocked(domain))),
+      StudyCycleError {
+        error_type: StudyCycleErrorType::UntranslatedError(Some(DomainBlocked(domain))),
         ..
       } => ActivityPubError::Other(format!("Domain {domain:?} is blocked")),
-      LemmyError {
-        error_type: LemmyErrorType::UntranslatedError(Some(DomainNotInAllowList(domain))),
+      StudyCycleError {
+        error_type: StudyCycleErrorType::UntranslatedError(Some(DomainNotInAllowList(domain))),
         ..
       } => ActivityPubError::Other(format!("Domain {domain:?} is not in allowlist")),
       _ => ActivityPubError::Other("Failed validating apub id".into()),
@@ -46,9 +46,9 @@ impl UrlVerifier for VerifyUrlData {
   }
 }
 
-/// Returns true if the local instance was created in the last 24 hours. In this case Lemmy should
+/// Returns true if the local instance was created in the last 24 hours. In this case StudyCycle should
 /// fetch less data over federation, because the setup task fetches a lot of communities.
-async fn is_new_instance(context: &LemmyContext) -> LemmyResult<bool> {
+async fn is_new_instance(context: &StudyCycleContext) -> StudyCycleResult<bool> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   Ok(local_site.published_at - Days::new(1) < Utc::now())
 }

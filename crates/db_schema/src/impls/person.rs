@@ -23,19 +23,19 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use diesel_uplete::{UpleteCount, uplete};
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   schema::{instance, instance_actions, local_user, person, person_actions},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   dburl::DbUrl,
   traits::Crud,
   utils::functions::lower,
 };
-use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult},
   settings::structs::Settings,
 };
 use url::Url;
@@ -46,35 +46,35 @@ impl Crud for Person {
   type IdType = PersonId;
 
   // Override this, so that you don't get back deleted
-  async fn read(pool: &mut DbPool<'_>, person_id: PersonId) -> LemmyResult<Self> {
+  async fn read(pool: &mut DbPool<'_>, person_id: PersonId) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     person::table
       .filter(person::deleted.eq(false))
       .find(person_id)
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  async fn create(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
   async fn update(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     form: &PersonUpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(person::table.find(person_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
@@ -83,7 +83,7 @@ impl Person {
   ///
   /// This is necessary for federation, because Activitypub doesn't distinguish between these
   /// actions.
-  pub async fn upsert(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> LemmyResult<Self> {
+  pub async fn upsert(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
       .values(form)
@@ -92,14 +92,14 @@ impl Person {
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   pub async fn delete_account(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     local_instance_id: InstanceId,
-  ) -> LemmyResult<Person> {
+  ) -> StudyCycleResult<Person> {
     let conn = &mut get_conn(pool).await?;
 
     // Set the local user email to none, only if they aren't banned locally.
@@ -137,10 +137,10 @@ impl Person {
       ))
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
-  pub async fn check_username_taken(pool: &mut DbPool<'_>, username: &str) -> LemmyResult<()> {
+  pub async fn check_username_taken(pool: &mut DbPool<'_>, username: &str) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(not(exists(
       person::table
@@ -150,7 +150,7 @@ impl Person {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::UsernameAlreadyTaken.into())
+    .ok_or(StudyCycleErrorType::UsernameAlreadyTaken.into())
   }
 }
 
@@ -164,14 +164,14 @@ impl ApubActor for Person {
   async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: &DbUrl,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     person::table
       .filter(lower(person::ap_id).eq(object_id.to_lowercase()))
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   async fn read_from_name(
@@ -179,7 +179,7 @@ impl ApubActor for Person {
     from_name: &str,
     domain: Option<&str>,
     include_deleted: bool,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     let mut q = person::table
       .inner_join(instance::table)
@@ -197,20 +197,20 @@ impl ApubActor for Person {
     q.first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  fn actor_url(&self, settings: &Settings) -> LemmyResult<Url> {
+  fn actor_url(&self, settings: &Settings) -> StudyCycleResult<Url> {
     let domain = self
       .ap_id
       .inner()
       .domain()
-      .ok_or(LemmyErrorType::NotFound)?;
+      .ok_or(StudyCycleErrorType::NotFound)?;
 
     format_actor_url(&self.name, domain, 'u', settings)
   }
 
-  fn generate_local_actor_url(name: &str, settings: &Settings) -> LemmyResult<DbUrl> {
+  fn generate_local_actor_url(name: &str, settings: &Settings) -> StudyCycleResult<DbUrl> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/u/{name}"))?.into())
   }
@@ -220,7 +220,7 @@ impl Followable for PersonActions {
   type Form = PersonFollowerForm;
   type IdType = PersonId;
 
-  async fn follow(pool: &mut DbPool<'_>, form: &PersonFollowerForm) -> LemmyResult<Self> {
+  async fn follow(pool: &mut DbPool<'_>, form: &PersonFollowerForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person_actions::table)
       .values(form)
@@ -230,26 +230,26 @@ impl Followable for PersonActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::AlreadyExists)
+      .with_studycycle_type(StudyCycleErrorType::AlreadyExists)
   }
 
   /// Currently no user following
-  async fn follow_accepted(_: &mut DbPool<'_>, _: CommunityId, _: PersonId) -> LemmyResult<Self> {
-    Err(LemmyErrorType::NotFound.into())
+  async fn follow_accepted(_: &mut DbPool<'_>, _: CommunityId, _: PersonId) -> StudyCycleResult<Self> {
+    Err(StudyCycleErrorType::NotFound.into())
   }
 
   async fn unfollow(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     target_id: Self::IdType,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(person_actions::table.find((person_id, target_id)))
       .set_null(person_actions::followed_at)
       .set_null(person_actions::follow_pending)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::AlreadyExists)
+      .with_studycycle_type(StudyCycleErrorType::AlreadyExists)
   }
 }
 
@@ -258,7 +258,7 @@ impl Blockable for PersonActions {
   type ObjectIdType = PersonId;
   type ObjectType = Person;
 
-  async fn block(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn block(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person_actions::table)
       .values(form)
@@ -268,23 +268,23 @@ impl Blockable for PersonActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::AlreadyExists)
+      .with_studycycle_type(StudyCycleErrorType::AlreadyExists)
   }
 
-  async fn unblock(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<UpleteCount> {
+  async fn unblock(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(person_actions::table.find((form.person_id, form.target_id)))
       .set_null(person_actions::blocked_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::AlreadyExists)
+      .with_studycycle_type(StudyCycleErrorType::AlreadyExists)
   }
 
   async fn read_block(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     recipient_id: Self::ObjectIdType,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     let find_action = person_actions::table
       .find((person_id, recipient_id))
@@ -294,13 +294,13 @@ impl Blockable for PersonActions {
       .get_result::<bool>(conn)
       .await?
       .then_some(())
-      .ok_or(LemmyErrorType::PersonIsBlocked.into())
+      .ok_or(StudyCycleErrorType::PersonIsBlocked.into())
   }
 
   async fn read_blocks_for_person(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-  ) -> LemmyResult<Vec<Self::ObjectType>> {
+  ) -> StudyCycleResult<Vec<Self::ObjectType>> {
     let conn = &mut get_conn(pool).await?;
     let target_person_alias = diesel::alias!(person as person1);
 
@@ -316,7 +316,7 @@ impl Blockable for PersonActions {
       .order_by(person_actions::blocked_at)
       .load::<Person>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -324,7 +324,7 @@ impl PersonActions {
   pub async fn follower_inboxes(
     pool: &mut DbPool<'_>,
     for_person_id: PersonId,
-  ) -> LemmyResult<Vec<DbUrl>> {
+  ) -> StudyCycleResult<Vec<DbUrl>> {
     let conn = &mut get_conn(pool).await?;
     person_actions::table
       .filter(person_actions::followed_at.is_not_null())
@@ -334,10 +334,10 @@ impl PersonActions {
       .distinct()
       .load(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  pub async fn note(pool: &mut DbPool<'_>, form: &PersonNoteForm) -> LemmyResult<Self> {
+  pub async fn note(pool: &mut DbPool<'_>, form: &PersonNoteForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person_actions::table)
       .values(form)
@@ -347,21 +347,21 @@ impl PersonActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn delete_note(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     target_id: PersonId,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(person_actions::table.find((person_id, target_id)))
       .set_null(person_actions::note)
       .set_null(person_actions::noted_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn like(
@@ -370,7 +370,7 @@ impl PersonActions {
     target_id: PersonId,
     previous_vote_is_upvote: Option<bool>,
     current_vote_is_upvote: Option<bool>,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     // here
@@ -406,7 +406,7 @@ impl PersonActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -424,14 +424,14 @@ mod tests {
     traits::{Followable, Likeable},
   };
   use diesel_uplete::UpleteCount;
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = TestData::create(pool).await?;
@@ -483,7 +483,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn follow() -> LemmyResult<()> {
+  async fn follow() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = TestData::create(pool).await?;
@@ -510,7 +510,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_aggregates() -> LemmyResult<()> {
+  async fn test_aggregates() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = TestData::create(pool).await?;
@@ -637,7 +637,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn person_vote_counts() -> LemmyResult<()> {
+  async fn person_vote_counts() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

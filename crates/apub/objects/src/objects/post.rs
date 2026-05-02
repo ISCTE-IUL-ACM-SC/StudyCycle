@@ -28,8 +28,8 @@ use activitypub_federation::{
 use anyhow::anyhow;
 use chrono::Utc;
 use html2text::{from_read_with_decorator, render::TrivialDecorator};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   request::generate_post_link_metadata,
   utils::{
@@ -40,18 +40,18 @@ use lemmy_api_utils::{
     update_post_tags,
   },
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::Community,
   community_tag::CommunityTag,
   local_site::LocalSite,
   person::Person,
   post::{Post, PostInsertForm, PostUpdateForm},
 };
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
-  error::{LemmyError, LemmyResult},
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
+  error::{StudyCycleError, StudyCycleResult},
   spawn_try_task,
   utils::{
     markdown::markdown_to_html,
@@ -83,9 +83,9 @@ impl From<Post> for ApubPost {
 
 #[async_trait::async_trait]
 impl Object for ApubPost {
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = Page;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     self.ap_id.inner()
@@ -94,7 +94,7 @@ impl Object for ApubPost {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     Ok(
       Post::read_from_apub_id(&mut context.pool(), object_id.into())
         .await?
@@ -102,7 +102,7 @@ impl Object for ApubPost {
     )
   }
 
-  async fn delete(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(&self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     if !self.deleted {
       let form = PostUpdateForm {
         deleted: Some(true),
@@ -117,9 +117,9 @@ impl Object for ApubPost {
     self.removed || self.deleted
   }
 
-  // Turn a Lemmy post into an ActivityPub page that can be sent out over the network.
+  // Turn a StudyCycle post into an ActivityPub page that can be sent out over the network.
 
-  async fn into_json(self, context: &Data<Self::DataType>) -> LemmyResult<Page> {
+  async fn into_json(self, context: &Data<Self::DataType>) -> StudyCycleResult<Page> {
     let creator_id = self.creator_id;
     let creator = Person::read(&mut context.pool(), creator_id).await?;
     let community_id = self.community_id;
@@ -160,7 +160,7 @@ impl Object for ApubPost {
     let page = Page {
       kind: PageType::Page,
       id: self.ap_id.clone().into(),
-      attributed_to: AttributedTo::Lemmy(creator.ap_id.into()),
+      attributed_to: AttributedTo::StudyCycle(creator.ap_id.into()),
       to: generate_to(&community)?,
       cc: maa.ccs,
       name: Some(self.name.clone()),
@@ -185,7 +185,7 @@ impl Object for ApubPost {
     page: &Page,
     expected_domain: &Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     verify_domains_match(page.id.inner(), expected_domain)?;
     let community = page.community(context).await?;
 
@@ -207,7 +207,7 @@ impl Object for ApubPost {
     Ok(())
   }
 
-  async fn from_json(page: Page, context: &Data<Self::DataType>) -> LemmyResult<ApubPost> {
+  async fn from_json(page: Page, context: &Data<Self::DataType>) -> StudyCycleResult<ApubPost> {
     let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
     let creator = page.creator()?.dereference(context).await?;
     let community = page.community(context).await?;
@@ -331,8 +331,8 @@ impl Object for ApubPost {
 pub async fn update_apub_post_tags(
   page: &Page,
   post: &Post,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<()> {
   let post_tag_ap_ids = page
     .tag
     .iter()
@@ -353,8 +353,8 @@ pub async fn post_nsfw(
   page: &Page,
   community: &Community,
   local_site: Option<&LocalSite>,
-  context: &LemmyContext,
-) -> LemmyResult<Option<bool>> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<Option<bool>> {
   // Ensure that all posts in NSFW communities are marked as NSFW
   let nsfw = if community.nsfw {
     Some(true)
@@ -380,21 +380,21 @@ mod tests {
   use super::*;
   use crate::{
     objects::ApubPerson,
-    utils::test::{file_to_json_object, parse_lemmy_community, parse_lemmy_person},
+    utils::test::{file_to_json_object, parse_studycycle_community, parse_studycycle_person},
   };
-  use lemmy_db_schema::{source::instance::Instance, test_data::TestData};
+  use studycycle_db_schema::{source::instance::Instance, test_data::TestData};
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_post() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_studycycle_post() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
-    parse_lemmy_person(&context).await?;
-    parse_lemmy_community(&context).await?;
+    parse_studycycle_person(&context).await?;
+    parse_studycycle_community(&context).await?;
 
-    let json = file_to_json_object("../apub/assets/lemmy/objects/page.json")?;
+    let json = file_to_json_object("../apub/assets/studycycle/objects/page.json")?;
     let url = Url::parse("https://enterprise.lemmy.ml/post/55143")?;
     ApubPost::verify(&json, &url, &context).await?;
     let post = ApubPost::from_json(json, &context).await?;
@@ -414,10 +414,10 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_convert_mastodon_post_title() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_convert_mastodon_post_title() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
-    parse_lemmy_community(&context).await?;
+    parse_studycycle_community(&context).await?;
 
     let json = file_to_json_object("../apub/assets/mastodon/objects/person.json")?;
     ApubPerson::from_json(json, &context).await?;

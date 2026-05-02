@@ -6,11 +6,11 @@ use activitypub_federation::{
   protocol::verification::verify_domains_match,
   traits::Collection,
 };
-use lemmy_api_utils::{context::LemmyContext, utils::generate_moderators_url};
-use lemmy_apub_objects::objects::{community::ApubCommunity, person::ApubPerson};
-use lemmy_db_schema::source::community::{CommunityActions, CommunityModeratorForm};
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_api_utils::{context::StudyCycleContext, utils::generate_moderators_url};
+use studycycle_apub_objects::objects::{community::ApubCommunity, person::ApubPerson};
+use studycycle_db_schema::source::community::{CommunityActions, CommunityModeratorForm};
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use url::Url;
 
 #[derive(Clone, Debug)]
@@ -19,11 +19,11 @@ pub(crate) struct ApubCommunityModerators(());
 #[async_trait::async_trait]
 impl Collection for ApubCommunityModerators {
   type Owner = ApubCommunity;
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = GroupModerators;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
-  async fn read_local(owner: &Self::Owner, data: &Data<Self::DataType>) -> LemmyResult<Self::Kind> {
+  async fn read_local(owner: &Self::Owner, data: &Data<Self::DataType>) -> StudyCycleResult<Self::Kind> {
     let moderators = CommunityModeratorView::for_community(&mut data.pool(), owner.id).await?;
     let ordered_items = moderators
       .into_iter()
@@ -40,7 +40,7 @@ impl Collection for ApubCommunityModerators {
     group_moderators: &GroupModerators,
     expected_domain: &Url,
     _data: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     verify_domains_match(&group_moderators.id, expected_domain)?;
     Ok(())
   }
@@ -49,7 +49,7 @@ impl Collection for ApubCommunityModerators {
     apub: Self::Kind,
     owner: &Self::Owner,
     data: &Data<Self::DataType>,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     handle_community_moderators(&apub.ordered_items, owner, data).await?;
 
     // This return value is unused, so just set an empty vec
@@ -60,8 +60,8 @@ impl Collection for ApubCommunityModerators {
 pub(super) async fn handle_community_moderators(
   new_mods: &Vec<ObjectId<ApubPerson>>,
   community: &ApubCommunity,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let community_id = community.id;
   let current_moderators =
     CommunityModeratorView::for_community(&mut context.pool(), community_id).await?;
@@ -101,12 +101,12 @@ pub(super) async fn handle_community_moderators(
 mod tests {
 
   use super::*;
-  use lemmy_apub_objects::utils::test::{
+  use studycycle_apub_objects::utils::test::{
     file_to_json_object,
-    parse_lemmy_community,
-    parse_lemmy_person,
+    parse_studycycle_community,
+    parse_studycycle_person,
   };
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     source::community::{CommunityActions, CommunityModeratorForm},
     test_data::TestData,
   };
@@ -115,11 +115,11 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_community_moderators() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_studycycle_community_moderators() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let data = TestData::create(&mut context.pool()).await?;
-    let (new_mod, site) = parse_lemmy_person(&context).await?;
-    let community = parse_lemmy_community(&context).await?;
+    let (new_mod, site) = parse_studycycle_person(&context).await?;
+    let community = parse_studycycle_community(&context).await?;
     let community_id = community.id;
 
     let community_moderator_form = CommunityModeratorForm::new(community.id, data.person.id);
@@ -129,7 +129,7 @@ mod tests {
     assert_eq!(site.ap_id.to_string(), "https://enterprise.lemmy.ml/");
 
     let json: GroupModerators =
-      file_to_json_object("assets/lemmy/collections/group_moderators.json")?;
+      file_to_json_object("assets/studycycle/collections/group_moderators.json")?;
     let url = Url::parse("https://enterprise.lemmy.ml/c/tenforward")?;
     ApubCommunityModerators::verify(&json, &url, &context).await?;
     ApubCommunityModerators::from_json(json, &community, &context).await?;

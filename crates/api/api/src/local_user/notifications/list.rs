@@ -1,16 +1,16 @@
 use crate::hide_modlog_names;
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_notification::{ListNotifications, NotificationView, impls::NotificationQuery};
-use lemmy_diesel_utils::pagination::PagedResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_notification::{ListNotifications, NotificationView, impls::NotificationQuery};
+use studycycle_diesel_utils::pagination::PagedResponse;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn list_notifications(
   Query(data): Query<ListNotifications>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PagedResponse<NotificationView>>> {
+) -> StudyCycleResult<Json<PagedResponse<NotificationView>>> {
   let hide_modlog_names = hide_modlog_names(Some(&local_user_view), None, &context).await;
   let notifications = NotificationQuery {
     type_: data.type_,

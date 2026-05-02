@@ -1,4 +1,4 @@
-pub use lemmy_db_schema::{
+pub use studycycle_db_schema::{
   newtypes::{CommunityId, CommunityTagId, MultiCommunityId},
   source::{
     community::{Community, CommunityActions},
@@ -6,8 +6,8 @@ pub use lemmy_db_schema::{
     multi_community::{MultiCommunity, MultiCommunityFollow},
   },
 };
-pub use lemmy_db_schema_file::enums::CommunityVisibility;
-pub use lemmy_db_views_community::{
+pub use studycycle_db_schema_file::enums::CommunityVisibility;
+pub use studycycle_db_views_community::{
   CommunityView,
   MultiCommunityView,
   api::{
@@ -26,11 +26,11 @@ pub use lemmy_db_views_community::{
     ListMultiCommunities,
   },
 };
-pub use lemmy_db_views_community_follower_approval::PendingFollowerView;
-pub use lemmy_db_views_community_moderator::CommunityModeratorView;
+pub use studycycle_db_views_community_follower_approval::PendingFollowerView;
+pub use studycycle_db_views_community_moderator::CommunityModeratorView;
 
 pub mod actions {
-  pub use lemmy_db_views_community::api::{
+  pub use studycycle_db_views_community::api::{
     BlockCommunity,
     CreateCommunity,
     FollowCommunity,
@@ -38,8 +38,8 @@ pub mod actions {
   };
 
   pub mod moderation {
-    pub use lemmy_db_schema_file::enums::CommunityFollowerState;
-    pub use lemmy_db_views_community::api::{
+    pub use studycycle_db_schema_file::enums::CommunityFollowerState;
+    pub use studycycle_db_views_community::api::{
       AddModToCommunity,
       AddModToCommunityResponse,
       ApproveCommunityPendingFollower,
@@ -54,8 +54,8 @@ pub mod actions {
       RemoveCommunity,
       TransferCommunity,
     };
-    pub use lemmy_db_views_community_follower::CommunityFollowerView;
-    pub use lemmy_db_views_community_follower_approval::{
+    pub use studycycle_db_views_community_follower::CommunityFollowerView;
+    pub use studycycle_db_views_community_follower_approval::{
       PendingFollowerView,
       api::ListCommunityPendingFollows,
     };

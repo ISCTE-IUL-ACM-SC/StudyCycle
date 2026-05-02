@@ -5,7 +5,7 @@ use diesel::{
   NullableExpressionMethods,
   QueryDsl,
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   aliases,

@@ -1,17 +1,17 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::is_mod_or_admin};
-use lemmy_db_views_comment::{CommentView, api::ListCommentLikes};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_vote::VoteView;
-use lemmy_diesel_utils::pagination::PagedResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::{context::StudyCycleContext, utils::is_mod_or_admin};
+use studycycle_db_views_comment::{CommentView, api::ListCommentLikes};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_vote::VoteView;
+use studycycle_diesel_utils::pagination::PagedResponse;
+use studycycle_utils::error::StudyCycleResult;
 
 /// Lists likes for a comment
 pub async fn list_comment_likes(
   Query(data): Query<ListCommentLikes>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PagedResponse<VoteView>>> {
+) -> StudyCycleResult<Json<PagedResponse<VoteView>>> {
   let local_instance_id = local_user_view.person.instance_id;
 
   let comment_view = CommentView::read(

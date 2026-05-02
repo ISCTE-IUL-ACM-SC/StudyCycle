@@ -7,9 +7,9 @@ use crate::{
 };
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
-use lemmy_api_crud::site::update::edit_site;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::{
+use studycycle_api_crud::site::update::edit_site;
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::{
   source::{
     local_site::{LocalSite, LocalSiteUpdateForm},
     local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
@@ -18,18 +18,18 @@ use lemmy_db_schema::{
   },
   test_data::TestData,
 };
-use lemmy_db_schema_file::{InstanceId, enums::RegistrationMode};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_registration_applications::{
+use studycycle_db_schema_file::{InstanceId, enums::RegistrationMode};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_registration_applications::{
   RegistrationApplicationView,
   api::ApproveRegistrationApplication,
 };
-use lemmy_db_views_site::api::EditSite;
-use lemmy_diesel_utils::{connection::DbPool, traits::Crud};
-use lemmy_utils::{CACHE_DURATION_API, error::LemmyResult};
+use studycycle_db_views_site::api::EditSite;
+use studycycle_diesel_utils::{connection::DbPool, traits::Crud};
+use studycycle_utils::{CACHE_DURATION_API, error::StudyCycleResult};
 use serial_test::serial;
 
-async fn create_test_site(context: &Data<LemmyContext>) -> LemmyResult<(TestData, LocalUserView)> {
+async fn create_test_site(context: &Data<StudyCycleContext>) -> StudyCycleResult<(TestData, LocalUserView)> {
   let pool = &mut context.pool();
   let data = TestData::create(pool).await?;
 
@@ -65,7 +65,7 @@ async fn signup(
   instance_id: InstanceId,
   name: &str,
   email: Option<&str>,
-) -> LemmyResult<(LocalUser, RegistrationApplication)> {
+) -> StudyCycleResult<(LocalUser, RegistrationApplication)> {
   let person_insert_form = PersonInsertForm::test_form(instance_id, name);
   let person = Person::create(pool, &person_insert_form).await?;
 
@@ -90,9 +90,9 @@ async fn signup(
 }
 
 async fn get_application_statuses(
-  context: &Data<LemmyContext>,
+  context: &Data<StudyCycleContext>,
   admin: LocalUserView,
-) -> LemmyResult<(
+) -> StudyCycleResult<(
   i64,
   Vec<RegistrationApplicationView>,
   Vec<RegistrationApplicationView>,
@@ -125,8 +125,8 @@ async fn get_application_statuses(
 #[serial]
 #[tokio::test]
 #[expect(clippy::indexing_slicing)]
-async fn test_application_approval() -> LemmyResult<()> {
-  let context = LemmyContext::init_test_context().await;
+async fn test_application_approval() -> StudyCycleResult<()> {
+  let context = StudyCycleContext::init_test_context().await;
   let pool = &mut context.pool();
 
   let (data, admin_local_user_view) = create_test_site(&context).await?;
@@ -139,7 +139,7 @@ async fn test_application_approval() -> LemmyResult<()> {
     pool,
     data.instance.id,
     "user_w_email",
-    Some("lemmy@localhost"),
+    Some("studycycle@localhost"),
   )
   .await?;
 
@@ -214,7 +214,7 @@ async fn test_application_approval() -> LemmyResult<()> {
     pool,
     data.instance.id,
     "user_w_email_2",
-    Some("lemmy2@localhost"),
+    Some("studycycle2@localhost"),
   )
   .await?;
   let (application_count, unread_applications, all_applications) =

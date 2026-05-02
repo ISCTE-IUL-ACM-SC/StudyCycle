@@ -28,23 +28,23 @@ use activitypub_federation::{
 };
 use either::Either;
 use following::send_accept_or_reject_follow;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_apub_objects::{
+use studycycle_apub_objects::{
   objects::{PostOrComment, person::ApubPerson},
   utils::functions::GetActorType,
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   activity::{ActivitySendTargets, SentActivity, SentActivityForm},
   community::Community,
   instance::InstanceActions,
 };
-use lemmy_db_views_post::PostView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyError, LemmyResult, UntranslatedError};
+use studycycle_db_views_post::PostView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult, UntranslatedError};
 use serde::Serialize;
 use tracing::info;
 use url::{ParseError, Url};
@@ -65,14 +65,14 @@ const MOD_ACTION_DEFAULT_REASON: &str = "No reason provided";
 /// doesn't have a site ban.
 async fn verify_person(
   person_id: &ObjectId<ApubPerson>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let person = person_id.dereference(context).await?;
   InstanceActions::check_ban(&mut context.pool(), person.id, person.instance_id).await?;
   Ok(())
 }
 
-pub(crate) fn check_community_deleted_or_removed(community: &Community) -> LemmyResult<()> {
+pub(crate) fn check_community_deleted_or_removed(community: &Community) -> StudyCycleResult<()> {
   if community.deleted || community.removed {
     Err(UntranslatedError::CannotCreatePostOrCommentInDeletedOrRemovedCommunity.into())
   } else {
@@ -82,7 +82,7 @@ pub(crate) fn check_community_deleted_or_removed(community: &Community) -> Lemmy
 
 /// Generate a unique ID for an activity, in the format:
 /// `http(s)://example.com/receive/create/202daf0a-1489-45df-8d2e-c8a3173fed36`
-fn generate_activity_id<T>(kind: T, context: &LemmyContext) -> Result<Url, ParseError>
+fn generate_activity_id<T>(kind: T, context: &StudyCycleContext) -> Result<Url, ParseError>
 where
   T: ToString,
 {
@@ -110,15 +110,15 @@ fn generate_announce_activity_id(
   Url::parse(&id)
 }
 
-async fn send_lemmy_activity<A, ActorT>(
-  data: &Data<LemmyContext>,
+async fn send_studycycle_activity<A, ActorT>(
+  data: &Data<StudyCycleContext>,
   activity: A,
   actor: &ActorT,
   send_targets: ActivitySendTargets,
   sensitive: bool,
-) -> LemmyResult<()>
+) -> StudyCycleResult<()>
 where
-  A: Activity + Serialize + Send + Sync + Clone + Activity<Error = LemmyError>,
+  A: Activity + Serialize + Send + Sync + Clone + Activity<Error = StudyCycleError>,
   ActorT: Actor + GetActorType,
 {
   info!("Saving outgoing activity to queue {}", activity.id());
@@ -142,7 +142,7 @@ where
   Ok(())
 }
 
-pub async fn handle_outgoing_activities(context: Data<LemmyContext>) {
+pub async fn handle_outgoing_activities(context: Data<StudyCycleContext>) {
   while let Some(data) = ActivityChannel::retrieve_activity().await {
     if let Err(e) = match_outgoing_activities(data, &context).await {
       tracing::warn!("error while saving outgoing activity to db: {e}");
@@ -152,8 +152,8 @@ pub async fn handle_outgoing_activities(context: Data<LemmyContext>) {
 
 pub async fn match_outgoing_activities(
   data: SendActivityData,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let context = context.clone();
   Box::pin(async {
     use SendActivityData::*;
@@ -390,8 +390,8 @@ pub async fn match_outgoing_activities(
 
 pub(crate) async fn post_or_comment_community(
   post_or_comment: &PostOrComment,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<Community> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<Community> {
   match post_or_comment {
     PostOrComment::Left(p) => Community::read(&mut context.pool(), p.community_id).await,
     PostOrComment::Right(c) => {

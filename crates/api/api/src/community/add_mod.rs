@@ -1,28 +1,28 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::notify_mod_action,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_community_mod_action,
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::{Community, CommunityActions, CommunityModeratorForm},
   local_user::LocalUser,
   modlog::{Modlog, ModlogInsertForm},
 };
-use lemmy_db_views_community::api::{AddModToCommunity, AddModToCommunityResponse};
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::{connection::get_conn, traits::Crud};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_db_views_community::api::{AddModToCommunity, AddModToCommunityResponse};
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::{connection::get_conn, traits::Crud};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn add_mod_to_community(
   Json(data): Json<AddModToCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<AddModToCommunityResponse>> {
+) -> StudyCycleResult<Json<AddModToCommunityResponse>> {
   let community = Community::read(&mut context.pool(), data.community_id).await?;
   // Verify that only mods or admins can add mod
   check_community_mod_action(&local_user_view, &community, false, &mut context.pool()).await?;
@@ -40,7 +40,7 @@ pub async fn add_mod_to_community(
     // Dont allow the last community mod to remove himself
     let mods = CommunityModeratorView::for_community(&mut context.pool(), community.id).await?;
     if !local_user_view.local_user.admin && mods.len() == 1 {
-      return Err(LemmyErrorType::CannotLeaveMod.into());
+      return Err(StudyCycleErrorType::CannotLeaveMod.into());
     }
   }
 

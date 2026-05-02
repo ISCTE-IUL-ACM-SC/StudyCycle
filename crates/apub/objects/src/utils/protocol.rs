@@ -5,14 +5,14 @@ use activitypub_federation::{
   kinds::object::ImageType,
   protocol::{tombstone::Tombstone, values::MediaTypeMarkdown},
 };
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::{
   impls::actor_language::UNDETERMINED_ID,
   newtypes::LanguageId,
   source::language::Language,
 };
-use lemmy_diesel_utils::{connection::DbPool, dburl::DbUrl};
-use lemmy_utils::error::LemmyResult;
+use studycycle_diesel_utils::{connection::DbPool, dburl::DbUrl};
+use studycycle_utils::error::StudyCycleResult;
 use serde::{Deserialize, Serialize};
 use std::{future::Future, ops::Deref};
 use url::Url;
@@ -36,8 +36,8 @@ impl Source {
 pub trait InCommunity {
   fn community(
     &self,
-    context: &Data<LemmyContext>,
-  ) -> impl Future<Output = LemmyResult<ApubCommunity>> + Send;
+    context: &Data<StudyCycleContext>,
+  ) -> impl Future<Output = StudyCycleResult<ApubCommunity>> + Send;
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -60,7 +60,7 @@ impl ImageObject {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum AttributedTo {
-  Lemmy(PersonOrGroupModerators),
+  StudyCycle(PersonOrGroupModerators),
   Peertube(Vec<AttributedToPeertube>),
 }
 
@@ -81,7 +81,7 @@ pub struct AttributedToPeertube {
 impl AttributedTo {
   pub fn url(self) -> Option<DbUrl> {
     match self {
-      AttributedTo::Lemmy(l) => Some(l.moderators().into()),
+      AttributedTo::StudyCycle(l) => Some(l.moderators().into()),
       AttributedTo::Peertube(_) => None,
     }
   }
@@ -135,7 +135,7 @@ impl LanguageTag {
   pub(crate) async fn new_single(
     lang: LanguageId,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<LanguageTag> {
+  ) -> StudyCycleResult<LanguageTag> {
     let lang = Language::read_from_id(pool, lang).await?;
 
     // undetermined
@@ -152,7 +152,7 @@ impl LanguageTag {
   pub(crate) async fn new_multiple(
     lang_ids: Vec<LanguageId>,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<LanguageTag>> {
+  ) -> StudyCycleResult<Vec<LanguageTag>> {
     let mut langs = Vec::<Language>::new();
 
     for l in lang_ids {
@@ -172,14 +172,14 @@ impl LanguageTag {
   pub(crate) async fn to_language_id_single(
     lang: Self,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<LanguageId> {
+  ) -> StudyCycleResult<LanguageId> {
     Language::read_id_from_code(pool, &lang.identifier).await
   }
 
   pub(crate) async fn to_language_id_multiple(
     langs: Vec<Self>,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<LanguageId>> {
+  ) -> StudyCycleResult<Vec<LanguageId>> {
     let mut language_ids = Vec::new();
 
     for l in langs {

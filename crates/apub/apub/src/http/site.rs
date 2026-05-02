@@ -1,18 +1,18 @@
 use crate::protocol::collections::url_collection::UrlCollection;
 use activitypub_federation::{config::Data, traits::Object};
 use actix_web::HttpResponse;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::objects::instance::ApubSite;
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::{FEDERATION_CONTEXT, error::LemmyResult};
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::objects::instance::ApubSite;
+use studycycle_db_views_site::SiteView;
+use studycycle_utils::{FEDERATION_CONTEXT, error::StudyCycleResult};
 
-pub(crate) async fn get_apub_site_http(context: Data<LemmyContext>) -> LemmyResult<HttpResponse> {
+pub(crate) async fn get_apub_site_http(context: Data<StudyCycleContext>) -> StudyCycleResult<HttpResponse> {
   let site: ApubSite = SiteView::read_local(&mut context.pool()).await?.site.into();
 
   site.http_response(&FEDERATION_CONTEXT, &context).await
 }
 
-pub(crate) async fn get_apub_site_outbox(context: Data<LemmyContext>) -> LemmyResult<HttpResponse> {
+pub(crate) async fn get_apub_site_outbox(context: Data<StudyCycleContext>) -> StudyCycleResult<HttpResponse> {
   let outbox_id = format!(
     "{}/site_outbox",
     context.settings().get_protocol_and_hostname()

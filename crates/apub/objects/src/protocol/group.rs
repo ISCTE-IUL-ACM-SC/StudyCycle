@@ -45,11 +45,11 @@ pub struct Group {
   /// banner
   #[serde(deserialize_with = "deserialize_last", default)]
   pub image: Option<ImageObject>,
-  // lemmy extension
+  // studycycle extension
   pub sensitive: Option<bool>,
   #[serde(deserialize_with = "deserialize_skip_error", default)]
   pub attributed_to: Option<AttributedTo>,
-  // lemmy extension
+  // studycycle extension
   pub posting_restricted_to_mods: Option<bool>,
   pub outbox: Url,
   pub endpoints: Option<Endpoints>,

@@ -1,21 +1,21 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{check_community_mod_of_any_or_admin_action, is_admin},
 };
-use lemmy_db_views_community_follower_approval::PendingFollowerView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_notification::NotificationView;
-use lemmy_db_views_registration_applications::RegistrationApplicationView;
-use lemmy_db_views_report_combined::ReportCombinedViewInternal;
-use lemmy_db_views_site::{SiteView, api::UnreadCountsResponse};
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_community_follower_approval::PendingFollowerView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_notification::NotificationView;
+use studycycle_db_views_registration_applications::RegistrationApplicationView;
+use studycycle_db_views_report_combined::ReportCombinedViewInternal;
+use studycycle_db_views_site::{SiteView, api::UnreadCountsResponse};
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn get_unread_counts(
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<UnreadCountsResponse>> {
+) -> StudyCycleResult<Json<UnreadCountsResponse>> {
   let person = &local_user_view.person;
   let show_bot_accounts = local_user_view.local_user.show_bot_accounts;
 

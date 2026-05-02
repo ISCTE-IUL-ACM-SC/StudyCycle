@@ -2,7 +2,7 @@ use crate::{
   check_community_deleted_or_removed,
   generate_activity_id,
   protocol::following::{accept::AcceptFollow, follow::Follow},
-  send_lemmy_activity,
+  send_studycycle_activity,
 };
 use activitypub_federation::{
   config::Data,
@@ -11,9 +11,9 @@ use activitypub_federation::{
   traits::{Activity, Actor, Object},
 };
 use either::Either::*;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::objects::{CommunityOrMulti, person::ApubPerson};
-use lemmy_db_schema::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::objects::{CommunityOrMulti, person::ApubPerson};
+use studycycle_db_schema::{
   source::{
     activity::ActivitySendTargets,
     community::{CommunityActions, CommunityFollowerForm},
@@ -24,17 +24,17 @@ use lemmy_db_schema::{
   },
   traits::Followable,
 };
-use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
-use lemmy_db_views_community_moderator::CommunityPersonBanView;
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult, UntranslatedError};
+use studycycle_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
+use studycycle_db_views_community_moderator::CommunityPersonBanView;
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult, UntranslatedError};
 use url::Url;
 
 impl Follow {
   pub(in crate::following) fn new(
     actor: &ApubPerson,
     target: &CommunityOrMulti,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Follow> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<Follow> {
     Ok(Follow {
       actor: actor.id().clone().into(),
       object: target.id().clone().into(),
@@ -47,18 +47,18 @@ impl Follow {
   pub async fn send(
     actor: &ApubPerson,
     target: &CommunityOrMulti,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     let follow = Follow::new(actor, target, context)?;
     let inbox = ActivitySendTargets::to_inbox(target.shared_inbox_or_inbox());
-    send_lemmy_activity(context, follow, actor, inbox, true).await
+    send_studycycle_activity(context, follow, actor, inbox, true).await
   }
 }
 
 #[async_trait::async_trait]
 impl Activity for Follow {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -68,14 +68,14 @@ impl Activity for Follow {
     self.actor.inner()
   }
 
-  async fn verify(&self, _context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, _context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     if let Some(to) = &self.to {
       verify_urls_match(to[0].inner(), self.object.inner())?;
     }
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     use CommunityVisibility::*;
     let actor = self.actor.dereference(context).await?;
     let object = self.object.dereference(context).await?;
@@ -126,7 +126,7 @@ impl Activity for Follow {
           Public | Unlisted => CommunityFollowerState::Accepted,
           Private => CommunityFollowerState::ApprovalRequired,
           // Dont allow following local-only community via federation.
-          LocalOnlyPrivate | LocalOnlyPublic => return Err(LemmyErrorType::NotFound.into()),
+          LocalOnlyPrivate | LocalOnlyPublic => return Err(StudyCycleErrorType::NotFound.into()),
         };
         let form = CommunityFollowerForm::new(c.id, person.id, follow_state);
         CommunityActions::follow(&mut context.pool(), &form).await?;

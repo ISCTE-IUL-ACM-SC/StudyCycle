@@ -5,7 +5,7 @@ use diesel::{
   QueryDsl,
   helper_types::{Eq, NotEq},
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   aliases::my_instance_persons_actions,
   enums::{CommunityFollowerState, CommunityVisibility},
   schema::{
@@ -36,14 +36,14 @@ pub fn filter_blocked() -> _ {
 }
 
 type IsSubscribedType =
-  Eq<lemmy_db_schema_file::schema::community_actions::follow_state, Option<CommunityFollowerState>>;
+  Eq<studycycle_db_schema_file::schema::community_actions::follow_state, Option<CommunityFollowerState>>;
 
 pub fn filter_is_subscribed() -> IsSubscribedType {
   community_actions::follow_state.eq(Some(CommunityFollowerState::Accepted))
 }
 
 type IsNotUnlistedType =
-  NotEq<lemmy_db_schema_file::schema::community::visibility, CommunityVisibility>;
+  NotEq<studycycle_db_schema_file::schema::community::visibility, CommunityVisibility>;
 
 #[diesel::dsl::auto_type]
 pub fn filter_not_unlisted() -> _ {

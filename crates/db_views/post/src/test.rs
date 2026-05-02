@@ -4,7 +4,7 @@ use crate::{PostView, impls::PostQuery};
 use chrono::{DateTime, Days, Utc};
 use diesel_async::SimpleAsyncConnection;
 use diesel_uplete::UpleteCount;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   assert_length,
   impls::actor_language::UNDETERMINED_ID,
   newtypes::{LanguageId, PostId},
@@ -41,20 +41,20 @@ use lemmy_db_schema::{
   test_data::TestData,
   traits::{Bannable, Blockable, Followable, Likeable},
 };
-use lemmy_db_schema_file::enums::{
+use studycycle_db_schema_file::enums::{
   CommunityFollowerState,
   CommunityVisibility,
   ListingType,
   PostSortType,
   TagColor,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::{
   connection::{ActualDbPool, DbPool, build_db_pool, get_conn},
   pagination::PaginationCursor,
   traits::Crud,
 };
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::{
@@ -106,7 +106,7 @@ impl Data {
     }
   }
 
-  async fn setup_inner() -> LemmyResult<Data> {
+  async fn setup_inner() -> StudyCycleResult<Data> {
     let actual_pool = build_db_pool()?;
     let pool = &mut (&actual_pool).into();
     let data = TestData::create(pool).await?;
@@ -264,7 +264,7 @@ impl Data {
       local_site: data.local_site,
     })
   }
-  async fn teardown_inner(data: Data) -> LemmyResult<()> {
+  async fn teardown_inner(data: Data) -> StudyCycleResult<()> {
     let pool = &mut data.pool2();
     let num_deleted = Post::delete(pool, data.post.id).await?;
     Community::delete(pool, data.community.id).await?;
@@ -290,7 +290,7 @@ impl AsyncTestContext for Data {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_with_person(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_with_person(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -350,7 +350,7 @@ async fn post_listing_with_person(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_no_person(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_no_person(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -383,7 +383,7 @@ async fn post_listing_no_person(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_block_community(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_block_community(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -406,7 +406,7 @@ async fn post_listing_block_community(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_like(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_like(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -472,7 +472,7 @@ async fn post_listing_like(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn person_note(data: &mut Data) -> LemmyResult<()> {
+async fn person_note(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -522,7 +522,7 @@ async fn person_note(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_person_vote_totals(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_person_vote_totals(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -697,7 +697,7 @@ async fn post_listing_person_vote_totals(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_read_only(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_read_only(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -721,7 +721,7 @@ async fn post_listing_read_only(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn creator_info(data: &mut Data) -> LemmyResult<()> {
+async fn creator_info(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
   let community_id = data.community.id;
@@ -844,7 +844,7 @@ async fn creator_info(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_person_language(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_person_language(data: &mut Data) -> StudyCycleResult<()> {
   const EL_POSTO: &str = "el posto";
 
   let pool = &data.pool();
@@ -917,7 +917,7 @@ async fn post_listing_person_language(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listings_removed(data: &mut Data) -> LemmyResult<()> {
+async fn post_listings_removed(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -957,7 +957,7 @@ async fn post_listings_removed(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listings_deleted(data: &mut Data) -> LemmyResult<()> {
+async fn post_listings_deleted(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -996,7 +996,7 @@ async fn post_listings_deleted(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listings_hidden_community(data: &mut Data) -> LemmyResult<()> {
+async fn post_listings_hidden_community(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1043,7 +1043,7 @@ async fn post_listings_hidden_community(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_instance_block_communities(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_instance_block_communities(data: &mut Data) -> StudyCycleResult<()> {
   const POST_FROM_BLOCKED_INSTANCE_COMMS: &str = "post on blocked instance";
   const HOWARD_POST: &str = "howard post";
   const POST_LISTING_WITH_BLOCKED: [&str; 5] = [
@@ -1144,7 +1144,7 @@ async fn post_listing_instance_block_communities(data: &mut Data) -> LemmyResult
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_instance_block_persons(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_instance_block_persons(data: &mut Data) -> StudyCycleResult<()> {
   const POST_FROM_BLOCKED_INSTANCE_USERS: &str = "post from blocked instance user";
   const POST_TO_UNBLOCKED_COMM: &str = "post to unblocked comm";
   const POST_LISTING_WITH_BLOCKED: [&str; 5] = [
@@ -1234,7 +1234,7 @@ async fn post_listing_instance_block_persons(data: &mut Data) -> LemmyResult<()>
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn pagination_includes_each_post_once(data: &mut Data) -> LemmyResult<()> {
+async fn pagination_includes_each_post_once(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1335,7 +1335,7 @@ async fn pagination_includes_each_post_once(data: &mut Data) -> LemmyResult<()> 
 #[tokio::test]
 #[serial]
 /// Test that last and first partial pages only have one cursor.
-async fn pagination_hidden_cursors(data: &mut Data) -> LemmyResult<()> {
+async fn pagination_hidden_cursors(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1433,13 +1433,13 @@ async fn pagination_hidden_cursors(data: &mut Data) -> LemmyResult<()> {
 
   // Cursor doesn't work for item that no longer exists
   let removed_item_page = get_page(&first_page2.prev_page).await;
-  if let Err(LemmyError {
+  if let Err(StudyCycleError {
     error_type,
     cause: _,
     caller: _,
   }) = removed_item_page
   {
-    assert_eq!(error_type, LemmyErrorType::NotFound);
+    assert_eq!(error_type, StudyCycleErrorType::NotFound);
   } else {
     unreachable!();
   }
@@ -1452,7 +1452,7 @@ async fn pagination_hidden_cursors(data: &mut Data) -> LemmyResult<()> {
 #[tokio::test]
 #[serial]
 /// Test paging past the last and first page.
-async fn pagination_recovery_cursors(data: &mut Data) -> LemmyResult<()> {
+async fn pagination_recovery_cursors(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1582,7 +1582,7 @@ async fn pagination_recovery_cursors(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listings_hide_read(data: &mut Data) -> LemmyResult<()> {
+async fn post_listings_hide_read(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1633,7 +1633,7 @@ async fn post_listings_hide_read(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listings_hide_hidden(data: &mut Data) -> LemmyResult<()> {
+async fn post_listings_hide_hidden(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1682,7 +1682,7 @@ async fn post_listings_hide_hidden(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listings_hide_nsfw(data: &mut Data) -> LemmyResult<()> {
+async fn post_listings_hide_nsfw(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1719,7 +1719,7 @@ async fn post_listings_hide_nsfw(data: &mut Data) -> LemmyResult<()> {
   assert!(
     &post_listings_show_nsfw
       .first()
-      .ok_or(LemmyErrorType::NotFound)?
+      .ok_or(StudyCycleErrorType::NotFound)?
       .post
       .nsfw
   );
@@ -1730,7 +1730,7 @@ async fn post_listings_hide_nsfw(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn local_only_instance(data: &mut Data) -> LemmyResult<()> {
+async fn local_only_instance(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1779,7 +1779,7 @@ async fn local_only_instance(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_local_user_banned_from_community(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_local_user_banned_from_community(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1823,7 +1823,7 @@ async fn post_listing_local_user_banned_from_community(data: &mut Data) -> Lemmy
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_local_user_not_banned_from_community(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_local_user_not_banned_from_community(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1851,7 +1851,7 @@ fn micros(dt: DateTime<Utc>) -> i64 {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_creator_banned(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_creator_banned(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1902,7 +1902,7 @@ async fn post_listing_creator_banned(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_creator_community_banned(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_creator_community_banned(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -1957,7 +1957,7 @@ async fn post_listing_creator_community_banned(data: &mut Data) -> LemmyResult<(
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn speed_check(data: &mut Data) -> LemmyResult<()> {
+async fn speed_check(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -2009,7 +2009,7 @@ async fn speed_check(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listings_no_comments_only(data: &mut Data) -> LemmyResult<()> {
+async fn post_listings_no_comments_only(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -2039,7 +2039,7 @@ async fn post_listings_no_comments_only(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_private_community(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_private_community(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -2138,7 +2138,7 @@ async fn post_listing_private_community(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listings_hide_media(data: &mut Data) -> LemmyResult<()> {
+async fn post_listings_hide_media(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -2198,7 +2198,7 @@ async fn post_listings_hide_media(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_with_blocked_keywords(data: &mut Data) -> LemmyResult<()> {
+async fn post_with_blocked_keywords(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -2271,7 +2271,7 @@ async fn post_with_blocked_keywords(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_tags_present(data: &mut Data) -> LemmyResult<()> {
+async fn post_tags_present(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -2304,7 +2304,7 @@ async fn post_tags_present(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn post_listing_multi_community(data: &mut Data) -> LemmyResult<()> {
+async fn post_listing_multi_community(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 
@@ -2387,7 +2387,7 @@ async fn post_listing_multi_community(data: &mut Data) -> LemmyResult<()> {
 #[test_context(Data)]
 #[tokio::test]
 #[serial]
-async fn search(data: &mut Data) -> LemmyResult<()> {
+async fn search(data: &mut Data) -> StudyCycleResult<()> {
   let pool = &data.pool();
   let pool = &mut pool.into();
 

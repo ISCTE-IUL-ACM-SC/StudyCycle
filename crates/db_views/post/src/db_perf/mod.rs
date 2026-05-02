@@ -8,20 +8,20 @@ use diesel::{
   sql_types,
 };
 use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::{Community, CommunityInsertForm},
   instance::Instance,
   local_site::LocalSite,
   person::{Person, PersonInsertForm},
   site::Site,
 };
-use lemmy_db_schema_file::{enums::PostSortType, schema::post};
-use lemmy_diesel_utils::{
+use studycycle_db_schema_file::{enums::PostSortType, schema::post};
+use studycycle_diesel_utils::{
   connection::{build_db_pool, get_conn},
   traits::Crud,
   utils::now,
 };
-use lemmy_utils::error::LemmyResult;
+use studycycle_utils::error::StudyCycleResult;
 use serial_test::serial;
 use std::{fmt::Display, num::NonZeroU32, str::FromStr};
 use url::Url;
@@ -36,7 +36,7 @@ struct CmdArgs {
 }
 
 fn get_option<T: FromStr + Display>(suffix: &str, default: T) -> Result<T, T::Err> {
-  let name = format!("LEMMY_{suffix}");
+  let name = format!("STUDYCYCLE_{suffix}");
   if let Some(value) = std::env::var_os(&name) {
     value.to_string_lossy().parse()
   } else {
@@ -47,7 +47,7 @@ fn get_option<T: FromStr + Display>(suffix: &str, default: T) -> Result<T, T::Er
 
 #[tokio::test]
 #[serial]
-async fn db_perf() -> LemmyResult<()> {
+async fn db_perf() -> StudyCycleResult<()> {
   let args = CmdArgs {
     communities: get_option("COMMUNITIES", 3.try_into()?)?,
     people: get_option("PEOPLE", 3.try_into()?)?,
@@ -180,7 +180,7 @@ async fn db_perf() -> LemmyResult<()> {
   Ok(())
 }
 
-fn site() -> LemmyResult<Site> {
+fn site() -> StudyCycleResult<Site> {
   Ok(Site {
     id: Default::default(),
     name: String::new(),
@@ -200,7 +200,7 @@ fn site() -> LemmyResult<Site> {
   })
 }
 
-fn local_site() -> LemmyResult<LocalSite> {
+fn local_site() -> StudyCycleResult<LocalSite> {
   Ok(LocalSite {
     ..LocalSite::default()
   })

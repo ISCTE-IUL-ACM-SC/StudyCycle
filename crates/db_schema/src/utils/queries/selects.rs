@@ -11,7 +11,7 @@ use diesel::{
   query_source::AliasedField,
   sql_types::{Json, Timestamptz},
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   aliases::{
     CreatorCommunityInstanceActions,
     CreatorHomeInstanceActions,
@@ -36,7 +36,7 @@ use lemmy_db_schema_file::{
     post_community_tag,
   },
 };
-use lemmy_diesel_utils::utils::functions::{coalesce_2_nullable, coalesce_3_nullable};
+use studycycle_diesel_utils::utils::functions::{coalesce_2_nullable, coalesce_3_nullable};
 
 /// Checks that the creator_local_user is an admin.
 #[diesel::dsl::auto_type]

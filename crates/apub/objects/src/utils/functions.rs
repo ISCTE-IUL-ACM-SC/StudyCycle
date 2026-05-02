@@ -11,20 +11,20 @@ use activitypub_federation::{
 };
 use either::Either;
 use html2md::parse_html;
-use lemmy_api_utils::{context::LemmyContext, utils::check_is_mod_or_admin};
-use lemmy_db_schema::source::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_is_mod_or_admin};
+use studycycle_db_schema::source::{
   community::Community,
   instance::{Instance, InstanceActions},
   local_site::LocalSite,
 };
-use lemmy_db_schema_file::enums::{ActorType, CommunityVisibility};
-use lemmy_db_views_community_moderator::CommunityPersonBanView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::connection::DbPool;
-use lemmy_utils::{
+use studycycle_db_schema_file::enums::{ActorType, CommunityVisibility};
+use studycycle_db_views_community_moderator::CommunityPersonBanView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::connection::DbPool;
+use studycycle_utils::{
   CACHE_DURATION_FEDERATION,
   CacheLock,
-  error::{LemmyError, LemmyResult, UntranslatedError},
+  error::{StudyCycleError, StudyCycleResult, UntranslatedError},
 };
 use moka::future::Cache;
 use std::sync::{Arc, LazyLock};
@@ -36,7 +36,7 @@ pub fn read_from_string_or_source(
   source: &Option<Source>,
 ) -> String {
   if let Some(s) = source {
-    // markdown sent by lemmy in source field
+    // markdown sent by studycycle in source field
     s.content.clone()
   } else if media_type == &Some(MediaTypeMarkdownOrHtml::Markdown) {
     // markdown sent by peertube in content field
@@ -64,7 +64,7 @@ pub struct LocalSiteData {
   blocked_instances: Vec<Instance>,
 }
 
-pub async fn local_site_data_cached(pool: &mut DbPool<'_>) -> LemmyResult<Arc<LocalSiteData>> {
+pub async fn local_site_data_cached(pool: &mut DbPool<'_>) -> StudyCycleResult<Arc<LocalSiteData>> {
   // All incoming and outgoing federation actions read the blocklist/allowlist and slur filters
   // multiple times. This causes a huge number of database reads if we hit the db directly. So we
   // cache these values for a short time, which will already make a huge difference and ensures that
@@ -79,7 +79,7 @@ pub async fn local_site_data_cached(pool: &mut DbPool<'_>) -> LemmyResult<Arc<Lo
     Box::pin(CACHE
       .try_get_with((), async {
         let (local_site, allowed_instances, blocked_instances) =
-          lemmy_diesel_utils::try_join_with_pool!(pool => (
+          studycycle_diesel_utils::try_join_with_pool!(pool => (
             // LocalSite may be missing
             |pool| async {
               Ok(SiteView::read_local(pool).await.ok().map(|s| s.local_site))
@@ -88,7 +88,7 @@ pub async fn local_site_data_cached(pool: &mut DbPool<'_>) -> LemmyResult<Arc<Lo
             Instance::blocklist
           ))?;
 
-        Ok::<_, LemmyError>(Arc::new(LocalSiteData {
+        Ok::<_, StudyCycleError>(Arc::new(LocalSiteData {
           local_site,
           allowed_instances,
           blocked_instances,
@@ -101,8 +101,8 @@ pub async fn local_site_data_cached(pool: &mut DbPool<'_>) -> LemmyResult<Arc<Lo
 pub async fn check_apub_id_valid_with_strictness(
   apub_id: &Url,
   is_strict: bool,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<()> {
   let domain = apub_id
     .domain()
     .ok_or(UntranslatedError::UrlWithoutDomain)?
@@ -145,7 +145,7 @@ pub async fn check_apub_id_valid_with_strictness(
 /// - the correct scheme (either http or https)
 /// - URL being in the allowlist (if it is active)
 /// - URL not being in the blocklist (if it is active)
-pub fn check_apub_id_valid(apub_id: &Url, local_site_data: &LocalSiteData) -> LemmyResult<()> {
+pub fn check_apub_id_valid(apub_id: &Url, local_site_data: &LocalSiteData) -> StudyCycleResult<()> {
   let domain = apub_id
     .domain()
     .ok_or(UntranslatedError::UrlWithoutDomain)?
@@ -195,7 +195,7 @@ impl<L: GetActorType, R: GetActorType> GetActorType for either::Either<L, R> {
 }
 
 /// Marks object as public only if the community is public
-pub fn generate_to(community: &Community) -> LemmyResult<Vec<Url>> {
+pub fn generate_to(community: &Community) -> StudyCycleResult<Vec<Url>> {
   let ap_id = community.ap_id.clone().into();
   if community.visibility == CommunityVisibility::Public {
     Ok(vec![ap_id, public()])
@@ -212,8 +212,8 @@ pub fn generate_to(community: &Community) -> LemmyResult<Vec<Url>> {
 pub async fn verify_person_in_community(
   person_id: &ObjectId<ApubPerson>,
   community: &ApubCommunity,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let person = person_id.dereference(context).await?;
   InstanceActions::check_ban(&mut context.pool(), person.id, person.instance_id).await?;
   CommunityPersonBanView::check(&mut context.pool(), person.id, community.id).await
@@ -224,8 +224,8 @@ pub async fn verify_person_in_community(
 pub async fn verify_person_in_site_or_community(
   person_id: &ObjectId<ApubPerson>,
   site_or_community: &Either<ApubSite, ApubCommunity>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let person = person_id.dereference(context).await?;
   InstanceActions::check_ban(&mut context.pool(), person.id, person.instance_id).await?;
   if let Either::Right(community) = site_or_community {
@@ -236,7 +236,7 @@ pub async fn verify_person_in_site_or_community(
   Ok(())
 }
 
-pub fn verify_is_public(to: &[Url], cc: &[Url]) -> LemmyResult<()> {
+pub fn verify_is_public(to: &[Url], cc: &[Url]) -> StudyCycleResult<()> {
   if ![to, cc].iter().any(|set| set.contains(&public())) {
     Err(UntranslatedError::ObjectIsNotPublic.into())
   } else {
@@ -246,7 +246,7 @@ pub fn verify_is_public(to: &[Url], cc: &[Url]) -> LemmyResult<()> {
 
 /// Returns an error if object visibility doesnt match community visibility
 /// (ie content in private community must also be private).
-pub fn verify_visibility(to: &[Url], cc: &[Url], community: &ApubCommunity) -> LemmyResult<()> {
+pub fn verify_visibility(to: &[Url], cc: &[Url], community: &ApubCommunity) -> StudyCycleResult<()> {
   use CommunityVisibility::*;
   let object_is_public = [to, cc].iter().any(|set| set.contains(&public()));
   match community.visibility {
@@ -259,8 +259,8 @@ pub fn verify_visibility(to: &[Url], cc: &[Url], community: &ApubCommunity) -> L
 pub async fn append_attachments_to_comment(
   content: String,
   attachments: &[Attachment],
-  context: &Data<LemmyContext>,
-) -> LemmyResult<String> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<String> {
   let mut content = content;
   // Don't modify comments with no attachments
   if !attachments.is_empty() {
@@ -300,8 +300,8 @@ pub fn context_url(id: &Url) -> String {
 pub async fn verify_mod_action(
   mod_id: &ObjectId<ApubPerson>,
   community: &Community,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   // mod action comes from the same instance as the community, so it was presumably done
   // by an instance admin.
   // TODO: federate instance admin status and check it here

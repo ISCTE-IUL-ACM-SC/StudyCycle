@@ -9,7 +9,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   LocalUserSortType,
   newtypes::{LocalUserId, OAuthProviderId},
   source::{
@@ -18,13 +18,13 @@ use lemmy_db_schema::{
     person::{Person, PersonInsertForm, person_keys},
   },
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   aliases::creator_home_instance_actions,
   joins::creator_home_instance_actions_join,
   schema::{instance_actions, local_user, oauth_account, person},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -39,7 +39,7 @@ use lemmy_diesel_utils::{
     now,
   },
 };
-use lemmy_utils::error::{LemmyError, LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 use std::future::{Ready, ready};
 
 impl LocalUserView {
@@ -50,40 +50,40 @@ impl LocalUserView {
       .left_join(creator_home_instance_actions_join())
   }
 
-  pub async fn read(pool: &mut DbPool<'_>, local_user_id: LocalUserId) -> LemmyResult<Self> {
+  pub async fn read(pool: &mut DbPool<'_>, local_user_id: LocalUserId) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(local_user::id.eq(local_user_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  pub async fn read_person(pool: &mut DbPool<'_>, person_id: PersonId) -> LemmyResult<Self> {
+  pub async fn read_person(pool: &mut DbPool<'_>, person_id: PersonId) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(person::id.eq(person_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  pub async fn read_from_name(pool: &mut DbPool<'_>, name: &str) -> LemmyResult<Self> {
+  pub async fn read_from_name(pool: &mut DbPool<'_>, name: &str) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(lower(person::name).eq(name.to_lowercase()))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn find_by_email_or_name(
     pool: &mut DbPool<'_>,
     name_or_email: &str,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(
@@ -94,24 +94,24 @@ impl LocalUserView {
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  pub async fn find_by_email(pool: &mut DbPool<'_>, from_email: &str) -> LemmyResult<Self> {
+  pub async fn find_by_email(pool: &mut DbPool<'_>, from_email: &str) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(lower(coalesce(local_user::email, "")).eq(from_email.to_lowercase()))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn find_by_oauth_id(
     pool: &mut DbPool<'_>,
     oauth_provider_id: OAuthProviderId,
     oauth_user_id: &str,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .inner_join(oauth_account::table)
@@ -120,10 +120,10 @@ impl LocalUserView {
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  pub async fn list_admins_with_emails(pool: &mut DbPool<'_>) -> LemmyResult<Vec<Self>> {
+  pub async fn list_admins_with_emails(pool: &mut DbPool<'_>) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(local_user::email.is_not_null())
@@ -131,7 +131,7 @@ impl LocalUserView {
       .select(Self::as_select())
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn create_test_user(
@@ -139,7 +139,7 @@ impl LocalUserView {
     name: &str,
     bio: &str,
     admin: bool,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let instance_id = Instance::read_or_create(pool, "example.com").await?.id;
     let person_form = PersonInsertForm {
       display_name: Some(name.to_owned()),
@@ -168,7 +168,7 @@ pub struct LocalUserQuery {
 
 impl LocalUserQuery {
   // TODO: add filters and sorts
-  pub async fn list(self, pool: &mut DbPool<'_>) -> LemmyResult<PagedResponse<LocalUserView>> {
+  pub async fn list(self, pool: &mut DbPool<'_>) -> StudyCycleResult<PagedResponse<LocalUserView>> {
     let limit = self.limit.unwrap_or(i64::MAX);
     let mut query = LocalUserView::joins()
       .filter(person::deleted.eq(false))
@@ -213,13 +213,13 @@ impl LocalUserQuery {
 }
 
 impl FromRequest for LocalUserView {
-  type Error = LemmyError;
+  type Error = StudyCycleError;
   type Future = Ready<Result<Self, Self::Error>>;
 
   fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
     ready(match req.extensions().get::<LocalUserView>() {
       Some(c) => Ok(c.clone()),
-      None => Err(LemmyErrorType::IncorrectLogin.into()),
+      None => Err(StudyCycleErrorType::IncorrectLogin.into()),
     })
   }
 }
@@ -234,7 +234,7 @@ impl PaginationCursorConversion for LocalUserView {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     Person::read(pool, PersonId(cursor.id()?)).await
   }
 }
@@ -244,7 +244,7 @@ impl PaginationCursorConversion for LocalUserView {
 mod tests {
 
   use super::*;
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     assert_length,
     source::{
       instance::{Instance, InstanceActions, InstanceBanForm},
@@ -253,11 +253,11 @@ mod tests {
     },
     traits::Bannable,
   };
-  use lemmy_diesel_utils::{
+  use studycycle_diesel_utils::{
     connection::{DbPool, build_db_pool_for_tests},
     traits::Crud,
   };
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -265,7 +265,7 @@ mod tests {
     alice: Person,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> StudyCycleResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
 
     let alice_form = PersonInsertForm {
@@ -279,14 +279,14 @@ mod tests {
     Ok(Data { alice })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
     Instance::delete(pool, data.alice.instance_id).await?;
     Ok(())
   }
 
   #[tokio::test]
   #[serial]
-  async fn list_banned() -> LemmyResult<()> {
+  async fn list_banned() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

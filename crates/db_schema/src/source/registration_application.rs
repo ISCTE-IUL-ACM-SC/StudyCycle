@@ -1,10 +1,10 @@
 use crate::newtypes::{LocalUserId, RegistrationApplicationId};
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::PersonId;
+use studycycle_db_schema_file::PersonId;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
-use {i_love_jesus::CursorKeysModule, lemmy_db_schema_file::schema::registration_application};
+use {i_love_jesus::CursorKeysModule, studycycle_db_schema_file::schema::registration_application};
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

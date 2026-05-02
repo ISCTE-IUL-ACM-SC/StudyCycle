@@ -1,5 +1,5 @@
 use crate::{
-  context::LemmyContext,
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::proxy_image_link,
 };
@@ -7,19 +7,19 @@ use activitypub_federation::config::Data;
 use chrono::{DateTime, Utc};
 use encoding_rs::{Encoding, UTF_8};
 use futures::StreamExt;
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   images::{ImageDetailsInsertForm, LocalImage, LocalImageForm},
   local_site::LocalSite,
   post::{Post, PostUpdateForm},
 };
-use lemmy_db_schema_file::enums::ImageMode;
-use lemmy_db_views_post::api::{LinkMetadata, OpenGraphData};
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
+use studycycle_db_schema_file::enums::ImageMode;
+use studycycle_db_views_post::api::{LinkMetadata, OpenGraphData};
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
   REQWEST_TIMEOUT,
   VERSION,
-  error::{LemmyError, LemmyErrorExt, LemmyErrorType, LemmyResult, UntranslatedError},
+  error::{StudyCycleError, StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult, UntranslatedError},
   settings::structs::Settings,
 };
 use mime::{Mime, TEXT_HTML};
@@ -44,7 +44,7 @@ pub fn client_builder(settings: &Settings) -> ClientBuilder {
   let _ = rustls::crypto::ring::default_provider().install_default();
 
   let user_agent = format!(
-    "Lemmy/{}; +{}",
+    "StudyCycle/{}; +{}",
     *VERSION,
     settings.get_protocol_and_hostname()
   );
@@ -59,11 +59,11 @@ pub fn client_builder(settings: &Settings) -> ClientBuilder {
 /// Fetches metadata for the given link and optionally generates thumbnail.
 pub async fn fetch_link_metadata(
   url: &Url,
-  context: &LemmyContext,
+  context: &StudyCycleContext,
   recursion: bool,
-) -> LemmyResult<LinkMetadata> {
+) -> StudyCycleResult<LinkMetadata> {
   if url.scheme() != "http" && url.scheme() != "https" {
-    return Err(LemmyErrorType::InvalidUrl.into());
+    return Err(StudyCycleErrorType::InvalidUrl.into());
   }
 
   // Resolve the domain and throw an error if it points to any internal IP,
@@ -79,7 +79,7 @@ pub async fn fetch_link_metadata(
         IpAddr::V6(addr) => v6_is_invalid(addr),
       });
     if invalid_ip {
-      return Err(LemmyErrorType::InvalidUrl.into());
+      return Err(StudyCycleErrorType::InvalidUrl.into());
     }
   }
 
@@ -190,11 +190,11 @@ fn v6_is_invalid(v6: Ipv6Addr) -> bool {
 async fn collect_bytes_until_limit(
   response: Response,
   requested_bytes: usize,
-) -> Result<Vec<u8>, LemmyError> {
+) -> Result<Vec<u8>, StudyCycleError> {
   let mut stream = response.bytes_stream();
   let mut bytes = Vec::with_capacity(requested_bytes);
   while let Some(chunk) = stream.next().await {
-    let chunk = chunk.map_err(LemmyError::from)?;
+    let chunk = chunk.map_err(StudyCycleError::from)?;
     // we may go over the requested size here but the important part is we don't keep aggregating
     // more chunks than needed
     bytes.extend_from_slice(&chunk);
@@ -217,8 +217,8 @@ pub async fn generate_post_link_metadata(
   post: Post,
   custom_thumbnail: Option<Url>,
   send_activity: impl FnOnce(Post) -> Option<SendActivityData> + Send + 'static,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let metadata = match &post.url {
     Some(url) => fetch_link_metadata(url, &context, false)
       .await
@@ -291,7 +291,7 @@ pub async fn generate_post_link_metadata(
 }
 
 /// Extract site metadata from HTML Opengraph attributes.
-fn extract_opengraph_data(html_bytes: &[u8], url: &Url) -> LemmyResult<OpenGraphData> {
+fn extract_opengraph_data(html_bytes: &[u8], url: &Url) -> StudyCycleResult<OpenGraphData> {
   let html = String::from_utf8_lossy(html_bytes);
 
   let mut page = HTML::from_string(html.to_string(), None)?;
@@ -427,8 +427,8 @@ struct PictrsPurgeResponse {
 /// - Pictrs might not be set up
 pub async fn purge_image_from_pictrs_url(
   image_url: &Url,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<()> {
   is_image_content_type(context.pictrs_client(), image_url).await?;
 
   let alias = image_url
@@ -440,13 +440,13 @@ pub async fn purge_image_from_pictrs_url(
   purge_image_from_pictrs(alias, context).await
 }
 
-pub async fn purge_image_from_pictrs(alias: &str, context: &LemmyContext) -> LemmyResult<()> {
+pub async fn purge_image_from_pictrs(alias: &str, context: &StudyCycleContext) -> StudyCycleResult<()> {
   let pictrs_config = context.settings().pictrs()?;
   let purge_url = format!("{}internal/purge?alias={}", pictrs_config.url, alias);
 
   let pictrs_api_key = pictrs_config
     .api_key
-    .ok_or(LemmyErrorType::PictrsApiKeyNotProvided)?;
+    .ok_or(StudyCycleErrorType::PictrsApiKeyNotProvided)?;
   let response = context
     .pictrs_client()
     .post(&purge_url)
@@ -456,7 +456,7 @@ pub async fn purge_image_from_pictrs(alias: &str, context: &LemmyContext) -> Lem
     .await?
     .error_for_status()?;
 
-  let response: PictrsPurgeResponse = response.json().await.map_err(LemmyError::from)?;
+  let response: PictrsPurgeResponse = response.json().await.map_err(StudyCycleError::from)?;
 
   // Pictrs purges return all aliases.
   let aliases = response.aliases;
@@ -468,7 +468,7 @@ pub async fn purge_image_from_pictrs(alias: &str, context: &LemmyContext) -> Lem
 
   match response.msg.as_str() {
     "ok" => Ok(()),
-    _ => Err(LemmyErrorType::PictrsPurgeResponseError(response.msg).into()),
+    _ => Err(StudyCycleErrorType::PictrsPurgeResponseError(response.msg).into()),
   }
 }
 
@@ -479,7 +479,7 @@ pub async fn purge_image_from_pictrs(alias: &str, context: &LemmyContext) -> Lem
 /// This is a low-level function that doesn't check if the user is allowed to delete the image
 /// alias. Callers MUST check if the user has permission to delete the alias
 /// before calling this function (the user is an admin or the image belongs to the user).
-pub async fn delete_image_alias(alias: &str, context: &LemmyContext) -> LemmyResult<()> {
+pub async fn delete_image_alias(alias: &str, context: &StudyCycleContext) -> StudyCycleResult<()> {
   let pictrs_config = context.settings().pictrs()?;
   let url = format!("{}internal/delete?alias={}", pictrs_config.url, &alias);
 
@@ -493,7 +493,7 @@ pub async fn delete_image_alias(alias: &str, context: &LemmyContext) -> LemmyRes
     .await?
     .error_for_status()?;
 
-  // Delete db row if any (old Lemmy versions didn't generate this).
+  // Delete db row if any (old StudyCycle versions didn't generate this).
   LocalImage::delete_by_alias(&mut context.pool(), alias)
     .await
     .ok();
@@ -505,8 +505,8 @@ async fn generate_pictrs_thumbnail(
   post: &Post,
   image_url: &Url,
   local_site: &LocalSite,
-  context: &LemmyContext,
-) -> LemmyResult<Url> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<Url> {
   match local_site.image_mode {
     ImageMode::None => return Ok(image_url.clone()),
     ImageMode::ProxyAllImages => {
@@ -540,7 +540,7 @@ async fn generate_pictrs_thumbnail(
   let image = res
     .files
     .first()
-    .ok_or(LemmyErrorType::PictrsResponseError(res.msg))?;
+    .ok_or(StudyCycleErrorType::PictrsResponseError(res.msg))?;
 
   let form = LocalImageForm {
     pictrs_alias: image.file.clone(),
@@ -563,8 +563,8 @@ async fn generate_pictrs_thumbnail(
 /// We don't need to check for image mode, as that's already been done
 pub async fn fetch_pictrs_proxied_image_details(
   image_url: &Url,
-  context: &LemmyContext,
-) -> LemmyResult<PictrsFileDetails> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<PictrsFileDetails> {
   let pictrs_url = context.settings().pictrs()?.url;
   let encoded_image_url = encode(image_url.as_str());
 
@@ -578,7 +578,7 @@ pub async fn fetch_pictrs_proxied_image_details(
     .send()
     .await?
     .error_for_status()
-    .with_lemmy_type(LemmyErrorType::NotAnImageType)?;
+    .with_studycycle_type(StudyCycleErrorType::NotAnImageType)?;
 
   let details_url = format!("{pictrs_url}image/details/original?proxy={encoded_image_url}");
 
@@ -597,18 +597,18 @@ pub async fn fetch_pictrs_proxied_image_details(
 
 // TODO: get rid of this by reading content type from db
 
-async fn is_image_content_type(client: &ClientWithMiddleware, url: &Url) -> LemmyResult<()> {
+async fn is_image_content_type(client: &ClientWithMiddleware, url: &Url) -> StudyCycleResult<()> {
   let response = client.get(url.as_str()).send().await?;
   if response
     .headers()
     .get("Content-Type")
-    .ok_or(LemmyErrorType::NoContentTypeHeader)?
+    .ok_or(StudyCycleErrorType::NoContentTypeHeader)?
     .to_str()?
     .starts_with("image/")
   {
     Ok(())
   } else {
-    Err(LemmyErrorType::NotAnImageType.into())
+    Err(StudyCycleErrorType::NotAnImageType.into())
   }
 }
 
@@ -616,10 +616,10 @@ async fn is_image_content_type(client: &ClientWithMiddleware, url: &Url) -> Lemm
 mod tests {
 
   use crate::{
-    context::LemmyContext,
+    context::StudyCycleContext,
     request::{extract_opengraph_data, fetch_link_metadata},
   };
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
@@ -627,8 +627,8 @@ mod tests {
   // These helped with testing
   #[tokio::test]
   #[serial]
-  async fn test_link_metadata() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_link_metadata() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let sample_url = Url::parse("https://gitlab.com/IzzyOnDroid/repo/-/wikis/FAQ")?;
     let sample_res = fetch_link_metadata(&sample_url, &context, false).await?;
     assert_eq!(
@@ -656,7 +656,7 @@ mod tests {
   }
 
   #[test]
-  fn test_resolve_image_url() -> LemmyResult<()> {
+  fn test_resolve_image_url() -> StudyCycleResult<()> {
     // url that lists the opengraph fields
     let url = Url::parse("https://example.com/one/two.html")?;
 

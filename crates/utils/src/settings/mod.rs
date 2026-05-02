@@ -1,4 +1,4 @@
-use crate::{error::LemmyResult, location_info};
+use crate::{error::StudyCycleResult, location_info};
 use anyhow::{Context, anyhow};
 use deser_hjson::from_str;
 use std::{env, fs, sync::LazyLock};
@@ -15,12 +15,12 @@ const CONNECTION_OPTIONS: [&str; 1] = ["geqo_threshold=12"];
 
 #[expect(clippy::expect_used)]
 pub static SETTINGS: LazyLock<Settings> = LazyLock::new(|| {
-  if env::var("LEMMY_INITIALIZE_WITH_DEFAULT_SETTINGS").is_ok() {
+  if env::var("STUDYCYCLE_INITIALIZE_WITH_DEFAULT_SETTINGS").is_ok() {
     println!(
-      "LEMMY_INITIALIZE_WITH_DEFAULT_SETTINGS was set, any configuration file has been ignored."
+      "STUDYCYCLE_INITIALIZE_WITH_DEFAULT_SETTINGS was set, any configuration file has been ignored."
     );
     println!(
-      "Use with other environment variables to configure this instance further; e.g. LEMMY_DATABASE_URL."
+      "Use with other environment variables to configure this instance further; e.g. STUDYCYCLE_DATABASE_URL."
     );
     Settings::default()
   } else {
@@ -31,12 +31,12 @@ pub static SETTINGS: LazyLock<Settings> = LazyLock::new(|| {
 impl Settings {
   /// Reads config from configuration file.
   ///
-  /// Note: The env var `LEMMY_DATABASE_URL` is parsed in
-  /// `lemmy_db_schema/src/lib.rs::get_database_url_from_env()`
+  /// Note: The env var `STUDYCYCLE_DATABASE_URL` is parsed in
+  /// `studycycle_db_schema/src/lib.rs::get_database_url_from_env()`
   /// Warning: Only call this once.
-  pub(crate) fn init() -> LemmyResult<Self> {
+  pub(crate) fn init() -> StudyCycleResult<Self> {
     let path =
-      env::var("LEMMY_CONFIG_LOCATION").unwrap_or_else(|_| DEFAULT_CONFIG_FILE.to_string());
+      env::var("STUDYCYCLE_CONFIG_LOCATION").unwrap_or_else(|_| DEFAULT_CONFIG_FILE.to_string());
     let plain = fs::read_to_string(path)?;
     let config = from_str::<Settings>(&plain)?;
     if config.hostname == "unset" {
@@ -47,7 +47,7 @@ impl Settings {
   }
 
   pub fn get_database_url(&self) -> String {
-    if let Ok(url) = env::var("LEMMY_DATABASE_URL") {
+    if let Ok(url) = env::var("STUDYCYCLE_DATABASE_URL") {
       url
     } else {
       self.database.connection.clone()
@@ -66,8 +66,8 @@ impl Settings {
   }
 
   /// When running the federation test setup in `api_tests/` or `docker/federation`, the `hostname`
-  /// variable will be like `lemmy-alpha:8541`. This method removes the port and returns
-  /// `lemmy-alpha` instead. It has no effect in production.
+  /// variable will be like `studycycle-alpha:8541`. This method removes the port and returns
+  /// `studycycle-alpha` instead. It has no effect in production.
   pub fn get_hostname_without_port(&self) -> Result<String, anyhow::Error> {
     Ok(
       (*self
@@ -80,22 +80,22 @@ impl Settings {
     )
   }
 
-  pub fn pictrs(&self) -> LemmyResult<PictrsConfig> {
+  pub fn pictrs(&self) -> StudyCycleResult<PictrsConfig> {
     self
       .pictrs
       .clone()
       .ok_or_else(|| anyhow!("images_disabled").into())
   }
 
-  /// Sets a few additional config options necessary for starting lemmy
-  pub fn get_database_url_with_options(&self) -> LemmyResult<String> {
+  /// Sets a few additional config options necessary for starting studycycle
+  pub fn get_database_url_with_options(&self) -> StudyCycleResult<String> {
     let mut url = Url::parse(&self.get_database_url())?;
 
-    // Set `lemmy.protocol_and_hostname` so triggers can use it
-    let lemmy_protocol_and_hostname_option =
-      "lemmy.protocol_and_hostname=".to_owned() + &self.get_protocol_and_hostname();
+    // Set `studycycle.protocol_and_hostname` so triggers can use it
+    let studycycle_protocol_and_hostname_option =
+      "studycycle.protocol_and_hostname=".to_owned() + &self.get_protocol_and_hostname();
     let mut options = CONNECTION_OPTIONS.to_vec();
-    options.push(&lemmy_protocol_and_hostname_option);
+    options.push(&studycycle_protocol_and_hostname_option);
 
     // Create the connection uri portion
     let options_segments = options
@@ -123,7 +123,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_load_config() -> LemmyResult<()> {
+  fn test_load_config() -> StudyCycleResult<()> {
     Settings::init()?;
 
     Ok(())

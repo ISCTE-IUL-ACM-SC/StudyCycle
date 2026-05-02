@@ -5,11 +5,11 @@ use activitypub_federation::{
   protocol::verification::verify_domains_match,
   traits::Collection,
 };
-use lemmy_api_utils::{context::LemmyContext, utils::generate_followers_url};
-use lemmy_apub_objects::objects::community::ApubCommunity;
-use lemmy_db_schema::source::community::Community;
-use lemmy_db_views_community_follower::CommunityFollowerView;
-use lemmy_utils::error::LemmyError;
+use studycycle_api_utils::{context::StudyCycleContext, utils::generate_followers_url};
+use studycycle_apub_objects::objects::community::ApubCommunity;
+use studycycle_db_schema::source::community::Community;
+use studycycle_db_views_community_follower::CommunityFollowerView;
+use studycycle_utils::error::StudyCycleError;
 use url::Url;
 
 #[derive(Clone, Debug)]
@@ -18,9 +18,9 @@ pub(crate) struct ApubCommunityFollower(());
 #[async_trait::async_trait]
 impl Collection for ApubCommunityFollower {
   type Owner = ApubCommunity;
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = GroupFollowers;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   async fn read_local(
     community: &Self::Owner,

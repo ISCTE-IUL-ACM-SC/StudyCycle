@@ -1,24 +1,24 @@
 use super::utils::{adapt_request, delete_old_image, make_send};
 use UploadType::*;
 use actix_web::{self, HttpRequest, web::*};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   request::PictrsResponse,
   utils::{is_admin, is_mod_or_admin},
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::{Community, CommunityUpdateForm},
   images::{LocalImage, LocalImageForm},
   local_site::LocalSite,
   person::{Person, PersonUpdateForm},
   site::{Site, SiteUpdateForm},
 };
-use lemmy_db_views_community::api::CommunityIdQuery;
-use lemmy_db_views_local_image::api::UploadImageResponse;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_db_views_community::api::CommunityIdQuery;
+use studycycle_db_views_local_image::api::UploadImageResponse;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 use reqwest::Body;
 use std::time::Duration;
 
@@ -32,12 +32,12 @@ pub async fn upload_image(
   req: HttpRequest,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<UploadImageResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   if local_site.image_upload_disabled {
-    return Err(LemmyErrorType::ImageUploadDisabled.into());
+    return Err(StudyCycleErrorType::ImageUploadDisabled.into());
   }
 
   Ok(Json(
@@ -49,8 +49,8 @@ pub async fn upload_user_avatar(
   req: HttpRequest,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<UploadImageResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   let image = do_upload_image(req, body, Avatar, &local_user_view, &local_site, &context).await?;
@@ -69,8 +69,8 @@ pub async fn upload_user_banner(
   req: HttpRequest,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<UploadImageResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   let image = do_upload_image(req, body, Banner, &local_user_view, &local_site, &context).await?;
@@ -90,8 +90,8 @@ pub async fn upload_community_icon(
   query: Query<CommunityIdQuery>,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<UploadImageResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   let community: Community = Community::read(&mut context.pool(), query.id).await?;
@@ -114,8 +114,8 @@ pub async fn upload_community_banner(
   query: Query<CommunityIdQuery>,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<UploadImageResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   let community: Community = Community::read(&mut context.pool(), query.id).await?;
@@ -137,8 +137,8 @@ pub async fn upload_site_icon(
   req: HttpRequest,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<UploadImageResponse>> {
   is_admin(&local_user_view)?;
 
   let SiteView {
@@ -161,8 +161,8 @@ pub async fn upload_site_banner(
   req: HttpRequest,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<UploadImageResponse>> {
   is_admin(&local_user_view)?;
 
   let SiteView {
@@ -187,8 +187,8 @@ async fn do_upload_image(
   upload_type: UploadType,
   local_user_view: &LocalUserView,
   local_site: &LocalSite,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<UploadImageResponse> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<UploadImageResponse> {
   let pictrs_url = context.settings().pictrs()?.url;
   let max_upload_size = local_site.image_max_upload_size.to_string();
   let image_url = format!("{}image", pictrs_url);
@@ -236,13 +236,13 @@ async fn do_upload_image(
     .await
     // Dont check for status code here and dont call `error_for_status()`. If the upload failed,
     // this is handled below as `images.files` is empty.
-    .with_lemmy_type(LemmyErrorType::PictrsInvalidImageUpload(
+    .with_studycycle_type(StudyCycleErrorType::PictrsInvalidImageUpload(
       "HTTP request to pict-rs failed".to_string(),
     ))?;
 
   let mut images = res.json::<PictrsResponse>().await?;
   for image in &images.files {
-    // Pictrs allows uploading multiple images in a single request. Lemmy doesnt need this,
+    // Pictrs allows uploading multiple images in a single request. StudyCycle doesnt need this,
     // but still a user may upload multiple and so we need to store all links in db for
     // to allow deletion via web ui.
     let form = LocalImageForm {
@@ -261,7 +261,7 @@ async fn do_upload_image(
   let image = images
     .files
     .pop()
-    .ok_or(LemmyErrorType::PictrsInvalidImageUpload(images.msg))?;
+    .ok_or(StudyCycleErrorType::PictrsInvalidImageUpload(images.msg))?;
 
   let url = image.image_url(&context.settings().get_protocol_and_hostname())?;
   Ok(UploadImageResponse {

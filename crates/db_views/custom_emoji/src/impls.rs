@@ -1,13 +1,13 @@
 use crate::CustomEmojiView;
 use diesel::{ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, dsl::Nullable};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::CustomEmojiId,
   source::{custom_emoji::CustomEmoji, custom_emoji_keyword::CustomEmojiKeyword},
 };
-use lemmy_db_schema_file::schema::{custom_emoji, custom_emoji_keyword};
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_db_schema_file::schema::{custom_emoji, custom_emoji_keyword};
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 use std::collections::HashMap;
 
 type SelectionType = (
@@ -32,7 +32,7 @@ impl CustomEmojiView {
     )
   }
 
-  pub async fn get(pool: &mut DbPool<'_>, emoji_id: CustomEmojiId) -> LemmyResult<Self> {
+  pub async fn get(pool: &mut DbPool<'_>, emoji_id: CustomEmojiId) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let emojis = Self::joins()
       .filter(custom_emoji::id.eq(emoji_id))
@@ -45,11 +45,11 @@ impl CustomEmojiView {
     {
       Ok(emoji)
     } else {
-      Err(LemmyErrorType::NotFound.into())
+      Err(StudyCycleErrorType::NotFound.into())
     }
   }
 
-  pub async fn list(pool: &mut DbPool<'_>, category: &Option<String>) -> LemmyResult<Vec<Self>> {
+  pub async fn list(pool: &mut DbPool<'_>, category: &Option<String>) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = Self::joins().into_boxed();

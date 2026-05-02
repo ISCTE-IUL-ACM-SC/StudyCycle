@@ -4,9 +4,9 @@ use crate::protocol::create_or_update::{
   private_message::CreateOrUpdatePrivateMessage,
 };
 use activitypub_federation::{config::Data, traits::Activity};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::{objects::community::ApubCommunity, utils::protocol::InCommunity};
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::{objects::community::ApubCommunity, utils::protocol::InCommunity};
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use serde_json::{from_value, to_value};
 use url::Url;
 
@@ -15,8 +15,8 @@ use url::Url;
 /// routes them to the correct handler.
 #[async_trait::async_trait]
 impl Activity for CreateOrUpdateNoteWrapper {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -26,12 +26,12 @@ impl Activity for CreateOrUpdateNoteWrapper {
     &self.actor
   }
 
-  async fn verify(&self, _context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, _context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     // Do everything in receive to avoid extra checks.
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     // Use serde to convert NoteWrapper either into Comment or PrivateMessage,
     // depending on conditions below. This works because NoteWrapper keeps all
     // additional data in field `other: Map<String, Value>`.
@@ -57,7 +57,7 @@ impl Activity for CreateOrUpdateNoteWrapper {
 }
 
 impl InCommunity for CreateOrUpdateNoteWrapper {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<ApubCommunity> {
     // Same logic as in receive. In case this is a private message, an error is returned.
     let val = to_value(self)?;
     let comment: CreateOrUpdateNote = from_value(val.clone())?;

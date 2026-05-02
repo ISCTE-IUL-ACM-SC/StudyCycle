@@ -1,29 +1,29 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::LemmyContext, utils::check_local_user_valid};
-use lemmy_db_schema::source::instance::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_local_user_valid};
+use studycycle_db_schema::source::instance::{
   InstanceActions,
   InstanceCommunitiesBlockForm,
   InstancePersonsBlockForm,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::api::{
   SuccessResponse,
   UserBlockInstanceCommunitiesParams,
   UserBlockInstancePersonsParams,
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn user_block_instance_communities(
   Json(data): Json<UserBlockInstanceCommunitiesParams>,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<SuccessResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<SuccessResponse>> {
   check_local_user_valid(&local_user_view)?;
   let instance_id = data.instance_id;
   let person_id = local_user_view.person.id;
   if local_user_view.person.instance_id == instance_id {
-    return Err(LemmyErrorType::CantBlockLocalInstance.into());
+    return Err(StudyCycleErrorType::CantBlockLocalInstance.into());
   }
 
   let block_form = InstanceCommunitiesBlockForm::new(person_id, instance_id);
@@ -40,12 +40,12 @@ pub async fn user_block_instance_communities(
 pub async fn user_block_instance_persons(
   Json(data): Json<UserBlockInstancePersonsParams>,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<SuccessResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<SuccessResponse>> {
   let instance_id = data.instance_id;
   let person_id = local_user_view.person.id;
   if local_user_view.person.instance_id == instance_id {
-    return Err(LemmyErrorType::CantBlockLocalInstance.into());
+    return Err(StudyCycleErrorType::CantBlockLocalInstance.into());
   }
 
   let block_form = InstancePersonsBlockForm::new(person_id, instance_id);

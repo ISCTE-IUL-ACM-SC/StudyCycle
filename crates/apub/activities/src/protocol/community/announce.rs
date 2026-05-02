@@ -4,7 +4,7 @@ use activitypub_federation::{
   kinds::activity::AnnounceType,
   protocol::helpers::deserialize_one_or_many,
 };
-use lemmy_apub_objects::objects::community::ApubCommunity;
+use studycycle_apub_objects::objects::community::ApubCommunity;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use url::Url;
@@ -24,7 +24,7 @@ pub struct AnnounceActivity {
 }
 
 /// Use this to receive community inbox activities, and then announce them if valid. This
-/// ensures that all json fields are kept, even if Lemmy doesn't understand them.
+/// ensures that all json fields are kept, even if StudyCycle doesn't understand them.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RawAnnouncableActivities {
   pub(crate) id: Url,

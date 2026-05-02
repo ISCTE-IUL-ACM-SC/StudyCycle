@@ -5,16 +5,16 @@ use crate::{
 };
 use diesel::{delete, dsl::insert_into};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::community_community_follow;
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_schema_file::schema::community_community_follow;
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::StudyCycleResult;
 
 impl CommunityCommunityFollow {
   pub async fn follow(
     pool: &mut DbPool<'_>,
     target_id: CommunityId,
     community_id: CommunityId,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     insert_into(community_community_follow::table)
       .values((
@@ -30,7 +30,7 @@ impl CommunityCommunityFollow {
     pool: &mut DbPool<'_>,
     target_id: CommunityId,
     community_id: CommunityId,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     delete(
       community_community_follow::table

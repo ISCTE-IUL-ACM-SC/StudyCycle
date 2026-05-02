@@ -1,4 +1,4 @@
-pub use lemmy_db_schema::{
+pub use studycycle_db_schema::{
   ReportType,
   newtypes::{CommentReportId, CommunityReportId, PostReportId, PrivateMessageReportId},
   source::{
@@ -8,7 +8,7 @@ pub use lemmy_db_schema::{
     private_message_report::PrivateMessageReport,
   },
 };
-pub use lemmy_db_views_report_combined::{
+pub use studycycle_db_views_report_combined::{
   CommentReportView,
   CommunityReportView,
   PostReportView,

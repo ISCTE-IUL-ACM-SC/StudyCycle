@@ -6,13 +6,13 @@ use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::{
+use studycycle_db_schema_file::schema::{
   multi_community,
   multi_community_entry,
   multi_community_follow,
 };
-use lemmy_db_schema_file::{InstanceId, PersonId, enums::CommunityFollowerState};
-use lemmy_diesel_utils::{dburl::DbUrl, sensitive::SensitiveString};
+use studycycle_db_schema_file::{InstanceId, PersonId, enums::CommunityFollowerState};
+use studycycle_diesel_utils::{dburl::DbUrl, sensitive::SensitiveString};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

@@ -1,7 +1,7 @@
 #[cfg(feature = "full")]
 use diesel::Queryable;
-use lemmy_db_schema::source::{community::Community, person::Person};
-use lemmy_db_schema_file::enums::CommunityFollowerState;
+use studycycle_db_schema::source::{community::Community, person::Person};
+use studycycle_db_schema_file::enums::CommunityFollowerState;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

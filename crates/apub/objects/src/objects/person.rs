@@ -17,8 +17,8 @@ use activitypub_federation::{
   traits::{Actor, Object},
 };
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{
     generate_outbox_url,
     get_url_blocklist,
@@ -27,15 +27,15 @@ use lemmy_api_utils::{
     slur_regex,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::person::{Person as DbPerson, PersonInsertForm, PersonUpdateForm},
   traits::ApubActor,
 };
-use lemmy_db_schema_file::enums::ActorType;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{sensitive::SensitiveString, traits::Crud};
-use lemmy_utils::{
-  error::{LemmyError, LemmyResult},
+use studycycle_db_schema_file::enums::ActorType;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{sensitive::SensitiveString, traits::Crud};
+use studycycle_utils::{
+  error::{StudyCycleError, StudyCycleResult},
   utils::{markdown::markdown_to_html, slurs::remove_slurs},
 };
 use std::ops::Deref;
@@ -59,9 +59,9 @@ impl From<DbPerson> for ApubPerson {
 
 #[async_trait::async_trait]
 impl Object for ApubPerson {
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = Person;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     self.ap_id.inner()
@@ -74,7 +74,7 @@ impl Object for ApubPerson {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     Ok(
       DbPerson::read_from_apub_id(&mut context.pool(), &object_id.into())
         .await?
@@ -82,7 +82,7 @@ impl Object for ApubPerson {
     )
   }
 
-  async fn delete(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(&self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     let form = PersonUpdateForm {
       deleted: Some(true),
       ..Default::default()
@@ -95,7 +95,7 @@ impl Object for ApubPerson {
     self.deleted
   }
 
-  async fn into_json(self, _context: &Data<Self::DataType>) -> LemmyResult<Person> {
+  async fn into_json(self, _context: &Data<Self::DataType>) -> StudyCycleResult<Person> {
     let kind = if self.bot_account {
       UserTypes::Service
     } else {
@@ -126,7 +126,7 @@ impl Object for ApubPerson {
     person: &Person,
     expected_domain: &Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     verify_domains_match(person.id.inner(), expected_domain)?;
     verify_is_remote_object(&person.id, context)?;
     check_apub_id_valid_with_strictness(person.id.inner(), false, context).await?;
@@ -134,7 +134,7 @@ impl Object for ApubPerson {
     Ok(())
   }
 
-  async fn from_json(person: Person, context: &Data<Self::DataType>) -> LemmyResult<ApubPerson> {
+  async fn from_json(person: Person, context: &Data<Self::DataType>) -> StudyCycleResult<ApubPerson> {
     let instance_id = fetch_instance_actor_for_object(&person.id, context).await?;
 
     let slur_regex = slur_regex(context).await?;
@@ -210,19 +210,19 @@ pub(crate) mod tests {
   use super::*;
   use crate::{
     objects::instance::ApubSite,
-    utils::test::{file_to_json_object, parse_lemmy_person},
+    utils::test::{file_to_json_object, parse_studycycle_person},
   };
   use activitypub_federation::fetch::object_id::ObjectId;
-  use lemmy_db_schema::{source::instance::Instance, test_data::TestData};
+  use studycycle_db_schema::{source::instance::Instance, test_data::TestData};
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_person() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_studycycle_person() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
-    let (person, _) = parse_lemmy_person(&context).await?;
+    let (person, _) = parse_studycycle_person(&context).await?;
 
     assert_eq!(person.display_name, Some("Jean-Luc Picard".to_string()));
     assert!(!person.local);
@@ -235,13 +235,13 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_pleroma_person() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_pleroma_person() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
 
     // create and parse a fake pleroma instance actor, to avoid network request during test
     let mut json: crate::protocol::instance::Instance =
-      file_to_json_object("../apub/assets/lemmy/objects/instance.json")?;
+      file_to_json_object("../apub/assets/studycycle/objects/instance.json")?;
     json.id = ObjectId::parse("https://queer.hacktivis.me/")?;
     let url = Url::parse("https://queer.hacktivis.me/users/lanodan")?;
     ApubSite::verify(&json, &url, &context).await?;

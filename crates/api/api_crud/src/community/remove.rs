@@ -1,13 +1,13 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_community_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   notify::notify_mod_action,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_community_mod_action, is_admin},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     community::{Community, CommunityUpdateForm},
     community_report::CommunityReport,
@@ -15,17 +15,17 @@ use lemmy_db_schema::{
   },
   traits::Reportable,
 };
-use lemmy_db_views_community::api::{CommunityResponse, RemoveCommunity};
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_community::api::{CommunityResponse, RemoveCommunity};
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn remove_community(
   Json(data): Json<RemoveCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityResponse>> {
+) -> StudyCycleResult<Json<CommunityResponse>> {
   let community = Community::read(&mut context.pool(), data.community_id).await?;
   check_community_mod_action(&local_user_view, &community, true, &mut context.pool()).await?;
 

@@ -20,13 +20,13 @@ use crate::protocol::{
   voting::{undo_vote::UndoVote, vote::Vote},
 };
 use activitypub_federation::{config::Data, traits::Activity};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::{
   objects::community::ApubCommunity,
   protocol::page::Page,
   utils::protocol::InCommunity,
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -74,7 +74,7 @@ pub enum AnnouncableActivities {
 }
 
 impl InCommunity for AnnouncableActivities {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<ApubCommunity> {
     use AnnouncableActivities::*;
     match self {
       CreateOrUpdateNoteWrapper(a) => a.community(context).await,
@@ -92,7 +92,7 @@ impl InCommunity for AnnouncableActivities {
       UndoLock(a) => a.object.community(context).await,
       Report(a) => a.community(context).await,
       ResolveReport(a) => a.object.community(context).await,
-      Page(_) => Err(LemmyErrorType::NotFound.into()),
+      Page(_) => Err(StudyCycleErrorType::NotFound.into()),
     }
   }
 }
@@ -101,28 +101,28 @@ impl InCommunity for AnnouncableActivities {
 mod tests {
 
   use crate::activity_lists::SharedInboxActivities;
-  use lemmy_apub_objects::utils::test::{test_json, test_parse_lemmy_item};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_apub_objects::utils::test::{test_json, test_parse_studycycle_item};
+  use studycycle_utils::error::StudyCycleResult;
 
   #[test]
-  fn test_shared_inbox() -> LemmyResult<()> {
-    test_parse_lemmy_item::<SharedInboxActivities>(
-      "../apub/assets/lemmy/activities/deletion/delete_user.json",
+  fn test_shared_inbox() -> StudyCycleResult<()> {
+    test_parse_studycycle_item::<SharedInboxActivities>(
+      "../apub/assets/studycycle/activities/deletion/delete_user.json",
     )?;
-    test_parse_lemmy_item::<SharedInboxActivities>(
-      "../apub/assets/lemmy/activities/following/accept.json",
+    test_parse_studycycle_item::<SharedInboxActivities>(
+      "../apub/assets/studycycle/activities/following/accept.json",
     )?;
-    test_parse_lemmy_item::<SharedInboxActivities>(
-      "../apub/assets/lemmy/activities/create_or_update/create_comment.json",
+    test_parse_studycycle_item::<SharedInboxActivities>(
+      "../apub/assets/studycycle/activities/create_or_update/create_comment.json",
     )?;
-    test_parse_lemmy_item::<SharedInboxActivities>(
-      "../apub/assets/lemmy/activities/create_or_update/create_private_message.json",
+    test_parse_studycycle_item::<SharedInboxActivities>(
+      "../apub/assets/studycycle/activities/create_or_update/create_private_message.json",
     )?;
-    test_parse_lemmy_item::<SharedInboxActivities>(
-      "../apub/assets/lemmy/activities/following/follow.json",
+    test_parse_studycycle_item::<SharedInboxActivities>(
+      "../apub/assets/studycycle/activities/following/follow.json",
     )?;
-    test_parse_lemmy_item::<SharedInboxActivities>(
-      "../apub/assets/lemmy/activities/create_or_update/create_comment.json",
+    test_parse_studycycle_item::<SharedInboxActivities>(
+      "../apub/assets/studycycle/activities/create_or_update/create_comment.json",
     )?;
     test_json::<SharedInboxActivities>("../apub/assets/mastodon/activities/follow.json")?;
     Ok(())

@@ -1,8 +1,8 @@
 use activitypub_federation::{config::Data, traits::Actor};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::protocol::tags::ApubTag;
-use lemmy_db_schema::source::{activity::ActivitySendTargets, person::Person};
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::protocol::tags::ApubTag;
+use studycycle_db_schema::source::{activity::ActivitySendTargets, person::Person};
+use studycycle_utils::error::StudyCycleResult;
 
 pub mod comment;
 pub(crate) mod note_wrapper;
@@ -13,8 +13,8 @@ pub mod private_message;
 /// Used when sending out activity to ensure the mentioned users see it.
 async fn tagged_user_inboxes(
   tagged_users: &[ApubTag],
-  context: &Data<LemmyContext>,
-) -> LemmyResult<ActivitySendTargets> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<ActivitySendTargets> {
   let tagged_users: Vec<_> = tagged_users.iter().flat_map(ApubTag::mention_id).collect();
   let mut inboxes = ActivitySendTargets::empty();
   for t in tagged_users {
@@ -27,8 +27,8 @@ async fn tagged_user_inboxes(
 /// Extracts the users who are mentioned in a received, federated post.
 async fn parse_apub_mentions(
   tags: &[ApubTag],
-  context: &Data<LemmyContext>,
-) -> LemmyResult<Vec<Person>> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<Vec<Person>> {
   let mentions: Vec<_> = tags.iter().filter_map(ApubTag::mention_id).collect();
   let mut res = vec![];
   for m in mentions {

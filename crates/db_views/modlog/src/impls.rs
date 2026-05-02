@@ -9,7 +9,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   ModlogKindFilter,
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CommentId, CommunityId, ModlogId, PostId},
@@ -22,13 +22,13 @@ use lemmy_db_schema::{
     queries::filters::{filter_is_subscribed, filter_not_unlisted, filter_suggested_communities},
   },
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   aliases,
   enums::ListingType,
   schema::{comment, community, community_actions, instance, modlog, person, post},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -38,7 +38,7 @@ use lemmy_diesel_utils::{
     paginate_response,
   },
 };
-use lemmy_utils::error::LemmyResult;
+use studycycle_utils::error::StudyCycleResult;
 
 impl ModlogView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -76,7 +76,7 @@ impl PaginationCursorConversion for ModlogView {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     let conn = &mut get_conn(pool).await?;
     let query = modlog::table
       .select(Self::PaginatedType::as_select())
@@ -106,7 +106,7 @@ pub struct ModlogQuery<'a> {
 }
 
 impl ModlogQuery<'_> {
-  pub async fn list(self, pool: &mut DbPool<'_>) -> LemmyResult<PagedResponse<ModlogView>> {
+  pub async fn list(self, pool: &mut DbPool<'_>) -> StudyCycleResult<PagedResponse<ModlogView>> {
     let limit = limit_fetch(self.limit, None)?;
 
     let target_person = aliases::person1.field(person::id);
@@ -205,7 +205,7 @@ impl ModlogView {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use super::*;
-  use lemmy_db_schema::source::{
+  use studycycle_db_schema::source::{
     comment::{Comment, CommentInsertForm},
     community::{Community, CommunityInsertForm},
     instance::Instance,
@@ -213,12 +213,12 @@ mod tests {
     person::{Person, PersonInsertForm},
     post::{Post, PostInsertForm},
   };
-  use lemmy_db_schema_file::enums::ModlogKind;
-  use lemmy_diesel_utils::{
+  use studycycle_db_schema_file::enums::ModlogKind;
+  use studycycle_diesel_utils::{
     connection::{DbPool, build_db_pool_for_tests},
     traits::Crud,
   };
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -235,7 +235,7 @@ mod tests {
     comment_2: Comment,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> StudyCycleResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
 
     let timmy_form = PersonInsertForm::test_form(instance.id, "timmy_rcv");
@@ -292,7 +292,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
     Instance::delete(pool, data.instance.id).await?;
 
     Ok(())
@@ -300,7 +300,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn admin_types() -> LemmyResult<()> {
+  async fn admin_types() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -452,7 +452,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn mod_types() -> LemmyResult<()> {
+  async fn mod_types() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -847,7 +847,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn hide_modlog_names() -> LemmyResult<()> {
+  async fn hide_modlog_names() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -888,7 +888,7 @@ mod tests {
   /// Verifies that a single (non-bulk) modlog entry has bulk_action_parent_id == None by default.
   #[tokio::test]
   #[serial]
-  async fn individual_modlog_is_not_bulk() -> LemmyResult<()> {
+  async fn individual_modlog_is_not_bulk() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -914,7 +914,7 @@ mod tests {
   /// Verifies bulk entries are linked to their parent and can be queried by parent ID or show_bulk.
   #[tokio::test]
   #[serial]
-  async fn bulk_modlog_has_parent_id() -> LemmyResult<()> {
+  async fn bulk_modlog_has_parent_id() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -998,7 +998,7 @@ mod tests {
   /// Verifies that bulk_action_parent_id filter isolates children of one parent from another.
   #[tokio::test]
   #[serial]
-  async fn bulk_action_parent_id_isolation() -> LemmyResult<()> {
+  async fn bulk_action_parent_id_isolation() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

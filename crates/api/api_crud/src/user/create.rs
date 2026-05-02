@@ -5,9 +5,9 @@ use activitypub_federation::{
 };
 use actix_web::{HttpRequest, rt::time::sleep, web::Json};
 use diesel_async::{AsyncPgConnection, scoped_futures::ScopedFutureExt};
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   claims::Claims,
-  context::LemmyContext,
+  context::StudyCycleContext,
   plugins::{is_captcha_plugin_loaded, plugin_validate_captcha},
   utils::{
     check_email_verified,
@@ -22,8 +22,8 @@ use lemmy_api_utils::{
     slur_regex,
   },
 };
-use lemmy_apub_objects::objects::community::ApubCommunity;
-use lemmy_db_schema::{
+use studycycle_apub_objects::objects::community::ApubCommunity;
+use studycycle_db_schema::{
   newtypes::OAuthProviderId,
   source::{
     actor_language::SiteLanguage,
@@ -39,23 +39,23 @@ use lemmy_db_schema::{
   },
   traits::{ApubActor, Likeable},
 };
-use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_community::CommunityView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::PersonView;
-use lemmy_db_views_registration_applications::api::Register;
-use lemmy_db_views_site::{
+use studycycle_db_schema_file::enums::RegistrationMode;
+use studycycle_db_views_community::CommunityView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_person::PersonView;
+use studycycle_db_views_registration_applications::api::Register;
+use studycycle_db_views_site::{
   SiteView,
   api::{AuthenticateWithOauth, LoginResponse},
 };
-use lemmy_diesel_utils::{connection::get_conn, pagination::PagedResponse, traits::Crud};
-use lemmy_email::{
+use studycycle_diesel_utils::{connection::get_conn, pagination::PagedResponse, traits::Crud};
+use studycycle_email::{
   account::send_verification_email_if_required,
   admin::send_new_applicant_email_to_admins,
   user_language,
 };
-use lemmy_utils::{
-  error::{LemmyError, LemmyErrorExt, LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleError, StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult},
   spawn_try_task,
   utils::{
     slurs::{check_slurs, check_slurs_opt},
@@ -82,8 +82,8 @@ struct TokenResponse {
 pub async fn register(
   Json(data): Json<Register>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<LoginResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<LoginResponse>> {
   let pool = &mut context.pool();
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
@@ -91,14 +91,14 @@ pub async fn register(
     local_site.registration_mode == RegistrationMode::RequireApplication;
 
   if local_site.registration_mode == RegistrationMode::Closed {
-    return Err(LemmyErrorType::RegistrationClosed.into());
+    return Err(StudyCycleErrorType::RegistrationClosed.into());
   }
 
   password_length_check(&data.password)?;
   honeypot_check(&data.honeypot)?;
 
   if local_site.email_verification_required && data.email.is_none() {
-    return Err(LemmyErrorType::EmailRequired.into());
+    return Err(StudyCycleErrorType::EmailRequired.into());
   }
 
   // make sure the registration answer is provided when the registration application is required
@@ -108,7 +108,7 @@ pub async fn register(
 
   // Make sure passwords match
   if data.password != data.password_verify {
-    return Err(LemmyErrorType::PasswordsDoNotMatch.into());
+    return Err(StudyCycleErrorType::PasswordsDoNotMatch.into());
   }
 
   if local_site.site_setup && is_captcha_plugin_loaded() {
@@ -228,8 +228,8 @@ pub async fn register(
 pub async fn authenticate_with_oauth(
   Json(data): Json<AuthenticateWithOauth>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<LoginResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<LoginResponse>> {
   let pool = &mut context.pool();
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
@@ -243,7 +243,7 @@ pub async fn authenticate_with_oauth(
 
   // validate inputs
   if data.oauth_provider_id == OAuthProviderId(0) || data.code.is_empty() || data.code.len() > 300 {
-    return Err(LemmyErrorType::OauthAuthorizationInvalid.into());
+    return Err(StudyCycleErrorType::OauthAuthorizationInvalid.into());
   }
 
   // validate the redirect_uri
@@ -252,7 +252,7 @@ pub async fn authenticate_with_oauth(
     || !redirect_uri.path().eq(&String::from("/oauth/callback"))
     || !redirect_uri.query().unwrap_or("").is_empty()
   {
-    return Err(LemmyErrorType::OauthAuthorizationInvalid.into());
+    return Err(StudyCycleErrorType::OauthAuthorizationInvalid.into());
   }
 
   // validate the PKCE challenge
@@ -265,10 +265,10 @@ pub async fn authenticate_with_oauth(
   let oauth_provider = AdminOAuthProvider::read(pool, oauth_provider_id)
     .await
     .ok()
-    .ok_or(LemmyErrorType::OauthAuthorizationInvalid)?;
+    .ok_or(StudyCycleErrorType::OauthAuthorizationInvalid)?;
 
   if !oauth_provider.enabled {
-    return Err(LemmyErrorType::OauthAuthorizationInvalid.into());
+    return Err(StudyCycleErrorType::OauthAuthorizationInvalid.into());
   }
 
   let token_response = oauth_request_access_token(
@@ -321,12 +321,12 @@ pub async fn authenticate_with_oauth(
 
     // prevent registration if registration is closed
     if local_site.registration_mode == RegistrationMode::Closed {
-      return Err(LemmyErrorType::RegistrationClosed.into());
+      return Err(StudyCycleErrorType::RegistrationClosed.into());
     }
 
     // prevent registration if registration is closed for OAUTH providers
     if !local_site.oauth_registration {
-      return Err(LemmyErrorType::OauthRegistrationClosed.into());
+      return Err(StudyCycleErrorType::OauthRegistrationClosed.into());
     }
 
     // Extract the OAUTH email claim from the returned user_info
@@ -359,7 +359,7 @@ pub async fn authenticate_with_oauth(
 
         user_view.local_user.clone()
       } else {
-        return Err(LemmyErrorType::EmailAlreadyTaken.into());
+        return Err(StudyCycleErrorType::EmailAlreadyTaken.into());
       }
     } else {
       // No user was found by email => Register as new user
@@ -381,7 +381,7 @@ pub async fn authenticate_with_oauth(
             let username = tx_data
               .username
               .as_ref()
-              .ok_or(LemmyErrorType::RegistrationUsernameRequired)?;
+              .ok_or(StudyCycleErrorType::RegistrationUsernameRequired)?;
 
             check_slurs(username, &slur_regex)?;
             check_slurs_opt(&tx_data.answer, &slur_regex)?;
@@ -426,7 +426,7 @@ pub async fn authenticate_with_oauth(
                   // than unwrap or expect (which also requires clippy allow).
                   answer: data
                     .answer
-                    .ok_or(LemmyErrorType::RegistrationApplicationAnswerRequired)?,
+                    .ok_or(StudyCycleErrorType::RegistrationApplicationAnswerRequired)?,
                 },
               )
               .await?;
@@ -465,9 +465,9 @@ pub async fn authenticate_with_oauth(
 async fn create_person(
   username: String,
   site_view: &SiteView,
-  context: &LemmyContext,
+  context: &StudyCycleContext,
   conn: &mut AsyncPgConnection,
-) -> Result<Person, LemmyError> {
+) -> Result<Person, StudyCycleError> {
   let actor_keypair = generate_actor_keypair()?;
   is_valid_actor_name(&username)?;
   let ap_id = Person::generate_local_actor_url(&username, context.settings())?;
@@ -507,8 +507,8 @@ async fn create_local_user(
   language_tags: Vec<String>,
   mut local_user_form: LocalUserInsertForm,
   local_site: &LocalSite,
-  context: &Data<LemmyContext>,
-) -> Result<LocalUser, LemmyError> {
+  context: &Data<StudyCycleContext>,
+) -> Result<LocalUser, StudyCycleError> {
   let conn_ = &mut conn.into();
   let all_languages = Language::read_all(conn_).await?;
   // use hashset to avoid duplicates
@@ -551,21 +551,21 @@ async fn create_local_user(
 fn validate_registration_answer(
   require_registration_application: bool,
   answer: &Option<String>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   if require_registration_application && answer.is_none() {
-    return Err(LemmyErrorType::RegistrationApplicationAnswerRequired.into());
+    return Err(StudyCycleErrorType::RegistrationApplicationAnswerRequired.into());
   }
 
   Ok(())
 }
 
 async fn oauth_request_access_token(
-  context: &Data<LemmyContext>,
+  context: &Data<StudyCycleContext>,
   oauth_provider: &AdminOAuthProvider,
   code: &str,
   pkce_code_verifier: Option<&str>,
   redirect_uri: &str,
-) -> LemmyResult<TokenResponse> {
+) -> StudyCycleResult<TokenResponse> {
   let mut form = vec![
     ("client_id", &*oauth_provider.client_id),
     ("client_secret", &*oauth_provider.client_secret),
@@ -586,24 +586,24 @@ async fn oauth_request_access_token(
     .form(&form[..])
     .send()
     .await
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?
+    .with_studycycle_type(StudyCycleErrorType::OauthLoginFailed)?
     .error_for_status()
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+    .with_studycycle_type(StudyCycleErrorType::OauthLoginFailed)?;
 
   // Extract the access token
   let token_response = response
     .json::<TokenResponse>()
     .await
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+    .with_studycycle_type(StudyCycleErrorType::OauthLoginFailed)?;
 
   Ok(token_response)
 }
 
 async fn oidc_get_user_info(
-  context: &Data<LemmyContext>,
+  context: &Data<StudyCycleContext>,
   oauth_provider: &AdminOAuthProvider,
   access_token: &str,
-) -> LemmyResult<serde_json::Value> {
+) -> StudyCycleResult<serde_json::Value> {
   // Request the user info from the OAUTH provider
   let response = context
     .client()
@@ -612,30 +612,30 @@ async fn oidc_get_user_info(
     .bearer_auth(access_token)
     .send()
     .await
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?
+    .with_studycycle_type(StudyCycleErrorType::OauthLoginFailed)?
     .error_for_status()
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+    .with_studycycle_type(StudyCycleErrorType::OauthLoginFailed)?;
 
   // Extract the OAUTH user_id claim from the returned user_info
   let user_info = response
     .json::<serde_json::Value>()
     .await
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+    .with_studycycle_type(StudyCycleErrorType::OauthLoginFailed)?;
 
   Ok(user_info)
 }
 
-fn read_user_info(user_info: &serde_json::Value, key: &str) -> LemmyResult<String> {
+fn read_user_info(user_info: &serde_json::Value, key: &str) -> StudyCycleResult<String> {
   if let Some(value) = user_info.get(key) {
     let result = serde_json::from_value::<String>(value.clone())
-      .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+      .with_studycycle_type(StudyCycleErrorType::OauthLoginFailed)?;
     return Ok(result);
   }
-  Err(LemmyErrorType::OauthLoginFailed.into())
+  Err(StudyCycleErrorType::OauthLoginFailed.into())
 }
 
 #[expect(clippy::expect_used)]
-fn check_code_verifier(code_verifier: &str) -> LemmyResult<()> {
+fn check_code_verifier(code_verifier: &str) -> StudyCycleResult<()> {
   static VALID_CODE_VERIFIER_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-._~]{43,128}$").expect("compile regex"));
 
@@ -644,11 +644,11 @@ fn check_code_verifier(code_verifier: &str) -> LemmyResult<()> {
   if check {
     Ok(())
   } else {
-    Err(LemmyErrorType::InvalidCodeVerifier.into())
+    Err(StudyCycleErrorType::InvalidCodeVerifier.into())
   }
 }
 
-fn fetch_community_list(context: Data<LemmyContext>) {
+fn fetch_community_list(context: Data<StudyCycleContext>) {
   // Only do this in release mode.
   if cfg!(debug_assertions) {
     //return;
@@ -709,7 +709,7 @@ fn fetch_community_list(context: Data<LemmyContext>) {
   })
 }
 
-fn create_welcome_post(local_user: LocalUser, context: &LemmyContext) {
+fn create_welcome_post(local_user: LocalUser, context: &StudyCycleContext) {
   let context = context.clone();
 
   spawn_try_task(async move {

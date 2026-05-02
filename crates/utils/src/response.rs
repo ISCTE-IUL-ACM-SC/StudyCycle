@@ -1,4 +1,4 @@
-use crate::error::{LemmyError, LemmyErrorType};
+use crate::error::{StudyCycleError, StudyCycleErrorType};
 use actix_web::{
   HttpRequest,
   HttpResponse,
@@ -16,29 +16,29 @@ pub fn jsonify_plain_text_errors<BODY>(
   if maybe_error.is_none() && !is_rate_limit_error {
     return Ok(ErrorHandlerResponse::Response(res.map_into_left_body()));
   }
-  // We're assuming that any LemmyError is already in JSON format, so we don't need to do anything
+  // We're assuming that any StudyCycleError is already in JSON format, so we don't need to do anything
   if let Some(maybe_error) = maybe_error
-    && maybe_error.as_error::<LemmyError>().is_some()
+    && maybe_error.as_error::<StudyCycleError>().is_some()
   {
     return Ok(ErrorHandlerResponse::Response(res.map_into_left_body()));
   }
 
   // convert other errors to json format
   let (req, res_parts) = res.into_parts();
-  let lemmy_err_type = if let Some(error) = res_parts.error() {
-    LemmyErrorType::Unknown(error.to_string())
+  let studycycle_err_type = if let Some(error) = res_parts.error() {
+    StudyCycleErrorType::Unknown(error.to_string())
   } else if is_rate_limit_error {
-    LemmyErrorType::TooManyRequests
+    StudyCycleErrorType::TooManyRequests
   } else {
-    LemmyErrorType::Unknown("couldnt build json".into())
+    StudyCycleErrorType::Unknown("couldnt build json".into())
   };
-  build_error_response(req, res_parts, lemmy_err_type)
+  build_error_response(req, res_parts, studycycle_err_type)
 }
 
 fn build_error_response<BODY>(
   req: HttpRequest,
   res_parts: HttpResponse<BODY>,
-  err: LemmyErrorType,
+  err: StudyCycleErrorType,
 ) -> actix_web::Result<ErrorHandlerResponse<BODY>> {
   let response = HttpResponse::build(res_parts.status()).json(err);
 
@@ -51,7 +51,7 @@ fn build_error_response<BODY>(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::error::{LemmyError, LemmyErrorType};
+  use crate::error::{StudyCycleError, StudyCycleErrorType};
   use actix_web::{
     App,
     Error,
@@ -75,13 +75,13 @@ mod tests {
   }
 
   #[actix_web::test]
-  async fn test_lemmy_errors_are_not_modified() {
-    async fn lemmy_error_service() -> actix_web::Result<String, LemmyError> {
-      Err(LemmyError::from(LemmyErrorType::AlreadyExists))
+  async fn test_studycycle_errors_are_not_modified() {
+    async fn studycycle_error_service() -> actix_web::Result<String, StudyCycleError> {
+      Err(StudyCycleError::from(StudyCycleErrorType::AlreadyExists))
     }
 
     check_for_jsonification(
-      lemmy_error_service,
+      studycycle_error_service,
       StatusCode::BAD_REQUEST,
       "{\"error\":\"already_exists\",\"cause\":\"AlreadyExists\"}",
     )
@@ -91,21 +91,21 @@ mod tests {
   #[actix_web::test]
   async fn test_generic_errors_are_jsonified_as_unknown_errors() {
     async fn generic_error_service() -> actix_web::Result<String, Error> {
-      Err(ErrorInternalServerError("This is not a LemmyError"))
+      Err(ErrorInternalServerError("This is not a StudyCycleError"))
     }
 
     check_for_jsonification(
       generic_error_service,
       StatusCode::INTERNAL_SERVER_ERROR,
-      "{\"error\":\"unknown\",\"message\":\"This is not a LemmyError\"}",
+      "{\"error\":\"unknown\",\"message\":\"This is not a StudyCycleError\"}",
     )
     .await;
   }
 
   #[actix_web::test]
-  async fn test_anyhow_errors_wrapped_in_lemmy_errors_are_jsonified_correctly() {
-    async fn anyhow_error_service() -> actix_web::Result<String, LemmyError> {
-      Err(LemmyError::from(anyhow::anyhow!("This is the inner error")))
+  async fn test_anyhow_errors_wrapped_in_studycycle_errors_are_jsonified_correctly() {
+    async fn anyhow_error_service() -> actix_web::Result<String, StudyCycleError> {
+      Err(StudyCycleError::from(anyhow::anyhow!("This is the inner error")))
     }
 
     check_for_jsonification(
@@ -118,12 +118,12 @@ mod tests {
 
   #[actix_web::test]
   async fn test_rate_limit_error() {
-    async fn lemmy_error_service() -> actix_web::Result<HttpResponse> {
+    async fn studycycle_error_service() -> actix_web::Result<HttpResponse> {
       Ok(HttpResponse::TooManyRequests().finish())
     }
 
     check_for_jsonification(
-      lemmy_error_service,
+      studycycle_error_service,
       StatusCode::TOO_MANY_REQUESTS,
       "{\"error\":\"too_many_requests\"}",
     )

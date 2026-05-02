@@ -5,9 +5,9 @@ use crate::{
   protocol::{IdOrNestedObject, deletion::delete::Delete},
 };
 use activitypub_federation::{config::Data, kinds::activity::DeleteType, traits::Activity};
-use lemmy_api_utils::{context::LemmyContext, notify::notify_mod_action};
-use lemmy_apub_objects::objects::person::ApubPerson;
-use lemmy_db_schema::{
+use studycycle_api_utils::{context::StudyCycleContext, notify::notify_mod_action};
+use studycycle_apub_objects::objects::person::ApubPerson;
+use studycycle_db_schema::{
   source::{
     comment::{Comment, CommentUpdateForm},
     comment_report::CommentReport,
@@ -19,15 +19,15 @@ use lemmy_db_schema::{
   },
   traits::Reportable,
 };
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult, UntranslatedError};
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult, UntranslatedError};
 use url::Url;
 
 #[async_trait::async_trait]
 impl Activity for Delete {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -37,12 +37,12 @@ impl Activity for Delete {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     verify_delete_activity(self, self.summary.is_some(), context).await?;
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     if let Some(reason) = self.summary {
       // We set reason to empty string if it doesn't exist, to distinguish between delete and
       // remove. Here we change it back to option, so we don't write it to db.
@@ -80,8 +80,8 @@ impl Delete {
     community: Option<&Community>,
     summary: Option<String>,
     with_replies: Option<bool>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Delete> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<Delete> {
     let id = generate_activity_id(DeleteType::Delete, context)?;
     let cc: Option<Url> = community.map(|c| c.ap_id.clone().into());
     Ok(Delete {
@@ -104,8 +104,8 @@ pub(crate) async fn receive_remove_action(
   object: &Url,
   reason: Option<String>,
   with_replies: Option<bool>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let reason = reason.unwrap_or_else(|| MOD_ACTION_DEFAULT_REASON.to_string());
   match DeletableObjects::read_from_db(object, context).await? {
     DeletableObjects::Community(community) => {
@@ -235,8 +235,8 @@ pub(crate) async fn receive_remove_action(
       }
     }
     // TODO these need to be implemented yet, for now, return errors
-    DeletableObjects::PrivateMessage(_) => return Err(LemmyErrorType::NotFound.into()),
-    DeletableObjects::Person(_) => return Err(LemmyErrorType::NotFound.into()),
+    DeletableObjects::PrivateMessage(_) => return Err(StudyCycleErrorType::NotFound.into()),
+    DeletableObjects::Person(_) => return Err(StudyCycleErrorType::NotFound.into()),
   }
   Ok(())
 }

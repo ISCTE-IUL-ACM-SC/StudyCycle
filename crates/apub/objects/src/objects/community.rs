@@ -19,8 +19,8 @@ use activitypub_federation::{
   traits::{Actor, Object},
 };
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{
     check_nsfw_allowed,
     generate_featured_url,
@@ -31,7 +31,7 @@ use lemmy_api_utils::{
     slur_regex,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     actor_language::CommunityLanguage,
     community::{Community, CommunityInsertForm, CommunityUpdateForm},
@@ -39,11 +39,11 @@ use lemmy_db_schema::{
   },
   traits::ApubActor,
 };
-use lemmy_db_schema_file::enums::{ActorType, CommunityVisibility};
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{sensitive::SensitiveString, traits::Crud};
-use lemmy_utils::{
-  error::{LemmyError, LemmyResult},
+use studycycle_db_schema_file::enums::{ActorType, CommunityVisibility};
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{sensitive::SensitiveString, traits::Crud};
+use studycycle_utils::{
+  error::{StudyCycleError, StudyCycleResult},
   utils::{markdown::markdown_to_html, slurs::remove_slurs, validation::truncate_summary},
 };
 use regex::RegexSet;
@@ -52,7 +52,7 @@ use url::Url;
 
 #[expect(clippy::type_complexity)]
 pub static FETCH_COMMUNITY_COLLECTIONS: OnceLock<
-  fn(ApubCommunity, Group, Data<LemmyContext>) -> (),
+  fn(ApubCommunity, Group, Data<StudyCycleContext>) -> (),
 > = OnceLock::new();
 
 #[derive(Clone, Debug)]
@@ -73,9 +73,9 @@ impl From<Community> for ApubCommunity {
 
 #[async_trait::async_trait]
 impl Object for ApubCommunity {
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = Group;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     self.ap_id.inner()
@@ -88,7 +88,7 @@ impl Object for ApubCommunity {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     Ok(
       Community::read_from_apub_id(&mut context.pool(), &object_id.into())
         .await?
@@ -96,7 +96,7 @@ impl Object for ApubCommunity {
     )
   }
 
-  async fn delete(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(&self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     let form = CommunityUpdateForm {
       deleted: Some(true),
       ..Default::default()
@@ -109,7 +109,7 @@ impl Object for ApubCommunity {
     self.removed || self.deleted
   }
 
-  async fn into_json(self, data: &Data<Self::DataType>) -> LemmyResult<Group> {
+  async fn into_json(self, data: &Data<Self::DataType>) -> StudyCycleResult<Group> {
     let community_id = self.id;
     let langs = CommunityLanguage::read(&mut data.pool(), community_id).await?;
     let language = LanguageTag::new_multiple(langs, &mut data.pool()).await?;
@@ -136,7 +136,7 @@ impl Object for ApubCommunity {
       published: Some(self.published_at),
       updated: self.updated_at,
       posting_restricted_to_mods: Some(self.posting_restricted_to_mods),
-      attributed_to: Some(AttributedTo::Lemmy(
+      attributed_to: Some(AttributedTo::StudyCycle(
         generate_moderators_url(&self.ap_id)?.into(),
       )),
       manually_approves_followers: Some(self.visibility == CommunityVisibility::Private),
@@ -153,7 +153,7 @@ impl Object for ApubCommunity {
     group: &Group,
     expected_domain: &Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     check_apub_id_valid_with_strictness(group.id.inner(), true, context).await?;
     verify_domains_match(expected_domain, group.id.inner())?;
 
@@ -163,7 +163,7 @@ impl Object for ApubCommunity {
   }
 
   /// Converts a `Group` to `Community`, inserts it into the database and updates moderators.
-  async fn from_json(group: Group, context: &Data<Self::DataType>) -> LemmyResult<ApubCommunity> {
+  async fn from_json(group: Group, context: &Data<Self::DataType>) -> StudyCycleResult<ApubCommunity> {
     let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
     let instance_id = fetch_instance_actor_for_object(&group.id, context).await?;
 
@@ -252,7 +252,7 @@ impl Object for ApubCommunity {
 
     let community: ApubCommunity = community.into();
 
-    // These collections are not necessary for Lemmy to work, so ignore errors. Reset request count
+    // These collections are not necessary for StudyCycle to work, so ignore errors. Reset request count
     // to avoid fetch errors, as it needs to fetch a lot of extra data.
     if let Some(fetch_fn) = FETCH_COMMUNITY_COLLECTIONS.get() {
       fetch_fn(
@@ -293,18 +293,18 @@ impl GetActorType for ApubCommunity {
 #[cfg(test)]
 pub(crate) mod tests {
   use super::*;
-  use crate::utils::test::{parse_lemmy_community, parse_lemmy_instance};
-  use lemmy_db_schema::{source::instance::Instance, test_data::TestData};
+  use crate::utils::test::{parse_studycycle_community, parse_studycycle_instance};
+  use studycycle_db_schema::{source::instance::Instance, test_data::TestData};
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_community() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_studycycle_community() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
-    parse_lemmy_instance(&context).await?;
-    let community = parse_lemmy_community(&context).await?;
+    parse_studycycle_instance(&context).await?;
+    let community = parse_studycycle_community(&context).await?;
 
     assert_eq!(community.title, "Ten Forward");
     assert!(!community.local);

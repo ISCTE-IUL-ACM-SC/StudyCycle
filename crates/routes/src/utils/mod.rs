@@ -1,5 +1,5 @@
 use actix_cors::Cors;
-use lemmy_utils::settings::structs::Settings;
+use studycycle_utils::settings::structs::Settings;
 
 pub mod prometheus_metrics;
 pub mod scheduled_tasks;

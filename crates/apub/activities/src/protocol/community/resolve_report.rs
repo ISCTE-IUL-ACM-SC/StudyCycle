@@ -1,7 +1,7 @@
 use super::report::Report;
 use activitypub_federation::{fetch::object_id::ObjectId, protocol::helpers::deserialize_one};
 use either::Either;
-use lemmy_apub_objects::objects::{
+use studycycle_apub_objects::objects::{
   community::ApubCommunity,
   instance::ApubSite,
   person::ApubPerson,

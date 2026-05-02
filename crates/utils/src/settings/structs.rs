@@ -27,11 +27,11 @@ pub struct Settings {
   #[default("unset")]
   #[doku(example = "example.com")]
   pub hostname: String,
-  /// Address where lemmy should listen for incoming requests
+  /// Address where studycycle should listen for incoming requests
   #[default(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)))]
   #[doku(as = "String")]
   pub bind: IpAddr,
-  /// Port where lemmy should listen for incoming requests
+  /// Port where studycycle should listen for incoming requests
   #[default(8536)]
   pub port: u16,
   /// Whether the site is available over TLS. Needs to be true for federation to work.
@@ -46,19 +46,19 @@ pub struct Settings {
   #[doku(example = "Some(Default::default())")]
   pub prometheus: Option<PrometheusConfig>,
   /// Sets a response Access-Control-Allow-Origin CORS header. Can also be set via environment:
-  /// `LEMMY_CORS_ORIGIN=example.org,site.com`
+  /// `STUDYCYCLE_CORS_ORIGIN=example.org,site.com`
   /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin
-  #[doku(example = "lemmy.tld")]
+  #[doku(example = "studycycle.tld")]
   cors_origin: Vec<String>,
   /// Print logs in JSON format. You can also disable ANSI colors in logs with env var `NO_COLOR`.
   pub json_logging: bool,
-  /// Data for loading Lemmy plugins
+  /// Data for loading StudyCycle plugins
   pub plugins: Vec<PluginSettings>,
 }
 
 impl Settings {
   pub fn cors_origin(&self) -> Vec<String> {
-    env::var("LEMMY_CORS_ORIGIN")
+    env::var("STUDYCYCLE_CORS_ORIGIN")
       .ok()
       .map(|e| e.split(',').map(ToString::to_string).collect())
       .unwrap_or(self.cors_origin.clone())
@@ -81,12 +81,12 @@ pub struct PictrsConfig {
 #[serde(default, deny_unknown_fields)]
 pub struct DatabaseConfig {
   /// Configure the database by specifying URI pointing to a postgres instance. This parameter can
-  /// also be set by environment variable `LEMMY_DATABASE_URL`.
+  /// also be set by environment variable `STUDYCYCLE_DATABASE_URL`.
   ///
   /// For an explanation of how to use connection URIs, see PostgreSQL's documentation:
   /// https://www.postgresql.org/docs/current/libpq-connect.html#id-1.7.3.8.3.6
-  #[default("postgres://lemmy:password@localhost:5432/lemmy")]
-  #[doku(example = "postgresql:///lemmy?user=lemmy&host=/var/run/postgresql")]
+  #[default("postgres://studycycle:password@localhost:5432/studycycle")]
+  #[doku(example = "postgresql:///studycycle?user=studycycle&host=/var/run/postgresql")]
   pub(crate) connection: String,
 
   /// Maximum number of active sql connections
@@ -119,16 +119,16 @@ pub struct SetupConfig {
   #[doku(example = "tf6HHDS4RolWfFhk4Rq9")]
   pub admin_password: String,
   /// Name of the site, can be changed later. Maximum 20 characters.
-  #[doku(example = "My Lemmy Instance")]
+  #[doku(example = "My StudyCycle Instance")]
   pub site_name: String,
   /// Email for the admin user (optional, can be omitted and set later through the website)
   #[doku(example = "user@example.com")]
   pub admin_email: Option<String>,
-  /// On first start Lemmy fetches the 50 most active communities from one of these instances,
+  /// On first start StudyCycle fetches the 50 most active communities from one of these instances,
   /// to provide some initial data. It tries the first list entry, and if it fails uses subsequent
   /// instances as fallback.
   /// Leave this empty to disable community bootstrap.
-  /// TODO: remove voyager.lemmy.ml from defaults once Lemmy 1.0 is deployed to production
+  /// TODO: remove voyager.lemmy.ml from defaults once StudyCycle 1.0 is deployed to production
   /// instances.
   #[default(vec!["lemmy.ml".to_string(),"lemmy.world".to_string(),"lemmy.zip".to_string(),"voyager.lemmy.ml".to_string()])]
   pub bootstrap_instances: Vec<String>,

@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, panic::Location};
 use strum::{Display, EnumIter};
 
-/// Errors used in the API, all of these are translated in lemmy-ui.
+/// Errors used in the API, all of these are translated in studycycle-ui.
 #[derive(Display, Debug, Serialize, Deserialize, Clone, PartialEq, EnumIter, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(tag = "error", content = "message", rename_all = "snake_case")]
 #[non_exhaustive]
-pub enum LemmyErrorType {
+pub enum StudyCycleErrorType {
   BlockKeywordTooShort,
   BlockKeywordTooLong,
   CouldntUpdate,
@@ -167,23 +167,23 @@ cfg_if! {
     use serde_with::serde_as;
     use serde_with::DisplayFromStr;
 
-    pub type LemmyResult<T> = Result<T, LemmyError>;
+    pub type StudyCycleResult<T> = Result<T, StudyCycleError>;
 
     #[serde_as]
     #[derive(Serialize)]
-    pub struct LemmyError {
+    pub struct StudyCycleError {
       #[serde(flatten)]
-      pub error_type: LemmyErrorType,
+      pub error_type: StudyCycleErrorType,
       #[serde_as(as = "DisplayFromStr")]
       pub cause: anyhow::Error,
       #[serde(skip)]
       pub caller: Location<'static>,
     }
 
-    /// Maximum number of items in an array passed as API parameter. See [[LemmyErrorType::TooManyItems]]
+    /// Maximum number of items in an array passed as API parameter. See [[StudyCycleErrorType::TooManyItems]]
     pub(crate) const MAX_API_PARAM_ELEMENTS: usize = 10_000;
 
-    impl<T> From<T> for LemmyError
+    impl<T> From<T> for StudyCycleError
     where
       T: Into<anyhow::Error>,
     {
@@ -191,10 +191,10 @@ cfg_if! {
       fn from(t: T) -> Self {
         let cause = t.into();
         let error_type = match cause.downcast_ref::<diesel::result::Error>() {
-          Some(&diesel::NotFound) => LemmyErrorType::NotFound,
-          _ => LemmyErrorType::Unknown(format!("{}", &cause))
+          Some(&diesel::NotFound) => StudyCycleErrorType::NotFound,
+          _ => StudyCycleErrorType::Unknown(format!("{}", &cause))
       };
-        LemmyError {
+        StudyCycleError {
           error_type,
           cause,
           caller: *Location::caller(),
@@ -202,9 +202,9 @@ cfg_if! {
       }
     }
 
-    impl Debug for LemmyError {
+    impl Debug for StudyCycleError {
       fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("LemmyError")
+        f.debug_struct("StudyCycleError")
          .field("message", &self.error_type)
          .field("caller", &format_args!("{}", self.caller))
          .field("inner", &self.cause)
@@ -212,7 +212,7 @@ cfg_if! {
       }
     }
 
-    impl fmt::Display for LemmyError {
+    impl fmt::Display for StudyCycleError {
       fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: ", &self.error_type)?;
         write!(f, "{}", self.caller)?;
@@ -221,11 +221,11 @@ cfg_if! {
       }
     }
 
-    impl actix_web::error::ResponseError for LemmyError {
+    impl actix_web::error::ResponseError for StudyCycleError {
       fn status_code(&self) -> actix_web::http::StatusCode {
         match self.error_type {
-          LemmyErrorType::IncorrectLogin => actix_web::http::StatusCode::UNAUTHORIZED,
-          LemmyErrorType::NotFound => actix_web::http::StatusCode::NOT_FOUND,
+          StudyCycleErrorType::IncorrectLogin => actix_web::http::StatusCode::UNAUTHORIZED,
+          StudyCycleErrorType::NotFound => actix_web::http::StatusCode::NOT_FOUND,
           _ => actix_web::http::StatusCode::BAD_REQUEST,
         }
       }
@@ -235,12 +235,12 @@ cfg_if! {
       }
     }
 
-    impl From<LemmyErrorType> for LemmyError {
+    impl From<StudyCycleErrorType> for StudyCycleError {
     #[track_caller]
-      fn from(error_type: LemmyErrorType) -> Self {
+      fn from(error_type: StudyCycleErrorType) -> Self {
 
         let cause = anyhow::anyhow!("{}", error_type);
-        LemmyError {
+        StudyCycleError {
           error_type,
           cause,
           caller: *Location::caller(),
@@ -248,45 +248,45 @@ cfg_if! {
       }
     }
 
-    impl From<UntranslatedError> for LemmyError {
+    impl From<UntranslatedError> for StudyCycleError {
     #[track_caller]
       fn from(error_type: UntranslatedError) -> Self {
         let cause = anyhow::anyhow!("{}", error_type);
-        LemmyError {
-          error_type: LemmyErrorType::UntranslatedError( Some(error_type) ),
+        StudyCycleError {
+          error_type: StudyCycleErrorType::UntranslatedError( Some(error_type) ),
           cause,
           caller: *Location::caller(),
         }
       }
     }
 
-    impl From<UntranslatedError> for LemmyErrorType {
+    impl From<UntranslatedError> for StudyCycleErrorType {
       fn from(error: UntranslatedError) -> Self {
-        LemmyErrorType::UntranslatedError (Some(error) )
+        StudyCycleErrorType::UntranslatedError (Some(error) )
       }
     }
 
-    pub trait LemmyErrorExt<T, E: Into<anyhow::Error>> {
-      fn with_lemmy_type(self, error_type: LemmyErrorType) -> LemmyResult<T>;
+    pub trait StudyCycleErrorExt<T, E: Into<anyhow::Error>> {
+      fn with_studycycle_type(self, error_type: StudyCycleErrorType) -> StudyCycleResult<T>;
     }
 
-    impl<T, E: Into<anyhow::Error>> LemmyErrorExt<T, E> for Result<T, E> {
+    impl<T, E: Into<anyhow::Error>> StudyCycleErrorExt<T, E> for Result<T, E> {
     #[track_caller]
-      fn with_lemmy_type(self, error_type: LemmyErrorType) -> LemmyResult<T> {
-        self.map_err(|error| LemmyError {
+      fn with_studycycle_type(self, error_type: StudyCycleErrorType) -> StudyCycleResult<T> {
+        self.map_err(|error| StudyCycleError {
           error_type,
           cause: error.into(),
           caller: *Location::caller(),
         })
       }
     }
-    pub trait LemmyErrorExt2<T> {
-      fn with_lemmy_type(self, error_type: LemmyErrorType) -> LemmyResult<T>;
+    pub trait StudyCycleErrorExt2<T> {
+      fn with_studycycle_type(self, error_type: StudyCycleErrorType) -> StudyCycleResult<T>;
       fn into_anyhow(self) -> Result<T, anyhow::Error>;
     }
 
-    impl<T> LemmyErrorExt2<T> for LemmyResult<T> {
-      fn with_lemmy_type(self, error_type: LemmyErrorType) -> LemmyResult<T> {
+    impl<T> StudyCycleErrorExt2<T> for StudyCycleResult<T> {
+      fn with_studycycle_type(self, error_type: StudyCycleErrorType) -> StudyCycleResult<T> {
         self.map_err(|mut e| {
           e.error_type = error_type;
           e
@@ -306,8 +306,8 @@ cfg_if! {
       use pretty_assertions::assert_eq;
 
       #[test]
-      fn untranslated_error_format() -> LemmyResult<()> {
-        let err = LemmyError::from(UntranslatedError::DomainBlocked("test".to_string())).error_response();
+      fn untranslated_error_format() -> StudyCycleResult<()> {
+        let err = StudyCycleError::from(UntranslatedError::DomainBlocked("test".to_string())).error_response();
         let json = String::from_utf8(err.into_body().try_into_bytes().unwrap_or_default().to_vec())?;
         assert_eq!(&json, r#"{"error":"domain_blocked","message":"test","cause":"DomainBlocked"}"#);
 
@@ -315,8 +315,8 @@ cfg_if! {
       }
 
       #[test]
-      fn deserializes_no_message() -> LemmyResult<()> {
-        let err = LemmyError::from(LemmyErrorType::BlockedUrl).error_response();
+      fn deserializes_no_message() -> StudyCycleResult<()> {
+        let err = StudyCycleError::from(StudyCycleErrorType::BlockedUrl).error_response();
         let json = String::from_utf8(err.into_body().try_into_bytes().unwrap_or_default().to_vec())?;
         assert_eq!(&json, r#"{"error":"blocked_url","cause":"BlockedUrl"}"#);
 
@@ -324,9 +324,9 @@ cfg_if! {
       }
 
       #[test]
-      fn deserializes_with_message() -> LemmyResult<()> {
-        let reg_banned = LemmyErrorType::PictrsResponseError(String::from("reason"));
-        let err = LemmyError::from(reg_banned).error_response();
+      fn deserializes_with_message() -> StudyCycleResult<()> {
+        let reg_banned = StudyCycleErrorType::PictrsResponseError(String::from("reason"));
+        let err = StudyCycleError::from(reg_banned).error_response();
         let json = String::from_utf8(err.into_body().try_into_bytes().unwrap_or_default().to_vec())?;
         assert_eq!(
           &json,
@@ -338,12 +338,12 @@ cfg_if! {
 
       #[test]
       fn test_convert_diesel_errors() {
-        let not_found_error = LemmyError::from(diesel::NotFound);
-        assert_eq!(LemmyErrorType::NotFound, not_found_error.error_type);
+        let not_found_error = StudyCycleError::from(diesel::NotFound);
+        assert_eq!(StudyCycleErrorType::NotFound, not_found_error.error_type);
         assert_eq!(404, not_found_error.status_code());
 
-        let other_error = LemmyError::from(diesel::result::Error::NotInTransaction);
-        assert!(matches!(other_error.error_type, LemmyErrorType::Unknown{..}));
+        let other_error = StudyCycleError::from(diesel::result::Error::NotInTransaction);
+        assert!(matches!(other_error.error_type, StudyCycleErrorType::Unknown{..}));
         assert_eq!(400, other_error.status_code());
       }
     }

@@ -191,7 +191,7 @@ pub enum ImageMode {
   /// ensures that they can be reliably retrieved and can be resized using pict-rs APIs. However it
   /// also increases storage usage.
   ///
-  /// This behaviour matches Lemmy 0.18.
+  /// This behaviour matches StudyCycle 0.18.
   StoreLinkPreviews,
   /// If enabled, all images from remote domains are rewritten to pass through
   /// `/api/v4/image/proxy`, including embedded images in markdown. Images are stored temporarily in

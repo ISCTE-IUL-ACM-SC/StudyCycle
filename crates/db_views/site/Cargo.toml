@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_db_views_site"
+name = "studycycle_db_views_site"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -17,44 +17,44 @@ workspace = true
 
 [features]
 full = [
-  "lemmy_utils",
+  "studycycle_utils",
   "diesel",
   "diesel-async",
-  "lemmy_db_schema/full",
-  "lemmy_db_schema_file/full",
-  "lemmy_db_views_person/full",
-  "lemmy_db_views_community/full",
-  "lemmy_db_views_post/full",
-  "lemmy_db_views_comment/full",
+  "studycycle_db_schema/full",
+  "studycycle_db_schema_file/full",
+  "studycycle_db_views_person/full",
+  "studycycle_db_views_community/full",
+  "studycycle_db_views_post/full",
+  "studycycle_db_views_comment/full",
   "anyhow",
   "extism",
   "i-love-jesus",
 ]
 ts-rs = [
   "dep:ts-rs",
-  "lemmy_db_schema/ts-rs",
-  "lemmy_db_schema_file/ts-rs",
-  "lemmy_db_views_community_follower/ts-rs",
-  "lemmy_db_views_community_moderator/ts-rs",
-  "lemmy_db_views_local_user/ts-rs",
-  "lemmy_db_views_person/ts-rs",
-  "lemmy_db_views_community/ts-rs",
-  "lemmy_db_views_post/ts-rs",
-  "lemmy_db_views_comment/ts-rs",
+  "studycycle_db_schema/ts-rs",
+  "studycycle_db_schema_file/ts-rs",
+  "studycycle_db_views_community_follower/ts-rs",
+  "studycycle_db_views_community_moderator/ts-rs",
+  "studycycle_db_views_local_user/ts-rs",
+  "studycycle_db_views_person/ts-rs",
+  "studycycle_db_views_community/ts-rs",
+  "studycycle_db_views_post/ts-rs",
+  "studycycle_db_views_comment/ts-rs",
 ]
 
 [dependencies]
-lemmy_db_schema = { workspace = true }
-lemmy_utils = { workspace = true, optional = true }
-lemmy_db_schema_file = { workspace = true }
-lemmy_db_views_community_follower = { workspace = true }
-lemmy_db_views_community_moderator = { workspace = true }
-lemmy_db_views_local_user = { workspace = true }
-lemmy_db_views_person = { workspace = true }
-lemmy_diesel_utils = { workspace = true }
-lemmy_db_views_community = { workspace = true }
-lemmy_db_views_post = { workspace = true }
-lemmy_db_views_comment = { workspace = true }
+studycycle_db_schema = { workspace = true }
+studycycle_utils = { workspace = true, optional = true }
+studycycle_db_schema_file = { workspace = true }
+studycycle_db_views_community_follower = { workspace = true }
+studycycle_db_views_community_moderator = { workspace = true }
+studycycle_db_views_local_user = { workspace = true }
+studycycle_db_views_person = { workspace = true }
+studycycle_diesel_utils = { workspace = true }
+studycycle_db_views_community = { workspace = true }
+studycycle_db_views_post = { workspace = true }
+studycycle_db_views_comment = { workspace = true }
 diesel = { workspace = true, optional = true }
 diesel-async = { workspace = true, optional = true }
 serde = { workspace = true }

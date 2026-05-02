@@ -1,8 +1,8 @@
-use lemmy_api_utils::{context::LemmyContext, utils::is_mod_or_admin_opt};
-use lemmy_db_schema::newtypes::CommunityId;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+use studycycle_api_utils::{context::StudyCycleContext, utils::is_mod_or_admin_opt};
+use studycycle_db_schema::newtypes::CommunityId;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_utils::{
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult},
   utils::slurs::check_slurs,
 };
 use regex::Regex;
@@ -18,12 +18,12 @@ pub mod site;
 pub mod sitemap;
 
 /// Check size of report
-pub(crate) fn check_report_reason(reason: &str, slur_regex: &Regex) -> LemmyResult<()> {
+pub(crate) fn check_report_reason(reason: &str, slur_regex: &Regex) -> StudyCycleResult<()> {
   check_slurs(reason, slur_regex)?;
   if reason.is_empty() {
-    Err(LemmyErrorType::ReportReasonRequired.into())
+    Err(StudyCycleErrorType::ReportReasonRequired.into())
   } else if reason.chars().count() > 1000 {
-    Err(LemmyErrorType::ReportTooLong.into())
+    Err(StudyCycleErrorType::ReportTooLong.into())
   } else {
     Ok(())
   }
@@ -33,22 +33,22 @@ pub(crate) fn check_totp_2fa_valid(
   local_user_view: &LocalUserView,
   totp_token: &Option<String>,
   site_name: &str,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   // Throw an error if their token is missing
   let token = totp_token
     .as_deref()
-    .ok_or(LemmyErrorType::MissingTotpToken)?;
+    .ok_or(StudyCycleErrorType::MissingTotpToken)?;
   let secret = local_user_view
     .local_user
     .totp_2fa_secret
     .as_deref()
-    .ok_or(LemmyErrorType::MissingTotpSecret)?;
+    .ok_or(StudyCycleErrorType::MissingTotpSecret)?;
 
   let totp = build_totp_2fa(site_name, &local_user_view.person.name, secret)?;
 
   let check_passed = totp.check_current(token)?;
   if !check_passed {
-    return Err(LemmyErrorType::IncorrectTotpToken.into());
+    return Err(StudyCycleErrorType::IncorrectTotpToken.into());
   }
 
   Ok(())
@@ -58,11 +58,11 @@ pub(crate) fn generate_totp_2fa_secret() -> String {
   Secret::generate_secret().to_string()
 }
 
-fn build_totp_2fa(hostname: &str, username: &str, secret: &str) -> LemmyResult<TOTP> {
+fn build_totp_2fa(hostname: &str, username: &str, secret: &str) -> StudyCycleResult<TOTP> {
   let sec = Secret::Raw(secret.as_bytes().to_vec());
   let sec_bytes = sec
     .to_bytes()
-    .with_lemmy_type(LemmyErrorType::CouldntParseTotpSecret)?;
+    .with_studycycle_type(StudyCycleErrorType::CouldntParseTotpSecret)?;
 
   TOTP::new(
     totp_rs::Algorithm::SHA1,
@@ -73,7 +73,7 @@ fn build_totp_2fa(hostname: &str, username: &str, secret: &str) -> LemmyResult<T
     Some(hostname.to_string()),
     username.to_string(),
   )
-  .with_lemmy_type(LemmyErrorType::CouldntGenerateTotp)
+  .with_studycycle_type(StudyCycleErrorType::CouldntGenerateTotp)
 }
 
 /// Only show the modlog names if:
@@ -83,7 +83,7 @@ fn build_totp_2fa(hostname: &str, username: &str, secret: &str) -> LemmyResult<T
 async fn hide_modlog_names(
   local_user_view: Option<&LocalUserView>,
   community_id: Option<CommunityId>,
-  context: &LemmyContext,
+  context: &StudyCycleContext,
 ) -> bool {
   if let Some(community_id) = community_id {
     is_mod_or_admin_opt(&mut context.pool(), local_user_view, Some(community_id))

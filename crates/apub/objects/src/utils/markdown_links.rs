@@ -1,14 +1,14 @@
 use crate::objects::SearchableObjects;
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use either::Either::*;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::traits::ApubActor;
-use lemmy_utils::utils::markdown::image_links::{markdown_find_links, markdown_handle_title};
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::traits::ApubActor;
+use studycycle_utils::utils::markdown::image_links::{markdown_find_links, markdown_handle_title};
 use url::Url;
 
 pub async fn markdown_rewrite_remote_links_opt(
   src: Option<String>,
-  context: &Data<LemmyContext>,
+  context: &Data<StudyCycleContext>,
 ) -> Option<String> {
   match src {
     Some(t) => Some(markdown_rewrite_remote_links(t, context).await),
@@ -24,7 +24,7 @@ pub async fn markdown_rewrite_remote_links_opt(
 /// for the API.
 pub async fn markdown_rewrite_remote_links(
   mut src: String,
-  context: &Data<LemmyContext>,
+  context: &Data<StudyCycleContext>,
 ) -> String {
   let links_offsets = markdown_find_links(&src);
 
@@ -46,7 +46,7 @@ pub async fn markdown_rewrite_remote_links(
   src
 }
 
-pub(crate) async fn to_local_url(url: &str, context: &Data<LemmyContext>) -> Option<Url> {
+pub(crate) async fn to_local_url(url: &str, context: &Data<StudyCycleContext>) -> Option<Url> {
   let local_domain = &context.settings().get_protocol_and_hostname();
   let object_id = ObjectId::<SearchableObjects>::parse(url).ok()?;
   let object_domain = object_id.inner().domain();
@@ -67,7 +67,7 @@ pub(crate) async fn to_local_url(url: &str, context: &Data<LemmyContext>) -> Opt
 #[cfg(test)]
 mod tests {
   use super::*;
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     source::{
       community::{Community, CommunityInsertForm},
       instance::Instance,
@@ -75,16 +75,16 @@ mod tests {
     },
     test_data::TestData,
   };
-  use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_diesel_utils::traits::Crud;
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_db_views_local_user::LocalUserView;
+  use studycycle_diesel_utils::traits::Crud;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[serial]
   #[tokio::test]
-  async fn test_markdown_rewrite_remote_links() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_markdown_rewrite_remote_links() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let data = TestData::create(&mut context.pool()).await?;
     let community = Community::create(
       &mut context.pool(),
@@ -105,7 +105,7 @@ mod tests {
       ..PostInsertForm::new("My post".to_string(), user.person.id, community.id)
     };
     let post = Post::create(&mut context.pool(), &post_form).await?;
-    let markdown_local_post_url = format!("[link](https://lemmy-alpha/post/{})", post.id);
+    let markdown_local_post_url = format!("[link](https://studycycle-alpha/post/{})", post.id);
 
     let tests: Vec<_> = vec![
       (
@@ -116,17 +116,17 @@ mod tests {
       (
         "rewrite community link",
         format!("[link]({})", community.ap_id),
-        "[link](https://lemmy-alpha/c/my_community@changeme.invalid)",
+        "[link](https://studycycle-alpha/c/my_community@changeme.invalid)",
       ),
       (
         "dont rewrite local post link",
-        "[link](https://lemmy-alpha/post/2)".to_string(),
-        "[link](https://lemmy-alpha/post/2)",
+        "[link](https://studycycle-alpha/post/2)".to_string(),
+        "[link](https://studycycle-alpha/post/2)",
       ),
       (
         "dont rewrite local community link",
-        "[link](https://lemmy-alpha/c/test)".to_string(),
-        "[link](https://lemmy-alpha/c/test)",
+        "[link](https://studycycle-alpha/c/test)".to_string(),
+        "[link](https://studycycle-alpha/c/test)",
       ),
       (
         "dont rewrite non-fediverse link",
@@ -140,7 +140,7 @@ mod tests {
       ),
     ];
 
-    let context = LemmyContext::init_test_context().await;
+    let context = StudyCycleContext::init_test_context().await;
     for (msg, input, expected) in &tests {
       let result = markdown_rewrite_remote_links(input.clone(), &context).await;
 

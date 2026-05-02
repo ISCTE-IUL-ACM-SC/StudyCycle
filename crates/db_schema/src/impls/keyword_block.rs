@@ -4,29 +4,29 @@ use crate::{
 };
 use diesel::{ExpressionMethods, QueryDsl, delete, insert_into};
 use diesel_async::{RunQueryDsl, scoped_futures::ScopedFutureExt};
-use lemmy_db_schema_file::schema::local_user_keyword_block;
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_db_schema_file::schema::local_user_keyword_block;
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl LocalUserKeywordBlock {
   pub async fn read(
     pool: &mut DbPool<'_>,
     for_local_user_id: LocalUserId,
-  ) -> LemmyResult<Vec<String>> {
+  ) -> StudyCycleResult<Vec<String>> {
     let conn = &mut get_conn(pool).await?;
     local_user_keyword_block::table
       .filter(local_user_keyword_block::local_user_id.eq(for_local_user_id))
       .select(local_user_keyword_block::keyword)
       .load(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn update(
     pool: &mut DbPool<'_>,
     blocking_keywords: Vec<String>,
     for_local_user_id: LocalUserId,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     // No need to update if keywords unchanged
     conn
@@ -37,7 +37,7 @@ impl LocalUserKeywordBlock {
             .filter(local_user_keyword_block::keyword.ne_all(&blocking_keywords))
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdate)?;
+            .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)?;
           let forms = blocking_keywords
             .into_iter()
             .map(|k| LocalUserKeywordBlockForm {
@@ -50,7 +50,7 @@ impl LocalUserKeywordBlock {
             .on_conflict_do_nothing()
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+            .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
         }
         .scope_boxed()
       })

@@ -6,7 +6,7 @@ use crate::{
   community::send_activity_in_community,
   generate_activity_id,
   protocol::block::{block_user::BlockUser, undo_block_user::UndoBlockUser},
-  send_lemmy_activity,
+  send_studycycle_activity,
 };
 use activitypub_federation::{
   config::Data,
@@ -14,16 +14,16 @@ use activitypub_federation::{
   protocol::verification::verify_domains_match,
   traits::{Activity, Actor, Object},
 };
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::notify_mod_action,
   utils::{remove_or_restore_user_data, remove_or_restore_user_data_in_community},
 };
-use lemmy_apub_objects::{
+use studycycle_apub_objects::{
   objects::person::ApubPerson,
   utils::functions::{verify_is_public, verify_visibility},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     activity::ActivitySendTargets,
     community::{CommunityActions, CommunityPersonBanForm},
@@ -32,7 +32,7 @@ use lemmy_db_schema::{
   },
   traits::Bannable,
 };
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult};
 use url::Url;
 
 impl UndoBlockUser {
@@ -42,8 +42,8 @@ impl UndoBlockUser {
     mod_: &ApubPerson,
     restore_data: bool,
     reason: String,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     let block = BlockUser::new(target, user, mod_, None, reason, None, context).await?;
     let to = to(target)?;
 
@@ -63,7 +63,7 @@ impl UndoBlockUser {
     match target {
       SiteOrCommunity::Left(_) => {
         inboxes.set_all_instances();
-        send_lemmy_activity(context, undo, mod_, inboxes, false).await
+        send_studycycle_activity(context, undo, mod_, inboxes, false).await
       }
       SiteOrCommunity::Right(c) => {
         let activity = AnnouncableActivities::UndoBlockUser(undo);
@@ -75,8 +75,8 @@ impl UndoBlockUser {
 
 #[async_trait::async_trait]
 impl Activity for UndoBlockUser {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -86,13 +86,13 @@ impl Activity for UndoBlockUser {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     verify_domains_match(self.actor.inner(), self.object.actor.inner())?;
     self.object.verify(context).await?;
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     let expires_at = self.object.end_time;
     let mod_person = self.actor.dereference(context).await?;
     let blocked_person = self.object.object.dereference_local(context).await?;
@@ -111,7 +111,7 @@ impl Activity for UndoBlockUser {
         let form =
           ModlogInsertForm::admin_ban(&mod_person, blocked_person.id, false, expires_at, &reason);
         let action = Modlog::create(&mut context.pool(), &[form]).await?;
-        let parent_id = action.first().ok_or(LemmyErrorType::NotFound)?.id;
+        let parent_id = action.first().ok_or(StudyCycleErrorType::NotFound)?.id;
         notify_mod_action(action, context.app_data());
 
         if self.restore_data.unwrap_or(false) {
@@ -146,7 +146,7 @@ impl Activity for UndoBlockUser {
           &reason,
         );
         let action = Modlog::create(&mut context.pool(), &[form]).await?;
-        let parent_id = action.first().ok_or(LemmyErrorType::NotFound)?.id;
+        let parent_id = action.first().ok_or(StudyCycleErrorType::NotFound)?.id;
         notify_mod_action(action, context.app_data());
 
         if self.restore_data.unwrap_or(false) {

@@ -1,7 +1,7 @@
-use crate::context::LemmyContext;
+use crate::context::StudyCycleContext;
 use activitypub_federation::config::Data;
 use either::Either;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::CommunityId,
   source::{
     comment::Comment,
@@ -13,11 +13,11 @@ use lemmy_db_schema::{
     site::Site,
   },
 };
-use lemmy_db_schema_file::PersonId;
-use lemmy_db_views_community::api::BanFromCommunity;
-use lemmy_db_views_private_message::PrivateMessageView;
-use lemmy_diesel_utils::dburl::DbUrl;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_schema_file::PersonId;
+use studycycle_db_views_community::api::BanFromCommunity;
+use studycycle_db_views_private_message::PrivateMessageView;
+use studycycle_diesel_utils::dburl::DbUrl;
+use studycycle_utils::error::StudyCycleResult;
 use std::sync::LazyLock;
 use tokio::{
   sync::{
@@ -112,7 +112,7 @@ pub enum SendActivityData {
   UpdateMultiCommunity(MultiCommunity, Person),
 }
 
-// TODO: instead of static, move this into LemmyContext. make sure that stopping the process with
+// TODO: instead of static, move this into StudyCycleContext. make sure that stopping the process with
 //       ctrl+c still works.
 static ACTIVITY_CHANNEL: LazyLock<ActivityChannel> = LazyLock::new(|| {
   let (sender, receiver) = mpsc::unbounded_channel();
@@ -136,7 +136,7 @@ impl ActivityChannel {
     lock.recv().await
   }
 
-  pub fn submit_activity(data: SendActivityData, _context: &Data<LemmyContext>) -> LemmyResult<()> {
+  pub fn submit_activity(data: SendActivityData, _context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     // could do `ACTIVITY_CHANNEL.keepalive_sender.lock()` instead and get rid of weak_sender,
     // not sure which way is more efficient
     if let Some(sender) = ACTIVITY_CHANNEL.weak_sender.upgrade() {
@@ -145,7 +145,7 @@ impl ActivityChannel {
     Ok(())
   }
 
-  pub async fn close(outgoing_activities_task: JoinHandle<()>) -> LemmyResult<()> {
+  pub async fn close(outgoing_activities_task: JoinHandle<()>) -> StudyCycleResult<()> {
     ACTIVITY_CHANNEL.keepalive_sender.lock().await.take();
     outgoing_activities_task.await?;
     Ok(())

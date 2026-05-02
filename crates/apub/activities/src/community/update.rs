@@ -3,7 +3,7 @@ use crate::{
   community::{AnnouncableActivities, send_activity_in_community},
   generate_activity_id,
   protocol::community::update::Update,
-  send_lemmy_activity,
+  send_studycycle_activity,
 };
 use activitypub_federation::{
   config::Data,
@@ -11,29 +11,29 @@ use activitypub_federation::{
   traits::{Activity, Object},
 };
 use either::Either;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::{
   objects::{community::ApubCommunity, multi_community::ApubMultiCommunity, person::ApubPerson},
   utils::{
     functions::{generate_to, verify_mod_action, verify_visibility},
     protocol::InCommunity,
   },
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   activity::ActivitySendTargets,
   community::Community,
   modlog::{Modlog, ModlogInsertForm},
   multi_community::MultiCommunity,
   person::Person,
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use url::Url;
 
 pub(crate) async fn send_update_community(
   community: Community,
   actor: Person,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let community: ApubCommunity = community.into();
   let actor: ApubPerson = actor.into();
   let id = generate_activity_id(UpdateType::Update, &context)?;
@@ -62,8 +62,8 @@ pub(crate) async fn send_update_community(
 pub(crate) async fn send_update_multi_community(
   multi: MultiCommunity,
   actor: Person,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let multi: ApubMultiCommunity = multi.into();
   let actor: ApubPerson = actor.into();
   let id = generate_activity_id(UpdateType::Update, &context)?;
@@ -80,13 +80,13 @@ pub(crate) async fn send_update_multi_community(
   let activity = AnnouncableActivities::UpdateCommunity(Box::new(update));
   let mut inboxes = ActivitySendTargets::empty();
   inboxes.add_inboxes(MultiCommunity::follower_inboxes(&mut context.pool(), multi.id).await?);
-  send_lemmy_activity(&context, activity, &actor, inboxes, false).await
+  send_studycycle_activity(&context, activity, &actor, inboxes, false).await
 }
 
 #[async_trait::async_trait]
 impl Activity for Update {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -96,7 +96,7 @@ impl Activity for Update {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     match &self.object {
       Either::Left(c) => {
         let community = self.community(context).await?;
@@ -110,7 +110,7 @@ impl Activity for Update {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     match &self.object {
       Either::Left(c) => {
         let old_community = self.community(context).await?;

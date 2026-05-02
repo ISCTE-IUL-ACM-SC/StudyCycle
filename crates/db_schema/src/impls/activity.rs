@@ -5,46 +5,46 @@ use crate::{
 };
 use diesel::{ExpressionMethods, QueryDsl, dsl::insert_into};
 use diesel_async::RunQueryDsl;
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   dburl::DbUrl,
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl SentActivity {
-  pub async fn create(pool: &mut DbPool<'_>, form: SentActivityForm) -> LemmyResult<Self> {
-    use lemmy_db_schema_file::schema::sent_activity::dsl::sent_activity;
+  pub async fn create(pool: &mut DbPool<'_>, form: SentActivityForm) -> StudyCycleResult<Self> {
+    use studycycle_db_schema_file::schema::sent_activity::dsl::sent_activity;
     let conn = &mut get_conn(pool).await?;
     insert_into(sent_activity)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
-  pub async fn read_from_apub_id(pool: &mut DbPool<'_>, object_id: &DbUrl) -> LemmyResult<Self> {
-    use lemmy_db_schema_file::schema::sent_activity::dsl::{ap_id, sent_activity};
+  pub async fn read_from_apub_id(pool: &mut DbPool<'_>, object_id: &DbUrl) -> StudyCycleResult<Self> {
+    use studycycle_db_schema_file::schema::sent_activity::dsl::{ap_id, sent_activity};
     let conn = &mut get_conn(pool).await?;
     sent_activity
       .filter(ap_id.eq(object_id))
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
-  pub async fn read(pool: &mut DbPool<'_>, object_id: ActivityId) -> LemmyResult<Self> {
-    use lemmy_db_schema_file::schema::sent_activity::dsl::sent_activity;
+  pub async fn read(pool: &mut DbPool<'_>, object_id: ActivityId) -> StudyCycleResult<Self> {
+    use studycycle_db_schema_file::schema::sent_activity::dsl::sent_activity;
     let conn = &mut get_conn(pool).await?;
     sent_activity
       .find(object_id)
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
 impl ReceivedActivity {
-  pub async fn create(pool: &mut DbPool<'_>, ap_id_: &DbUrl) -> LemmyResult<()> {
-    use lemmy_db_schema_file::schema::received_activity::dsl::{ap_id, received_activity};
+  pub async fn create(pool: &mut DbPool<'_>, ap_id_: &DbUrl) -> StudyCycleResult<()> {
+    use studycycle_db_schema_file::schema::received_activity::dsl::{ap_id, received_activity};
     let conn = &mut get_conn(pool).await?;
     let rows_affected = insert_into(received_activity)
       .values(ap_id.eq(ap_id_))
@@ -56,7 +56,7 @@ impl ReceivedActivity {
       // new activity inserted successfully
       Ok(())
     } else {
-      Err(LemmyErrorType::CouldntCreate.into())
+      Err(StudyCycleErrorType::CouldntCreate.into())
     }
   }
 }
@@ -65,9 +65,9 @@ impl ReceivedActivity {
 mod tests {
 
   use super::*;
-  use lemmy_db_schema_file::enums::ActorType;
-  use lemmy_diesel_utils::connection::build_db_pool_for_tests;
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_db_schema_file::enums::ActorType;
+  use studycycle_diesel_utils::connection::build_db_pool_for_tests;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serde_json::json;
   use serial_test::serial;
@@ -75,7 +75,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn receive_activity_duplicate() -> LemmyResult<()> {
+  async fn receive_activity_duplicate() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let ap_id: DbUrl = Url::parse("http://example.com/activity/531")?.into();
@@ -90,7 +90,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn sent_activity_write_read() -> LemmyResult<()> {
+  async fn sent_activity_write_read() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let ap_id: DbUrl = Url::parse("http://example.com/activity/412")?.into();

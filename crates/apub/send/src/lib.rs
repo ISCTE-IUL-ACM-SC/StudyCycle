@@ -1,9 +1,9 @@
 use crate::{util::CancellableTask, worker::InstanceWorker};
 use activitypub_federation::config::FederationConfig;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::source::instance::Instance;
-use lemmy_db_schema_file::InstanceId;
-use lemmy_utils::{error::LemmyResult, settings::structs::FederationWorkerConfig};
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::source::instance::Instance;
+use studycycle_db_schema_file::InstanceId;
+use studycycle_utils::{error::StudyCycleResult, settings::structs::FederationWorkerConfig};
 use stats::receive_print_stats;
 use std::{collections::HashMap, time::Duration};
 use tokio::{
@@ -38,7 +38,7 @@ pub struct Opts {
 pub struct SendManager {
   opts: Opts,
   workers: HashMap<InstanceId, CancellableTask>,
-  context: FederationConfig<LemmyContext>,
+  context: FederationConfig<StudyCycleContext>,
   stats_sender: UnboundedSender<FederationQueueStateWithDomain>,
   exit_print: JoinHandle<()>,
   federation_worker_config: FederationWorkerConfig,
@@ -47,7 +47,7 @@ pub struct SendManager {
 impl SendManager {
   fn new(
     opts: Opts,
-    context: FederationConfig<LemmyContext>,
+    context: FederationConfig<StudyCycleContext>,
     federation_worker_config: FederationWorkerConfig,
   ) -> Self {
     assert!(opts.process_count > 0);
@@ -70,7 +70,7 @@ impl SendManager {
 
   pub fn run(
     opts: Opts,
-    context: FederationConfig<LemmyContext>,
+    context: FederationConfig<StudyCycleContext>,
     config: FederationWorkerConfig,
   ) -> CancellableTask {
     CancellableTask::spawn(WORKER_EXIT_TIMEOUT, move |cancel| {
@@ -90,14 +90,14 @@ impl SendManager {
         // cancel all the dependent workers as well to ensure they don't get orphaned and keep
         // running.
         manager.cancel().await?;
-        LemmyResult::Ok(())
+        StudyCycleResult::Ok(())
         // if the task was not intentionally cancelled, then this whole lambda will be run again by
         // CancellableTask after this
       }
     })
   }
 
-  async fn do_loop(&mut self, cancel: CancellationToken) -> LemmyResult<()> {
+  async fn do_loop(&mut self, cancel: CancellationToken) -> StudyCycleResult<()> {
     let process_index = self.opts.process_index - 1;
     info!(
       "Starting federation workers for process count {} and index {}",
@@ -169,7 +169,7 @@ impl SendManager {
     }
   }
 
-  pub async fn cancel(self) -> LemmyResult<()> {
+  pub async fn cancel(self) -> StudyCycleResult<()> {
     drop(self.stats_sender);
     tracing::warn!(
       "Waiting for {} workers ({:.2?} max)",
@@ -198,14 +198,14 @@ mod test {
   use super::*;
   use activitypub_federation::config::Data;
   use chrono::DateTime;
-  use lemmy_db_schema::source::{
+  use studycycle_db_schema::source::{
     federation_allowlist::{FederationAllowList, FederationAllowListForm},
     federation_blocklist::{FederationBlockList, FederationBlockListForm},
     instance::InstanceForm,
     person::{Person, PersonInsertForm},
   };
-  use lemmy_diesel_utils::traits::Crud;
-  use lemmy_utils::error::LemmyError;
+  use studycycle_diesel_utils::traits::Crud;
+  use studycycle_utils::error::StudyCycleError;
   use serial_test::serial;
   use std::{
     collections::HashSet,
@@ -215,12 +215,12 @@ mod test {
 
   struct TestData {
     send_manager: SendManager,
-    context: Data<LemmyContext>,
+    context: Data<StudyCycleContext>,
     instances: Vec<Instance>,
   }
   impl TestData {
-    async fn init(process_count: i32, process_index: i32) -> LemmyResult<Self> {
-      let context = LemmyContext::init_test_context().await;
+    async fn init(process_count: i32, process_index: i32) -> StudyCycleResult<Self> {
+      let context = StudyCycleContext::init_test_context().await;
       let opts = Opts {
         process_count,
         process_index,
@@ -230,7 +230,7 @@ mod test {
         .app_data(context.app_data().clone())
         .build()
         .await?;
-      let concurrent_sends_per_instance = std::env::var("LEMMY_TEST_FEDERATION_CONCURRENT_SENDS")
+      let concurrent_sends_per_instance = std::env::var("STUDYCYCLE_TEST_FEDERATION_CONCURRENT_SENDS")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(1);
@@ -253,7 +253,7 @@ mod test {
       })
     }
 
-    async fn run(&mut self) -> LemmyResult<()> {
+    async fn run(&mut self) -> StudyCycleResult<()> {
       // start it and cancel after workers are running
       let cancel = CancellationToken::new();
       let cancel_ = cancel.clone();
@@ -265,7 +265,7 @@ mod test {
       Ok(())
     }
 
-    async fn cleanup(self) -> LemmyResult<()> {
+    async fn cleanup(self) -> StudyCycleResult<()> {
       self.send_manager.cancel().await?;
       Instance::delete_all(&mut self.context.pool()).await?;
       Ok(())
@@ -275,7 +275,7 @@ mod test {
   /// Basic test with default params and only active/allowed instances
   #[tokio::test]
   #[serial]
-  async fn test_send_manager() -> LemmyResult<()> {
+  async fn test_send_manager() -> StudyCycleResult<()> {
     let mut data = TestData::init(1, 1).await?;
 
     data.run().await?;
@@ -291,7 +291,7 @@ mod test {
   /// Running with multiple processes should start correct workers
   #[tokio::test]
   #[serial]
-  async fn test_send_manager_processes() -> LemmyResult<()> {
+  async fn test_send_manager_processes() -> StudyCycleResult<()> {
     let active = Arc::new(Mutex::new(vec![]));
     let execute = |count, index, active: Arc<Mutex<Vec<InstanceId>>>| async move {
       let mut data = TestData::init(count, index).await?;
@@ -301,7 +301,7 @@ mod test {
         active.lock().unwrap().push(*k);
       }
       data.cleanup().await?;
-      Ok::<(), LemmyError>(())
+      Ok::<(), StudyCycleError>(())
     };
     execute(3, 1, active.clone()).await?;
     execute(3, 2, active.clone()).await?;
@@ -316,7 +316,7 @@ mod test {
   /// Use blocklist, should not send to blocked instances
   #[tokio::test]
   #[serial]
-  async fn test_send_manager_blocked() -> LemmyResult<()> {
+  async fn test_send_manager_blocked() -> StudyCycleResult<()> {
     let mut data = TestData::init(1, 1).await?;
 
     let instance_id = data.instances[0].id;
@@ -338,7 +338,7 @@ mod test {
   /// Use allowlist, should only send to allowed instance
   #[tokio::test]
   #[serial]
-  async fn test_send_manager_allowed() -> LemmyResult<()> {
+  async fn test_send_manager_allowed() -> StudyCycleResult<()> {
     let mut data = TestData::init(1, 1).await?;
 
     let instance_id = data.instances[0].id;
@@ -359,7 +359,7 @@ mod test {
   /// Mark instance as dead, there should be no worker created for it
   #[tokio::test]
   #[serial]
-  async fn test_send_manager_dead() -> LemmyResult<()> {
+  async fn test_send_manager_dead() -> StudyCycleResult<()> {
     let mut data = TestData::init(1, 1).await?;
 
     let instance = &data.instances[0];

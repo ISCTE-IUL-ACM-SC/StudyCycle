@@ -6,9 +6,9 @@ use std::{
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-pub struct LemmyInput(pub(crate) RateLimitIpAddr, pub(crate) ActionType);
+pub struct StudyCycleInput(pub(crate) RateLimitIpAddr, pub(crate) ActionType);
 
-pub(crate) type LemmyInputFuture = Ready<Result<LemmyInput, actix_web::Error>>;
+pub(crate) type StudyCycleInputFuture = Ready<Result<StudyCycleInput, actix_web::Error>>;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub(crate) enum RateLimitIpAddr {
@@ -49,10 +49,10 @@ fn parse_ip(addr: Option<&str>) -> IpAddr {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::error::LemmyResult;
+  use crate::error::StudyCycleResult;
 
   #[test]
-  fn test_get_ip() -> LemmyResult<()> {
+  fn test_get_ip() -> StudyCycleResult<()> {
     // Check that IPv4 addresses are preserved
     assert_eq!(
       raw_ip_key(Some("142.250.187.206")),

@@ -1,23 +1,23 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_community_mod_action, slur_regex},
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::Community,
   community_tag::{CommunityTag, CommunityTagInsertForm, CommunityTagUpdateForm},
 };
-use lemmy_db_views_community::{
+use studycycle_db_views_community::{
   CommunityView,
   api::{CreateCommunityTag, DeleteCommunityTag, EditCommunityTag},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::{traits::Crud, utils::diesel_string_update};
-use lemmy_utils::{
-  error::LemmyResult,
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::{traits::Crud, utils::diesel_string_update};
+use studycycle_utils::{
+  error::StudyCycleResult,
   utils::{
     slurs::check_slurs,
     validation::{check_api_elements_count, is_valid_actor_name, summary_length_check},
@@ -27,9 +27,9 @@ use url::Url;
 
 pub async fn create_community_tag(
   Json(data): Json<CreateCommunityTag>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityTag>> {
+) -> StudyCycleResult<Json<CommunityTag>> {
   is_valid_actor_name(&data.name)?;
 
   let community_view =
@@ -70,9 +70,9 @@ pub async fn create_community_tag(
 
 pub async fn edit_community_tag(
   Json(data): Json<EditCommunityTag>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityTag>> {
+) -> StudyCycleResult<Json<CommunityTag>> {
   let tag = CommunityTag::read(&mut context.pool(), data.tag_id).await?;
   let community = Community::read(&mut context.pool(), tag.community_id).await?;
 
@@ -99,9 +99,9 @@ pub async fn edit_community_tag(
 
 pub async fn delete_community_tag(
   Json(data): Json<DeleteCommunityTag>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityTag>> {
+) -> StudyCycleResult<Json<CommunityTag>> {
   let tag = CommunityTag::read(&mut context.pool(), data.tag_id).await?;
   let community = Community::read(&mut context.pool(), tag.community_id).await?;
 

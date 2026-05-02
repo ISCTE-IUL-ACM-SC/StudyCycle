@@ -1,10 +1,10 @@
 use crate::objects::UserOrCommunity;
 use activitypub_federation::{fetch::object_id::ObjectId, kinds::link::MentionType};
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::CommunityId,
   source::community_tag::{CommunityTag, CommunityTagInsertForm},
 };
-use lemmy_db_schema_file::enums::TagColor;
+use studycycle_db_schema_file::enums::TagColor;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;

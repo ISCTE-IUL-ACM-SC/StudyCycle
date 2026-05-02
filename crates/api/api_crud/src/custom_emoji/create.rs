@@ -1,23 +1,23 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
-use lemmy_db_schema::source::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::is_admin};
+use studycycle_db_schema::source::{
   custom_emoji::{CustomEmoji, CustomEmojiInsertForm},
   custom_emoji_keyword::CustomEmojiKeyword,
 };
-use lemmy_db_views_custom_emoji::{
+use studycycle_db_views_custom_emoji::{
   CustomEmojiView,
   api::{CreateCustomEmoji, CustomEmojiResponse},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn create_custom_emoji(
   Json(data): Json<CreateCustomEmoji>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CustomEmojiResponse>> {
+) -> StudyCycleResult<Json<CustomEmojiResponse>> {
   // Make sure user is an admin
   is_admin(&local_user_view)?;
 

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   combined::report::ReportCombined,
   comment::{Comment, CommentActions},
   comment_report::CommentReport,
@@ -16,7 +16,7 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{NullableExpressionMethods, Queryable, Selectable, dsl::Nullable},
-  lemmy_db_schema::utils::queries::selects::{
+  studycycle_db_schema::utils::queries::selects::{
     CreatorLocalHomeCommunityBanExpiresType,
     creator_ban_expires_from_community,
     creator_banned_from_community,
@@ -27,8 +27,8 @@ use {
     person1_select,
     person2_select,
   },
-  lemmy_db_schema::{Person1AliasAllColumnsTuple, Person2AliasAllColumnsTuple},
-  lemmy_db_views_local_user::LocalUserView,
+  studycycle_db_schema::{Person1AliasAllColumnsTuple, Person2AliasAllColumnsTuple},
+  studycycle_db_views_local_user::LocalUserView,
 };
 
 pub mod api;

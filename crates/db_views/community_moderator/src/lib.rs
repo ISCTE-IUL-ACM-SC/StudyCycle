@@ -1,6 +1,6 @@
 #[cfg(feature = "full")]
 use diesel::{Queryable, Selectable};
-use lemmy_db_schema::source::{community::Community, person::Person};
+use studycycle_db_schema::source::{community::Community, person::Person};
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "full")]

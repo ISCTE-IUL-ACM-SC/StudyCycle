@@ -10,16 +10,16 @@ use activitypub_federation::{
   protocol::verification::verify_urls_match,
   traits::{Activity, Actor, Object},
 };
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::{
   source::{activity::ActivitySendTargets, community::CommunityActions},
   traits::Followable,
 };
-use lemmy_utils::error::{LemmyError, LemmyResult, UntranslatedError};
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult, UntranslatedError};
 use url::Url;
 
 impl RejectFollow {
-  pub async fn send(follow: Follow, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  pub async fn send(follow: Follow, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     let user_or_community = follow.object.dereference_local(context).await?;
     let person = follow.actor.clone().dereference(context).await?;
     let reject = RejectFollow {
@@ -37,8 +37,8 @@ impl RejectFollow {
 /// Handle rejected follows
 #[async_trait::async_trait]
 impl Activity for RejectFollow {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -48,7 +48,7 @@ impl Activity for RejectFollow {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     verify_urls_match(self.actor.inner(), self.object.object.inner())?;
     self.object.verify(context).await?;
     if let Some(to) = &self.to {
@@ -57,7 +57,7 @@ impl Activity for RejectFollow {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     let community = self.actor.dereference(context).await?;
     check_community_deleted_or_removed(&community)?;
     let actor = self.object.actor.dereference(context).await?;

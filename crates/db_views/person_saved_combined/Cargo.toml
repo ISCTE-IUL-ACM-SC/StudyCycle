@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_db_views_person_saved_combined"
+name = "studycycle_db_views_person_saved_combined"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -17,28 +17,28 @@ workspace = true
 
 [features]
 full = [
-  "lemmy_utils",
+  "studycycle_utils",
   "diesel",
   "diesel-async",
   "i-love-jesus",
-  "lemmy_db_schema/full",
-  "lemmy_db_schema_file/full",
-  "lemmy_diesel_utils/full",
-  "lemmy_db_views_post_comment_combined/full",
+  "studycycle_db_schema/full",
+  "studycycle_db_schema_file/full",
+  "studycycle_diesel_utils/full",
+  "studycycle_db_views_post_comment_combined/full",
 ]
 ts-rs = [
   "dep:ts-rs",
-  "lemmy_db_schema/ts-rs",
-  "lemmy_db_views_post_comment_combined/ts-rs",
+  "studycycle_db_schema/ts-rs",
+  "studycycle_db_views_post_comment_combined/ts-rs",
 ]
 
 [dependencies]
-lemmy_db_views_post_comment_combined = { workspace = true }
-lemmy_db_views_local_user = { workspace = true }
-lemmy_db_schema = { workspace = true }
-lemmy_utils = { workspace = true, optional = true }
-lemmy_db_schema_file = { workspace = true }
-lemmy_diesel_utils = { workspace = true }
+studycycle_db_views_post_comment_combined = { workspace = true }
+studycycle_db_views_local_user = { workspace = true }
+studycycle_db_schema = { workspace = true }
+studycycle_utils = { workspace = true, optional = true }
+studycycle_db_schema_file = { workspace = true }
+studycycle_diesel_utils = { workspace = true }
 diesel = { workspace = true, optional = true }
 diesel-async = { workspace = true, optional = true }
 serde = { workspace = true }

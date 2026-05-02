@@ -1,10 +1,10 @@
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::source::{local_user::LocalUser, person::Person};
+use studycycle_db_schema::source::{local_user::LocalUser, person::Person};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::selects::{creator_home_ban_expires, creator_home_banned},
+  studycycle_db_schema::utils::queries::selects::{creator_home_ban_expires, creator_home_banned},
 };
 
 pub mod api;

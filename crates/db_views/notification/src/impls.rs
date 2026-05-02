@@ -8,7 +8,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   NotificationTypeFilter,
   newtypes::NotificationId,
   source::{
@@ -17,15 +17,15 @@ use lemmy_db_schema::{
   },
   utils::{limit_fetch, queries::filters::filter_blocked},
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   schema::{notification, person},
 };
-use lemmy_db_views_modlog::ModlogView;
-use lemmy_db_views_notification_sql::notification_joins;
-use lemmy_db_views_post::PostView;
-use lemmy_db_views_private_message::PrivateMessageView;
-use lemmy_diesel_utils::{
+use studycycle_db_views_modlog::ModlogView;
+use studycycle_db_views_notification_sql::notification_joins;
+use studycycle_db_views_post::PostView;
+use studycycle_db_views_private_message::PrivateMessageView;
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -35,7 +35,7 @@ use lemmy_diesel_utils::{
     paginate_response,
   },
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl NotificationView {
   /// Gets the number of unread mentions
@@ -43,7 +43,7 @@ impl NotificationView {
     pool: &mut DbPool<'_>,
     my_person: &Person,
     show_bot_accounts: bool,
-  ) -> LemmyResult<i64> {
+  ) -> StudyCycleResult<i64> {
     use diesel::dsl::count;
     let conn = &mut get_conn(pool).await?;
 
@@ -67,14 +67,14 @@ impl NotificationView {
     query
       .first::<i64>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn read(
     pool: &mut DbPool<'_>,
     id: NotificationId,
     my_person: &Person,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     let res = notification_joins(my_person.id, my_person.instance_id)
@@ -82,10 +82,10 @@ impl NotificationView {
       .select(NotificationViewInternal::as_select())
       .get_result::<NotificationViewInternal>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
     // TODO: should pass this in as param
     let hide_modlog_names = true;
-    map_to_enum(res, hide_modlog_names, my_person).ok_or(LemmyErrorType::NotFound.into())
+    map_to_enum(res, hide_modlog_names, my_person).ok_or(StudyCycleErrorType::NotFound.into())
   }
 }
 
@@ -99,7 +99,7 @@ impl PaginationCursorConversion for NotificationView {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     let conn = &mut get_conn(pool).await?;
     let query = notification::table
       .select(Self::PaginatedType::as_select())
@@ -127,7 +127,7 @@ impl NotificationQuery {
     self,
     pool: &mut DbPool<'_>,
     my_person: &Person,
-  ) -> impl Future<Output = LemmyResult<PagedResponse<NotificationView>>> {
+  ) -> impl Future<Output = StudyCycleResult<PagedResponse<NotificationView>>> {
     Box::pin(async move {
       let limit = limit_fetch(self.limit, self.no_limit)?;
       let mut query = notification_joins(my_person.id, my_person.instance_id)

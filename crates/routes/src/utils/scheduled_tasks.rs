@@ -16,12 +16,12 @@ use diesel::{
 };
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use diesel_uplete::uplete;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::send_webmention,
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     community::Community,
     instance::{Instance, InstanceForm},
@@ -30,7 +30,7 @@ use lemmy_db_schema::{
   },
   utils::DELETED_REPLACEMENT_TEXT,
 };
-use lemmy_db_schema_file::schema::{
+use studycycle_db_schema_file::schema::{
   comment,
   community,
   community_actions,
@@ -45,22 +45,22 @@ use lemmy_db_schema_file::schema::{
   sent_activity,
   site,
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   traits::Crud,
   utils::{functions::coalesce, now},
 };
-use lemmy_utils::{
+use studycycle_utils::{
   DB_BATCH_SIZE,
-  error::{LemmyErrorType, LemmyResult},
+  error::{StudyCycleErrorType, StudyCycleResult},
 };
 use reqwest_middleware::ClientWithMiddleware;
 use std::time::Duration;
 use tracing::{info, warn};
 
-/// Schedules various cleanup tasks for lemmy in a background thread
-pub async fn setup(context: Data<LemmyContext>) -> LemmyResult<()> {
+/// Schedules various cleanup tasks for studycycle in a background thread
+pub async fn setup(context: Data<StudyCycleContext>) -> StudyCycleResult<()> {
   // https://github.com/mdsherry/clokwerk/issues/38
   let mut scheduler = AsyncScheduler::with_tz(Utc);
 
@@ -153,7 +153,7 @@ pub async fn setup(context: Data<LemmyContext>) -> LemmyResult<()> {
 
 /// Update the hot_rank columns for the aggregates tables
 /// Runs in batches until all necessary rows are updated once
-async fn update_hot_ranks(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn update_hot_ranks(pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
   info!("Updating hot ranks for all history...");
 
   let conn = &mut get_conn(pool).await?;
@@ -195,7 +195,7 @@ async fn process_ranks_in_batches(
   table_name: &str,
   where_clause: &str,
   set_clause: &str,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let process_start_time: DateTime<Utc> = Utc.timestamp_opt(0, 0).single().unwrap_or_default();
 
   let mut processed_rows_count = 0;
@@ -219,7 +219,7 @@ async fn process_ranks_in_batches(
     .get_results::<HotRanksUpdateResult>(conn)
     .await
     .map_err(|e| {
-      LemmyErrorType::Unknown(format!("Failed to update {} hot_ranks: {}", table_name, e))
+      StudyCycleErrorType::Unknown(format!("Failed to update {} hot_ranks: {}", table_name, e))
     })?;
 
     processed_rows_count += updated_rows.len();
@@ -234,7 +234,7 @@ async fn process_ranks_in_batches(
 
 /// Post aggregates is a special case, since it needs to join to the community_aggregates
 /// table, to get the active monthly user counts.
-async fn process_post_aggregates_ranks_in_batches(conn: &mut AsyncPgConnection) -> LemmyResult<()> {
+async fn process_post_aggregates_ranks_in_batches(conn: &mut AsyncPgConnection) -> StudyCycleResult<()> {
   let process_start_time: DateTime<Utc> = Utc.timestamp_opt(0, 0).single().unwrap_or_default();
 
   let mut processed_rows_count = 0;
@@ -263,7 +263,7 @@ async fn process_post_aggregates_ranks_in_batches(conn: &mut AsyncPgConnection) 
     .get_results::<HotRanksUpdateResult>(conn)
     .await
     .map_err(|e| {
-      LemmyErrorType::Unknown(format!("Failed to update post_aggregates hot_ranks: {}", e))
+      StudyCycleErrorType::Unknown(format!("Failed to update post_aggregates hot_ranks: {}", e))
     })?;
 
     processed_rows_count += updated_rows.len();
@@ -277,7 +277,7 @@ async fn process_post_aggregates_ranks_in_batches(conn: &mut AsyncPgConnection) 
 }
 
 /// Clear old activities (this table gets very large)
-async fn clear_old_activities(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn clear_old_activities(pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
   info!("Clearing old activities...");
   let conn = &mut get_conn(pool).await?;
 
@@ -297,14 +297,14 @@ async fn clear_old_activities(pool: &mut DbPool<'_>) -> LemmyResult<()> {
   Ok(())
 }
 
-async fn delete_old_denied_users(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn delete_old_denied_users(pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
   LocalUser::delete_old_denied_local_users(pool).await?;
   info!("Done.");
   Ok(())
 }
 
 /// overwrite posts and comments 30d after deletion
-async fn overwrite_deleted_posts_and_comments(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn overwrite_deleted_posts_and_comments(pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
   info!("Overwriting deleted posts...");
   let conn = &mut get_conn(pool).await?;
 
@@ -355,7 +355,7 @@ struct CommunityAggregatesUpdateResult {
 }
 
 /// Re-calculate the site and community active counts for a given interval
-async fn active_counts(pool: &mut DbPool<'_>, interval: (&str, &str)) -> LemmyResult<()> {
+async fn active_counts(pool: &mut DbPool<'_>, interval: (&str, &str)) -> StudyCycleResult<()> {
   info!(
     "Updating active site and community aggregates for {}...",
     interval.0
@@ -375,7 +375,7 @@ async fn active_counts(pool: &mut DbPool<'_>, interval: (&str, &str)) -> LemmyRe
 }
 
 /// Re-calculate all the active counts
-async fn all_active_counts(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn all_active_counts(pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
   for i in ALL_ACTIVE_INTERVALS {
     active_counts(pool, i).await?;
   }
@@ -393,7 +393,7 @@ async fn all_active_counts(pool: &mut DbPool<'_>) -> LemmyResult<()> {
 async fn process_site_aggregates(
   conn: &mut AsyncPgConnection,
   interval: (&str, &str),
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   // Select the site count result first
   let site_activity = sql_query(format!(
     "select * from r.site_aggregates_activity('{}')",
@@ -429,7 +429,7 @@ async fn process_community_aggregates(
   interval: (&str, &str),
   field_name_prefix: &str,
   function_name: &str,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   // Select the community count results into a temp table.
   let caggs_temp_table = &format!("community_aggregates_temp_table_{}", interval.1);
 
@@ -488,7 +488,7 @@ async fn process_community_aggregates(
   Ok(())
 }
 
-async fn update_local_user_count(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn update_local_user_count(pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
   info!("Updating the local user count...");
 
   let conn = &mut get_conn(pool).await?;
@@ -519,7 +519,7 @@ async fn update_local_user_count(pool: &mut DbPool<'_>) -> LemmyResult<()> {
 }
 
 /// Set banned to false after ban expires
-async fn update_banned_when_expired(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn update_banned_when_expired(pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
   info!("Updating banned column if it expires ...");
   let conn = &mut get_conn(pool).await?;
 
@@ -540,7 +540,7 @@ async fn update_banned_when_expired(pool: &mut DbPool<'_>) -> LemmyResult<()> {
 }
 
 /// Set banned to false after ban expires
-async fn delete_instance_block_when_expired(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn delete_instance_block_when_expired(pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
   info!("Delete instance blocks when expired ...");
   let conn = &mut get_conn(pool).await?;
 
@@ -553,7 +553,7 @@ async fn delete_instance_block_when_expired(pool: &mut DbPool<'_>) -> LemmyResul
 }
 
 /// Find all unpublished posts with scheduled date in the future, and publish them.
-async fn publish_scheduled_posts(context: &Data<LemmyContext>) -> LemmyResult<()> {
+async fn publish_scheduled_posts(context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
   let pool = &mut context.pool();
   let local_instance_id = SiteView::read_local(pool).await?.instance.id;
   let conn = &mut get_conn(pool).await?;
@@ -609,7 +609,7 @@ async fn publish_scheduled_posts(context: &Data<LemmyContext>) -> LemmyResult<()
 async fn update_instance_software(
   pool: &mut DbPool<'_>,
   client: &ClientWithMiddleware,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   info!("Updating instances software and versions...");
   let conn = &mut get_conn(pool).await?;
 
@@ -693,8 +693,8 @@ async fn build_update_instance_form(
 mod tests {
 
   use super::*;
-  use lemmy_api_utils::request::client_builder;
-  use lemmy_db_schema::{
+  use studycycle_api_utils::request::client_builder;
+  use studycycle_db_schema::{
     source::{
       community::{Community, CommunityInsertForm},
       person::{Person, PersonInsertForm},
@@ -703,9 +703,9 @@ mod tests {
     test_data::TestData,
     traits::Likeable,
   };
-  use lemmy_diesel_utils::traits::Crud;
-  use lemmy_utils::{
-    error::{LemmyErrorType, LemmyResult},
+  use studycycle_diesel_utils::traits::Crud;
+  use studycycle_utils::{
+    error::{StudyCycleErrorType, StudyCycleResult},
     settings::structs::Settings,
   };
   use pretty_assertions::assert_eq;
@@ -713,29 +713,29 @@ mod tests {
   use serial_test::serial;
 
   #[tokio::test]
-  async fn test_nodeinfo_lemmy_ml() -> LemmyResult<()> {
+  async fn test_nodeinfo_lemmy_ml() -> StudyCycleResult<()> {
     let client = ClientBuilder::new(client_builder(&Settings::default()).build()?).build();
     let form = build_update_instance_form("lemmy.ml", &client)
       .await
-      .ok_or(LemmyErrorType::NotFound)?;
-    assert_eq!(form.software.ok_or(LemmyErrorType::NotFound)?, "lemmy");
+      .ok_or(StudyCycleErrorType::NotFound)?;
+    assert_eq!(form.software.ok_or(StudyCycleErrorType::NotFound)?, "lemmy");
     Ok(())
   }
 
   #[tokio::test]
-  async fn test_nodeinfo_mastodon_social() -> LemmyResult<()> {
+  async fn test_nodeinfo_mastodon_social() -> StudyCycleResult<()> {
     let client = ClientBuilder::new(client_builder(&Settings::default()).build()?).build();
     let form = build_update_instance_form("mastodon.social", &client)
       .await
-      .ok_or(LemmyErrorType::NotFound)?;
-    assert_eq!(form.software.ok_or(LemmyErrorType::NotFound)?, "mastodon");
+      .ok_or(StudyCycleErrorType::NotFound)?;
+    assert_eq!(form.software.ok_or(StudyCycleErrorType::NotFound)?, "mastodon");
     Ok(())
   }
 
   #[tokio::test]
   #[serial]
-  async fn test_scheduled_tasks() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_scheduled_tasks() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
 
     let data = TestData::create(pool).await?;

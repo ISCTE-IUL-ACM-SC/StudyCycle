@@ -1,4 +1,4 @@
-use lemmy_utils::error::LemmyErrorType;
+use studycycle_utils::error::StudyCycleErrorType;
 use std::{env::current_dir, process::Command};
 use strum::IntoEnumIterator;
 
@@ -9,8 +9,8 @@ fn test_errors_used() {
   let mut current_dir = current_dir().unwrap();
   current_dir.pop();
   current_dir.pop();
-  for error in LemmyErrorType::iter() {
-    let search = format!("LemmyErrorType::{error}");
+  for error in StudyCycleErrorType::iter() {
+    let search = format!("StudyCycleErrorType::{error}");
     let mut grep_all = Command::new("grep");
     let grep_all = grep_all
       .current_dir(current_dir.clone())
@@ -32,11 +32,11 @@ fn test_errors_used() {
     let grep_apub_out = std::str::from_utf8(&output.stdout).unwrap();
 
     if grep_all_out.is_empty() {
-      println!("LemmyErrorType::{} is unused", error);
+      println!("StudyCycleErrorType::{} is unused", error);
       unused_error_found = true;
     }
-    if search != "LemmyErrorType::UntranslatedError" && grep_all_out == grep_apub_out {
-      println!("LemmyErrorType::{} is only used for federation", error);
+    if search != "StudyCycleErrorType::UntranslatedError" && grep_all_out == grep_apub_out {
+      println!("StudyCycleErrorType::{} is only used for federation", error);
       unused_error_found = true;
     }
   }

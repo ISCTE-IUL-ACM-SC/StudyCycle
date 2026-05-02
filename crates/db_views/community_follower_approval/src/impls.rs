@@ -12,7 +12,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::CommunityId,
   source::{
     community::{Community, CommunityActions, community_actions_keys as key},
@@ -20,14 +20,14 @@ use lemmy_db_schema::{
   },
   utils::{limit_fetch, queries::selects::person1_select},
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   aliases,
   enums::{CommunityFollowerState, CommunityVisibility},
   schema::{community, community_actions, person},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -37,7 +37,7 @@ use lemmy_diesel_utils::{
     paginate_response,
   },
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 use std::collections::HashMap;
 
 diesel::alias!(community_actions as follower_community_actions: FollowerCommunityActions);
@@ -75,7 +75,7 @@ impl PendingFollowerView {
     unread_only: bool,
     page_cursor: Option<PaginationCursor>,
     limit: Option<i64>,
-  ) -> LemmyResult<PagedResponse<PendingFollowerView>> {
+  ) -> StudyCycleResult<PagedResponse<PendingFollowerView>> {
     let limit = limit_fetch(limit, None)?;
 
     let mut query = Self::joins()
@@ -155,7 +155,7 @@ impl PendingFollowerView {
   pub async fn count_approval_required(
     pool: &mut DbPool<'_>,
     mod_id: PersonId,
-  ) -> LemmyResult<i64> {
+  ) -> StudyCycleResult<i64> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(community_actions::became_moderator_at.is_not_null())
@@ -169,13 +169,13 @@ impl PendingFollowerView {
       .select(count(community_actions::community_id))
       .first::<i64>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
   pub async fn check_private_community_action(
     pool: &mut DbPool<'_>,
     from_person_id: PersonId,
     community: &Community,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     if community.visibility != CommunityVisibility::Private {
       return Ok(());
     }
@@ -189,13 +189,13 @@ impl PendingFollowerView {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::NotFound.into())
+    .ok_or(StudyCycleErrorType::NotFound.into())
   }
   pub async fn check_has_followers_from_instance(
     community_id: CommunityId,
     instance_id: InstanceId,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(exists(
       Self::joins()
@@ -207,7 +207,7 @@ impl PendingFollowerView {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::NotFound.into())
+    .ok_or(StudyCycleErrorType::NotFound.into())
   }
 }
 
@@ -221,7 +221,7 @@ impl PaginationCursorConversion for PendingFollowerView {
   async fn from_cursor(
     data: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     let [person_id, community_id] = data.multi()?;
     CommunityActions::read(pool, CommunityId(community_id), PersonId(person_id)).await
   }
@@ -232,7 +232,7 @@ impl PaginationCursorConversion for PendingFollowerView {
 mod tests {
   use super::*;
   use crate::PendingFollowerView;
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     assert_length,
     source::{
       community::{
@@ -246,13 +246,13 @@ mod tests {
     },
     traits::Followable,
   };
-  use lemmy_db_schema_file::enums::CommunityVisibility;
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_db_schema_file::enums::CommunityVisibility;
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_has_followers_from_instance() -> LemmyResult<()> {
+  async fn test_has_followers_from_instance() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -321,7 +321,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_pending_followers() -> LemmyResult<()> {
+  async fn test_pending_followers() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

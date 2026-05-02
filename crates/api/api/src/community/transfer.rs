@@ -1,24 +1,24 @@
 use actix_web::web::{Data, Json};
 use anyhow::Context;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::notify_mod_action,
   utils::{check_community_user_action, is_admin, is_top_mod},
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::{Community, CommunityActions, CommunityModeratorForm},
   modlog::{Modlog, ModlogInsertForm},
 };
-use lemmy_db_views_community::{
+use studycycle_db_views_community::{
   CommunityView,
   api::{GetCommunityResponse, TransferCommunity},
 };
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::{connection::get_conn, traits::Crud};
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::{connection::get_conn, traits::Crud};
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   location_info,
 };
 
@@ -27,9 +27,9 @@ use lemmy_utils::{
 
 pub async fn transfer_community(
   Json(data): Json<TransferCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<GetCommunityResponse>> {
+) -> StudyCycleResult<Json<GetCommunityResponse>> {
   let community = Community::read(&mut context.pool(), data.community_id).await?;
   let mut community_mods =
     CommunityModeratorView::for_community(&mut context.pool(), community.id).await?;
@@ -39,7 +39,7 @@ pub async fn transfer_community(
   // Make sure transferrer is either the top community mod, or an admin
   if !(is_top_mod(&local_user_view, &community_mods).is_ok() || is_admin(&local_user_view).is_ok())
   {
-    return Err(LemmyErrorType::NotAnAdmin.into());
+    return Err(StudyCycleErrorType::NotAnAdmin.into());
   }
 
   // You have to re-do the community_moderator table, reordering it.

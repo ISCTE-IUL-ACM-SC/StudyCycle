@@ -1,4 +1,4 @@
-pub use lemmy_db_schema::{
+pub use studycycle_db_schema::{
   newtypes::{LocalSiteId, SiteId},
   source::{
     local_site::LocalSite,
@@ -7,18 +7,18 @@ pub use lemmy_db_schema::{
     site::Site,
   },
 };
-pub use lemmy_db_schema_file::enums::RegistrationMode;
-pub use lemmy_db_views_site::{
+pub use studycycle_db_schema_file::enums::RegistrationMode;
+pub use studycycle_db_views_site::{
   SiteView,
   api::{GetSiteResponse, PostOrCommentOrPrivateMessage, SiteResponse, UnreadCountsResponse},
 };
 
 pub mod administration {
-  pub use lemmy_db_views_local_user::api::AdminListUsers;
-  pub use lemmy_db_views_person::api::{AddAdmin, AddAdminResponse};
-  pub use lemmy_db_views_registration_applications::api::{
+  pub use studycycle_db_views_local_user::api::AdminListUsers;
+  pub use studycycle_db_views_person::api::{AddAdmin, AddAdminResponse};
+  pub use studycycle_db_views_registration_applications::api::{
     ApproveRegistrationApplication,
     ListRegistrationApplications,
   };
-  pub use lemmy_db_views_site::api::{CreateSite, EditSite};
+  pub use studycycle_db_views_site::api::{CreateSite, EditSite};
 }

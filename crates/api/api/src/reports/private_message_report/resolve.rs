@@ -1,18 +1,18 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
-use lemmy_db_schema::{source::private_message_report::PrivateMessageReport, traits::Reportable};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_report_combined::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::is_admin};
+use studycycle_db_schema::{source::private_message_report::PrivateMessageReport, traits::Reportable};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_report_combined::{
   ReportCombinedViewInternal,
   api::{PrivateMessageReportResponse, ResolvePrivateMessageReport},
 };
-use lemmy_utils::error::LemmyResult;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn resolve_pm_report(
   Json(data): Json<ResolvePrivateMessageReport>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PrivateMessageReportResponse>> {
+) -> StudyCycleResult<Json<PrivateMessageReportResponse>> {
   is_admin(&local_user_view)?;
 
   let report_id = data.report_id;

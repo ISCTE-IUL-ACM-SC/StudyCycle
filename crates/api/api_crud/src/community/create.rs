@@ -1,8 +1,8 @@
 use activitypub_federation::{config::Data, http_signatures::generate_actor_keypair};
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_community_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   utils::{
     check_local_user_valid,
     check_nsfw_allowed,
@@ -16,7 +16,7 @@ use lemmy_api_utils::{
     slur_regex,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     actor_language::{CommunityLanguage, LocalUserLanguage, SiteLanguage},
     community::{
@@ -29,13 +29,13 @@ use lemmy_db_schema::{
   },
   traits::{ApubActor, Followable},
 };
-use lemmy_db_schema_file::enums::CommunityFollowerState;
-use lemmy_db_views_community::api::{CommunityResponse, CreateCommunity};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_db_schema_file::enums::CommunityFollowerState;
+use studycycle_db_views_community::api::{CommunityResponse, CreateCommunity};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::{
     slurs::check_slurs,
     validation::{
@@ -49,16 +49,16 @@ use lemmy_utils::{
 
 pub async fn create_community(
   Json(data): Json<CreateCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityResponse>> {
+) -> StudyCycleResult<Json<CommunityResponse>> {
   check_local_user_valid(&local_user_view)?;
   let SiteView {
     site, local_site, ..
   } = SiteView::read_local(&mut context.pool()).await?;
 
   if local_site.community_creation_admin_only && is_admin(&local_user_view).is_err() {
-    return Err(LemmyErrorType::OnlyAdminsCanCreateCommunities.into());
+    return Err(StudyCycleErrorType::OnlyAdminsCanCreateCommunities.into());
   }
 
   check_nsfw_allowed(data.nsfw, Some(&local_site))?;
@@ -95,7 +95,7 @@ pub async fn create_community(
   let community_ap_id = Community::generate_local_actor_url(&data.name, context.settings())?;
   let community_dupe = Community::read_from_apub_id(&mut context.pool(), &community_ap_id).await?;
   if community_dupe.is_some() {
-    return Err(LemmyErrorType::AlreadyExists.into());
+    return Err(StudyCycleErrorType::AlreadyExists.into());
   }
 
   let keypair = generate_actor_keypair()?;
@@ -144,7 +144,7 @@ pub async fn create_community(
     // https://stackoverflow.com/a/64227550
     let is_subset = languages.iter().all(|item| site_languages.contains(item));
     if !is_subset {
-      return Err(LemmyErrorType::LanguageNotAllowed.into());
+      return Err(StudyCycleErrorType::LanguageNotAllowed.into());
     }
     languages
   } else {

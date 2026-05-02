@@ -1,10 +1,10 @@
 use crate::check_totp_2fa_valid;
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::check_local_user_valid};
-use lemmy_db_schema::source::local_user::{LocalUser, LocalUserUpdateForm};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{EditTotp, EditTotpResponse};
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_local_user_valid};
+use studycycle_db_schema::source::local_user::{LocalUser, LocalUserUpdateForm};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::api::{EditTotp, EditTotpResponse};
+use studycycle_utils::error::StudyCycleResult;
 
 /// Enable or disable two-factor-authentication. The current setting is determined from
 /// [LocalUser.totp_2fa_enabled].
@@ -17,8 +17,8 @@ use lemmy_utils::error::LemmyResult;
 pub async fn edit_totp(
   Json(data): Json<EditTotp>,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<EditTotpResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<EditTotpResponse>> {
   check_local_user_valid(&local_user_view)?;
   check_totp_2fa_valid(
     &local_user_view,

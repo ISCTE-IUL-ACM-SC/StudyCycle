@@ -1,6 +1,6 @@
 use crate::newtypes::LanguageId;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::language;
+use studycycle_db_schema_file::schema::language;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

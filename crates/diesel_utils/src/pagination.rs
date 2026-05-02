@@ -15,8 +15,8 @@ use {
   },
   i_love_jesus::{PaginatedQueryBuilder, SortDirection},
   itertools::Itertools,
-  lemmy_utils::error::LemmyErrorType,
-  lemmy_utils::error::LemmyResult,
+  studycycle_utils::error::StudyCycleErrorType,
+  studycycle_utils::error::StudyCycleResult,
 };
 
 /// Use base 64 engine with custom alphabet based on base64::engine::general_purpose::URL_SAFE
@@ -37,22 +37,22 @@ impl CursorData {
   pub fn new_id(id: i32) -> Self {
     Self(id.to_string())
   }
-  pub fn id(self) -> LemmyResult<i32> {
+  pub fn id(self) -> StudyCycleResult<i32> {
     Ok(self.0.parse()?)
   }
 
   pub fn new_with_prefix(prefix: char, id: i32) -> Self {
     Self(format!("{prefix},{id}"))
   }
-  pub fn id_and_prefix(self) -> LemmyResult<(char, i32)> {
+  pub fn id_and_prefix(self) -> StudyCycleResult<(char, i32)> {
     let (prefix, id) = self
       .0
       .split_once(',')
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(StudyCycleErrorType::CouldntParsePaginationToken)?;
     let prefix = prefix
       .chars()
       .next()
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(StudyCycleErrorType::CouldntParsePaginationToken)?;
     Ok((prefix, id.parse()?))
   }
 
@@ -66,7 +66,7 @@ impl CursorData {
   pub fn new_multi<const N: usize>(data: [i32; N]) -> Self {
     Self(data.into_iter().join(","))
   }
-  pub fn multi<const N: usize>(self) -> LemmyResult<[i32; N]> {
+  pub fn multi<const N: usize>(self) -> StudyCycleResult<[i32; N]> {
     Ok(
       self
         .0
@@ -74,7 +74,7 @@ impl CursorData {
         .flat_map(|id| id.parse::<i32>().ok())
         .collect::<Vec<_>>()
         .try_into()
-        .map_err(|_e| LemmyErrorType::CouldntParsePaginationToken)?,
+        .map_err(|_e| StudyCycleErrorType::CouldntParsePaginationToken)?,
     )
   }
 }
@@ -88,7 +88,7 @@ pub trait PaginationCursorConversion {
   fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> impl Future<Output = LemmyResult<Self::PaginatedType>> + Send;
+  ) -> impl Future<Output = StudyCycleResult<Self::PaginatedType>> + Send;
 
   /// Paginate a db query.
   fn paginate<Q: Send>(
@@ -96,7 +96,7 @@ pub trait PaginationCursorConversion {
     cursor: &Option<PaginationCursor>,
     sort_direction: SortDirection,
     pool: &mut DbPool<'_>,
-  ) -> impl std::future::Future<Output = LemmyResult<PaginatedQueryBuilder<Self::PaginatedType, Q>>> + Send
+  ) -> impl std::future::Future<Output = StudyCycleResult<PaginatedQueryBuilder<Self::PaginatedType, Q>>> + Send
   {
     async move {
       let (page_after, page_back, recovery) = if let Some(cursor) = cursor {
@@ -131,7 +131,7 @@ pub trait PaginationCursorConversion {
 /// to the same endpoint.
 ///
 /// Do not attempt to parse or modify the cursor string. The format is internal and may change in
-/// minor Lemmy versions.
+/// minor StudyCycle versions.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
@@ -139,17 +139,17 @@ pub struct PaginationCursor(String);
 
 #[cfg(feature = "full")]
 impl PaginationCursor {
-  fn into_internal(self) -> LemmyResult<PaginationCursorInternal> {
+  fn into_internal(self) -> StudyCycleResult<PaginationCursorInternal> {
     let decoded = BASE64_ENGINE.decode(self.0)?;
     Ok(serde_urlencoded::from_str(&String::from_utf8(decoded)?)?)
   }
-  fn from_internal(other: PaginationCursorInternal) -> LemmyResult<Self> {
+  fn from_internal(other: PaginationCursorInternal) -> StudyCycleResult<Self> {
     let encoded = BASE64_ENGINE.encode(serde_urlencoded::to_string(other)?);
     Ok(Self(encoded))
   }
 
   // only used for PostView optimization
-  pub fn is_back(self) -> LemmyResult<bool> {
+  pub fn is_back(self) -> StudyCycleResult<bool> {
     Ok(self.into_internal()?.back)
   }
 }
@@ -222,11 +222,11 @@ pub fn paginate_response<#[cfg(feature = "ts-rs")] T: ts_rs::TS, #[cfg(not(featu
   data: Vec<T>,
   limit: i64,
   request_cursor: Option<PaginationCursor>,
-) -> LemmyResult<PagedResponse<T>>
+) -> StudyCycleResult<PagedResponse<T>>
 where
   T: PaginationCursorConversion + Serialize + for<'a> Deserialize<'a>,
 {
-  let make_cursor = |item: Option<&T>, back: bool| -> LemmyResult<Option<PaginationCursor>> {
+  let make_cursor = |item: Option<&T>, back: bool| -> StudyCycleResult<Option<PaginationCursor>> {
     if let Some(item) = item {
       let data = item.to_cursor();
       let cursor = PaginationCursorInternal {
@@ -307,7 +307,7 @@ mod test {
   use super::*;
 
   #[test]
-  fn test_cursor() -> LemmyResult<()> {
+  fn test_cursor() -> StudyCycleResult<()> {
     let data = CursorData::new_id(1);
     do_test_cursor(data)?;
 
@@ -317,7 +317,7 @@ mod test {
     Ok(())
   }
 
-  fn do_test_cursor(data: CursorData) -> LemmyResult<()> {
+  fn do_test_cursor(data: CursorData) -> StudyCycleResult<()> {
     let cursor = PaginationCursorInternal {
       back: true,
       data: data.clone(),
@@ -331,7 +331,7 @@ mod test {
   }
 
   #[test]
-  fn test_internal_format() -> LemmyResult<()> {
+  fn test_internal_format() -> StudyCycleResult<()> {
     assert_eq!(
       serde_urlencoded::to_string(PaginationCursorInternal {
         back: true,

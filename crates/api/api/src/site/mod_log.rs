@@ -1,17 +1,17 @@
 use crate::hide_modlog_names;
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_private_instance};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_modlog::{ModlogView, api::GetModlog, impls::ModlogQuery};
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::pagination::PagedResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_private_instance};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_modlog::{ModlogView, api::GetModlog, impls::ModlogQuery};
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::pagination::PagedResponse;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn get_mod_log(
   Query(data): Query<GetModlog>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<PagedResponse<ModlogView>>> {
+) -> StudyCycleResult<Json<PagedResponse<ModlogView>>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   check_private_instance(&local_user_view, &local_site)?;
@@ -49,8 +49,8 @@ pub async fn get_mod_log(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use lemmy_api_utils::utils::remove_or_restore_user_data;
-  use lemmy_db_schema::{
+  use studycycle_api_utils::utils::remove_or_restore_user_data;
+  use studycycle_db_schema::{
     ModlogKindFilter,
     source::{
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
@@ -63,19 +63,19 @@ mod tests {
     },
     traits::Likeable,
   };
-  use lemmy_db_schema_file::enums::ModlogKind;
-  use lemmy_db_views_comment::CommentView;
-  use lemmy_db_views_modlog::ModlogView;
-  use lemmy_db_views_post::PostView;
-  use lemmy_diesel_utils::traits::Crud;
-  use lemmy_utils::error::LemmyErrorType;
+  use studycycle_db_schema_file::enums::ModlogKind;
+  use studycycle_db_views_comment::CommentView;
+  use studycycle_db_views_modlog::ModlogView;
+  use studycycle_db_views_post::PostView;
+  use studycycle_diesel_utils::traits::Crud;
+  use studycycle_utils::error::StudyCycleErrorType;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_mod_remove_or_restore_data() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_mod_remove_or_restore_data() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
 
     let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
@@ -141,7 +141,7 @@ mod tests {
     // Remove the user data
     let ban_form = ModlogInsertForm::admin_ban(&john, sara.id, true, None, "a remove reason");
     let ban_action = Modlog::create(pool, &[ban_form]).await?;
-    let ban_id = ban_action.first().ok_or(LemmyErrorType::NotFound)?.id;
+    let ban_id = ban_action.first().ok_or(StudyCycleErrorType::NotFound)?.id;
     remove_or_restore_user_data(john.id, sara.id, true, "a remove reason", ban_id, &context)
       .await?;
 
@@ -240,7 +240,7 @@ mod tests {
     // Now restore the content, and make sure it got appended
     let unban_form = ModlogInsertForm::admin_ban(&john, sara.id, false, None, "a restore reason");
     let unban_action = Modlog::create(pool, &[unban_form]).await?;
-    let unban_id = unban_action.first().ok_or(LemmyErrorType::NotFound)?.id;
+    let unban_id = unban_action.first().ok_or(StudyCycleErrorType::NotFound)?.id;
     remove_or_restore_user_data(
       john.id,
       sara.id,
@@ -366,8 +366,8 @@ mod tests {
   /// when a real parent ModlogId is provided
   #[tokio::test]
   #[serial]
-  async fn test_bulk_parent_id_propagated() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_bulk_parent_id_propagated() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
 
     let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
@@ -399,7 +399,7 @@ mod tests {
     let ban_form =
       ModlogInsertForm::admin_ban(&person_a, person_b.id, true, None, "banning for bulk test");
     let ban_action = Modlog::create(pool, &[ban_form]).await?;
-    let ban_id = ban_action.first().ok_or(LemmyErrorType::NotFound)?.id;
+    let ban_id = ban_action.first().ok_or(StudyCycleErrorType::NotFound)?.id;
 
     // Remove person_b's content as a bulk action triggered by the ban
     remove_or_restore_user_data(
@@ -437,7 +437,7 @@ mod tests {
     .await?
     .items;
     assert_eq!(1, comment_modlog.len());
-    let first_comment = comment_modlog.first().ok_or(LemmyErrorType::NotFound)?;
+    let first_comment = comment_modlog.first().ok_or(StudyCycleErrorType::NotFound)?;
     assert_eq!(
       Some(ban_id),
       first_comment.modlog.bulk_action_parent_id,

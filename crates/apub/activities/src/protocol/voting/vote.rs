@@ -1,11 +1,11 @@
 use crate::post_or_comment_community;
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::{
   objects::{PostOrComment, community::ApubCommunity, person::ApubPerson},
   utils::protocol::InCommunity,
 };
-use lemmy_utils::error::LemmyResult;
+use studycycle_utils::error::StudyCycleResult;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 use url::Url;
@@ -44,7 +44,7 @@ impl From<&VoteType> for bool {
 }
 
 impl InCommunity for Vote {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<ApubCommunity> {
     if let Some(audience) = &self.audience {
       return audience.dereference(context).await;
     }

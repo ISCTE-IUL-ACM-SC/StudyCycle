@@ -1,26 +1,26 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use bcrypt::verify;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::purge_user_account,
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::CommunityActions,
   login_token::LoginToken,
   oauth_account::OAuthAccount,
   person::Person,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{DeleteAccount, SuccessResponse};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::api::{DeleteAccount, SuccessResponse};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn delete_account(
   Json(data): Json<DeleteAccount>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   let local_instance_id = local_user_view.person.instance_id;
 
   // Verify the password
@@ -31,7 +31,7 @@ pub async fn delete_account(
     .and_then(|password_encrypted| verify(&data.password, password_encrypted).ok())
     .unwrap_or(false);
   if !valid {
-    return Err(LemmyErrorType::IncorrectLogin.into());
+    return Err(StudyCycleErrorType::IncorrectLogin.into());
   }
 
   if data.delete_content {

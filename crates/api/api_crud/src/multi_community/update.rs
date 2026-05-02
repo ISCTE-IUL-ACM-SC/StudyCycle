@@ -2,20 +2,20 @@ use super::{check_multi_community_creator, send_federation_update};
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{check_local_user_valid, get_url_blocklist, process_markdown_opt, slur_regex},
 };
-use lemmy_db_schema::source::multi_community::{MultiCommunity, MultiCommunityUpdateForm};
-use lemmy_db_views_community::{
+use studycycle_db_schema::source::multi_community::{MultiCommunity, MultiCommunityUpdateForm};
+use studycycle_db_views_community::{
   MultiCommunityView,
   api::{EditMultiCommunity, MultiCommunityResponse},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{traits::Crud, utils::diesel_string_update};
-use lemmy_utils::{
-  error::LemmyResult,
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{traits::Crud, utils::diesel_string_update};
+use studycycle_utils::{
+  error::StudyCycleResult,
   utils::{
     slurs::check_slurs,
     validation::{is_valid_body_field, is_valid_display_name, summary_length_check},
@@ -24,9 +24,9 @@ use lemmy_utils::{
 
 pub async fn edit_multi_community(
   Json(data): Json<EditMultiCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<MultiCommunityResponse>> {
+) -> StudyCycleResult<Json<MultiCommunityResponse>> {
   let multi_community_id = data.id;
   let my_person_id = local_user_view.person.id;
   check_local_user_valid(&local_user_view)?;

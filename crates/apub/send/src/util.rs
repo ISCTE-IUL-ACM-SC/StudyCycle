@@ -2,8 +2,8 @@ use anyhow::{Context, Result, anyhow};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use either::Either::*;
-use lemmy_apub_objects::objects::SiteOrMultiOrCommunityOrUser;
-use lemmy_db_schema::{
+use studycycle_apub_objects::objects::SiteOrMultiOrCommunityOrUser;
+use studycycle_db_schema::{
   newtypes::ActivityId,
   source::{
     activity::SentActivity,
@@ -15,9 +15,9 @@ use lemmy_db_schema::{
   },
   traits::ApubActor,
 };
-use lemmy_db_schema_file::enums::ActorType;
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::LemmyError;
+use studycycle_db_schema_file::enums::ActorType;
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::StudyCycleError;
 use moka::future::Cache;
 use reqwest::Url;
 use std::{
@@ -34,8 +34,8 @@ use tokio_util::sync::CancellationToken;
 /// Should only be used for federation tests since it significantly increases CPU and DB load of the
 /// federation queue. This is intentionally a separate flag from other flags like debug_assertions,
 /// since this is a invasive change we only need rarely.
-pub(crate) static LEMMY_TEST_FAST_FEDERATION: LazyLock<bool> = LazyLock::new(|| {
-  std::env::var("LEMMY_TEST_FAST_FEDERATION")
+pub(crate) static STUDYCYCLE_TEST_FAST_FEDERATION: LazyLock<bool> = LazyLock::new(|| {
+  std::env::var("STUDYCYCLE_TEST_FAST_FEDERATION")
     .map(|s| !s.is_empty())
     .unwrap_or(false)
 });
@@ -55,7 +55,7 @@ pub(crate) static LEMMY_TEST_FAST_FEDERATION: LazyLock<bool> = LazyLock::new(|| 
 /// often and consume a lot of CPU. If the delay is long, then activities on low-traffic instances
 /// will on average take delay/2 seconds to federate.
 pub(crate) static WORK_FINISHED_RECHECK_DELAY: LazyLock<Duration> = LazyLock::new(|| {
-  if *LEMMY_TEST_FAST_FEDERATION {
+  if *STUDYCYCLE_TEST_FAST_FEDERATION {
     Duration::from_millis(100)
   } else {
     Duration::from_secs(30)
@@ -67,7 +67,7 @@ pub(crate) static WORK_FINISHED_RECHECK_DELAY: LazyLock<Duration> = LazyLock::ne
 /// This cache is common to all the instance workers and prevents there from being more than one
 /// call per N seconds between each DB query to find max(activity_id).
 pub(crate) static CACHE_DURATION_LATEST_ID: LazyLock<Duration> = LazyLock::new(|| {
-  if *LEMMY_TEST_FAST_FEDERATION {
+  if *STUDYCYCLE_TEST_FAST_FEDERATION {
     // in test mode, we use the same cache duration as the recheck delay so when recheck happens
     // data is fresh, accelerating the time the tests take.
     *WORK_FINISHED_RECHECK_DELAY
@@ -168,7 +168,7 @@ pub(crate) async fn get_actor_cached(
             .into(),
         )),
       };
-      Result::<_, LemmyError>::Ok(Arc::new(actor))
+      Result::<_, StudyCycleError>::Ok(Arc::new(actor))
     })
     .await
     .map_err(|e| anyhow::anyhow!("err getting actor {actor_type:?} {actor_apub_id}: {e:?}"))
@@ -190,7 +190,7 @@ pub(crate) async fn get_activity_cached(
       Ok(Some(Arc::new(SentActivity::read(pool, activity_id).await?)))
     })
     .await
-    .map_err(|e: Arc<LemmyError>| anyhow::anyhow!("err getting activity: {e:?}"))
+    .map_err(|e: Arc<StudyCycleError>| anyhow::anyhow!("err getting activity: {e:?}"))
 }
 
 /// return the most current activity id (with 1 second cache)
@@ -202,7 +202,7 @@ pub(crate) async fn get_latest_activity_id(pool: &mut DbPool<'_>) -> Result<Opti
   });
   CACHE
     .try_get_with((), async {
-      use lemmy_db_schema_file::schema::sent_activity::dsl::{id, sent_activity};
+      use studycycle_db_schema_file::schema::sent_activity::dsl::{id, sent_activity};
       let conn = &mut get_conn(pool).await?;
       let latest_id: Option<ActivityId> = sent_activity
         .select(diesel::dsl::max(id))

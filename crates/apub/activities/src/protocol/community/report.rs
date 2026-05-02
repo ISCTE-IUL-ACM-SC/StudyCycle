@@ -5,12 +5,12 @@ use activitypub_federation::{
   protocol::helpers::deserialize_one,
 };
 use either::Either;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::{
   objects::{ReportableObjects, community::ApubCommunity, instance::ApubSite, person::ApubPerson},
   utils::protocol::InCommunity,
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -21,7 +21,7 @@ pub struct Report {
   #[serde(deserialize_with = "deserialize_one")]
   pub(crate) to: [ObjectId<Either<ApubSite, ApubCommunity>>; 1],
   pub(crate) object: ReportObject,
-  /// Report reason as sent by Lemmy
+  /// Report reason as sent by StudyCycle
   pub(crate) summary: Option<String>,
   /// Report reason as sent by Mastodon
   pub(crate) content: Option<String>,
@@ -32,19 +32,19 @@ pub struct Report {
 }
 
 impl Report {
-  pub fn reason(&self) -> LemmyResult<String> {
+  pub fn reason(&self) -> StudyCycleResult<String> {
     self
       .summary
       .clone()
       .or(self.content.clone())
-      .ok_or(LemmyErrorType::NotFound.into())
+      .ok_or(StudyCycleErrorType::NotFound.into())
   }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 pub(crate) enum ReportObject {
-  Lemmy(ObjectId<ReportableObjects>),
+  StudyCycle(ObjectId<ReportableObjects>),
   /// Mastodon sends an array containing user id and one or more post ids
   Mastodon(Vec<Url>),
 }
@@ -52,30 +52,30 @@ pub(crate) enum ReportObject {
 impl ReportObject {
   pub(crate) async fn dereference(
     &self,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<ReportableObjects> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<ReportableObjects> {
     match self {
-      ReportObject::Lemmy(l) => l.dereference(context).await,
+      ReportObject::StudyCycle(l) => l.dereference(context).await,
       ReportObject::Mastodon(objects) => {
         for o in objects {
-          // Find the first reported item which can be dereferenced as post or comment (Lemmy can
+          // Find the first reported item which can be dereferenced as post or comment (StudyCycle can
           // only handle one item per report).
           let deref = ObjectId::from(o.clone()).dereference(context).await;
           if deref.is_ok() {
             return deref;
           }
         }
-        Err(LemmyErrorType::NotFound.into())
+        Err(StudyCycleErrorType::NotFound.into())
       }
     }
   }
 
   pub(crate) async fn object_id(
     &self,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<ObjectId<ReportableObjects>> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<ObjectId<ReportableObjects>> {
     match self {
-      ReportObject::Lemmy(l) => Ok(l.clone()),
+      ReportObject::StudyCycle(l) => Ok(l.clone()),
       ReportObject::Mastodon(objects) => {
         for o in objects {
           // Same logic as above, but return the ID and not the object itself.
@@ -86,19 +86,19 @@ impl ReportObject {
             return Ok(o.clone().into());
           }
         }
-        Err(LemmyErrorType::NotFound.into())
+        Err(StudyCycleErrorType::NotFound.into())
       }
     }
   }
 }
 
 impl InCommunity for Report {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<ApubCommunity> {
     if let Some(audience) = &self.audience {
       return audience.dereference(context).await;
     }
     match self.to[0].dereference(context).await? {
-      Either::Left(_) => Err(LemmyErrorType::NotFound.into()),
+      Either::Left(_) => Err(StudyCycleErrorType::NotFound.into()),
       Either::Right(c) => Ok(c),
     }
   }

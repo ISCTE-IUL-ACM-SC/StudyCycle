@@ -1,14 +1,14 @@
 use crate::{send::send_email, user_language};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::connection::DbPool;
-use lemmy_utils::{error::LemmyResult, settings::structs::Settings};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::connection::DbPool;
+use studycycle_utils::{error::StudyCycleResult, settings::structs::Settings};
 
 /// Send a new applicant email notification to all admins
 pub async fn send_new_applicant_email_to_admins(
   applicant_username: &str,
   pool: &mut DbPool<'_>,
   settings: &'static Settings,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   // Collect the admins with emails
   let admins = LocalUserView::list_admins_with_emails(pool).await?;
 
@@ -34,7 +34,7 @@ pub async fn send_new_report_email_to_admins(
   reported_username: &str,
   pool: &mut DbPool<'_>,
   settings: &'static Settings,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   // Collect the admins with emails
   let admins = LocalUserView::list_admins_with_emails(pool).await?;
 

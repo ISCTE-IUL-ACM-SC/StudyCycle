@@ -1,10 +1,10 @@
-pub use lemmy_db_schema::{
+pub use studycycle_db_schema::{
   PostFeatureType,
   newtypes::PostId,
   source::post::{Post, PostActions, PostInsertForm, PostLikeForm},
 };
-pub use lemmy_db_schema_file::enums::{PostListingMode, PostNotificationsMode};
-pub use lemmy_db_views_post::{
+pub use studycycle_db_schema_file::enums::{PostListingMode, PostNotificationsMode};
+pub use studycycle_db_views_post::{
   PostView,
   api::{
     GetPosts,
@@ -16,7 +16,7 @@ pub use lemmy_db_views_post::{
   },
 };
 pub mod actions {
-  pub use lemmy_db_views_post::api::{
+  pub use studycycle_db_views_post::api::{
     CreatePost,
     CreatePostLike,
     DeletePost,
@@ -29,7 +29,7 @@ pub mod actions {
   };
 
   pub mod moderation {
-    pub use lemmy_db_views_post::api::{
+    pub use studycycle_db_views_post::api::{
       FeaturePost,
       ListPostLikes,
       LockPost,

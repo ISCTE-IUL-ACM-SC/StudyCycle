@@ -6,30 +6,30 @@ use crate::{
     IdOrNestedObject,
     community::announce::{AnnounceActivity, RawAnnouncableActivities},
   },
-  send_lemmy_activity,
+  send_studycycle_activity,
 };
 use activitypub_federation::{
   config::Data,
   kinds::activity::AnnounceType,
   traits::{Activity, Object},
 };
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::{
   objects::community::ApubCommunity,
   utils::{
     functions::{generate_to, verify_person_in_community, verify_visibility},
     protocol::{Id, InCommunity},
   },
 };
-use lemmy_db_schema::source::{activity::ActivitySendTargets, community::CommunityActions};
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult, UntranslatedError};
+use studycycle_db_schema::source::{activity::ActivitySendTargets, community::CommunityActions};
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult, UntranslatedError};
 use serde_json::Value;
 use url::Url;
 
 #[async_trait::async_trait]
 impl Activity for RawAnnouncableActivities {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -82,8 +82,8 @@ impl AnnounceActivity {
   pub fn new(
     object: RawAnnouncableActivities,
     community: &ApubCommunity,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<AnnounceActivity> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<AnnounceActivity> {
     let inner_kind = object
       .other
       .get("type")
@@ -109,14 +109,14 @@ impl AnnounceActivity {
   pub async fn send(
     object: RawAnnouncableActivities,
     community: &ApubCommunity,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     let announce = AnnounceActivity::new(object.clone(), community, context)?;
     let inboxes = ActivitySendTargets::to_local_community_followers(community.id);
-    send_lemmy_activity(context, announce, community, inboxes.clone(), false).await?;
+    send_studycycle_activity(context, announce, community, inboxes.clone(), false).await?;
 
     // Pleroma and Mastodon can't handle activities like Announce/Create/Page. So for
-    // compatibility, we also send Announce/Page so that they can follow Lemmy communities.
+    // compatibility, we also send Announce/Page so that they can follow StudyCycle communities.
     let object_parsed = object.try_into()?;
     if let AnnouncableActivities::CreateOrUpdatePost(c) = object_parsed {
       // Hack: need to convert Page into a format which can be sent as activity, which requires
@@ -130,7 +130,7 @@ impl AnnounceActivity {
           .clone(),
       };
       let announce_compat = AnnounceActivity::new(announcable_page, community, context)?;
-      send_lemmy_activity(context, announce_compat, community, inboxes, false).await?;
+      send_studycycle_activity(context, announce_compat, community, inboxes, false).await?;
     }
     Ok(())
   }
@@ -138,8 +138,8 @@ impl AnnounceActivity {
 
 #[async_trait::async_trait]
 impl Activity for AnnounceActivity {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -149,11 +149,11 @@ impl Activity for AnnounceActivity {
     self.actor.inner()
   }
 
-  async fn verify(&self, _context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, _context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     let object: AnnouncableActivities = self.object.object(context).await?.try_into()?;
 
     // This is only for sending, not receiving so we reject it.
@@ -198,12 +198,12 @@ impl TryFrom<AnnouncableActivities> for RawAnnouncableActivities {
 ///       problem compared to receiving unsolicited posts.
 async fn can_accept_activity_in_community(
   community: &Option<ApubCommunity>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   if let Some(community) = community {
     // Local only community can't federate
     if !community.visibility.can_federate() {
-      return Err(LemmyErrorType::NotFound.into());
+      return Err(StudyCycleErrorType::NotFound.into());
     }
     if !community.local {
       CommunityActions::check_accept_activity_in_community(&mut context.pool(), community).await?

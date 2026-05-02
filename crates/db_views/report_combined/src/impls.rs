@@ -18,7 +18,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   ReportType,
   newtypes::{
     CommentReportId,
@@ -35,7 +35,7 @@ use lemmy_db_schema::{
   traits::InternalToCombinedView,
   utils::limit_fetch,
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   aliases,
   schema::{
     comment_report,
@@ -47,8 +47,8 @@ use lemmy_db_schema_file::{
     report_combined,
   },
 };
-use lemmy_db_views_report_combined_sql::report_combined_joins;
-use lemmy_diesel_utils::{
+use studycycle_db_views_report_combined_sql::report_combined_joins;
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -58,14 +58,14 @@ use lemmy_diesel_utils::{
     paginate_response,
   },
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl ReportCombinedViewInternal {
   pub async fn read_comment_report(
     pool: &mut DbPool<'_>,
     report_id: CommentReportId,
     my_person: &Person,
-  ) -> LemmyResult<CommentReportView> {
+  ) -> StudyCycleResult<CommentReportView> {
     let conn = &mut get_conn(pool).await?;
     let res = report_combined_joins(my_person.id, my_person.instance_id)
       .filter(report_combined::comment_report_id.eq(report_id))
@@ -75,7 +75,7 @@ impl ReportCombinedViewInternal {
 
     let res = InternalToCombinedView::map_to_enum(res);
     let Some(ReportCombinedView::Comment(c)) = res else {
-      return Err(LemmyErrorType::NotFound.into());
+      return Err(StudyCycleErrorType::NotFound.into());
     };
     Ok(c)
   }
@@ -84,7 +84,7 @@ impl ReportCombinedViewInternal {
     pool: &mut DbPool<'_>,
     report_id: PostReportId,
     my_person: &Person,
-  ) -> LemmyResult<PostReportView> {
+  ) -> StudyCycleResult<PostReportView> {
     let conn = &mut get_conn(pool).await?;
     let res = report_combined_joins(my_person.id, my_person.instance_id)
       .filter(report_combined::post_report_id.eq(report_id))
@@ -94,7 +94,7 @@ impl ReportCombinedViewInternal {
 
     let res = InternalToCombinedView::map_to_enum(res);
     let Some(ReportCombinedView::Post(p)) = res else {
-      return Err(LemmyErrorType::NotFound.into());
+      return Err(StudyCycleErrorType::NotFound.into());
     };
     Ok(p)
   }
@@ -103,7 +103,7 @@ impl ReportCombinedViewInternal {
     pool: &mut DbPool<'_>,
     report_id: CommunityReportId,
     my_person: &Person,
-  ) -> LemmyResult<CommunityReportView> {
+  ) -> StudyCycleResult<CommunityReportView> {
     let conn = &mut get_conn(pool).await?;
     let res = report_combined_joins(my_person.id, my_person.instance_id)
       .filter(report_combined::community_report_id.eq(report_id))
@@ -113,7 +113,7 @@ impl ReportCombinedViewInternal {
 
     let res = InternalToCombinedView::map_to_enum(res);
     let Some(ReportCombinedView::Community(c)) = res else {
-      return Err(LemmyErrorType::NotFound.into());
+      return Err(StudyCycleErrorType::NotFound.into());
     };
     Ok(c)
   }
@@ -122,7 +122,7 @@ impl ReportCombinedViewInternal {
     pool: &mut DbPool<'_>,
     report_id: PrivateMessageReportId,
     my_person: &Person,
-  ) -> LemmyResult<PrivateMessageReportView> {
+  ) -> StudyCycleResult<PrivateMessageReportView> {
     let conn = &mut get_conn(pool).await?;
     let res = report_combined_joins(my_person.id, my_person.instance_id)
       .filter(report_combined::private_message_report_id.eq(report_id))
@@ -132,13 +132,13 @@ impl ReportCombinedViewInternal {
 
     let res = InternalToCombinedView::map_to_enum(res);
     let Some(ReportCombinedView::PrivateMessage(pm)) = res else {
-      return Err(LemmyErrorType::NotFound.into());
+      return Err(StudyCycleErrorType::NotFound.into());
     };
     Ok(pm)
   }
 
   /// returns the current unresolved report count for the communities you mod
-  pub async fn get_report_count(pool: &mut DbPool<'_>, user: &LocalUserView) -> LemmyResult<i64> {
+  pub async fn get_report_count(pool: &mut DbPool<'_>, user: &LocalUserView) -> StudyCycleResult<i64> {
     use diesel::dsl::count;
 
     let conn = &mut get_conn(pool).await?;
@@ -157,7 +157,7 @@ impl ReportCombinedViewInternal {
     query
       .first::<i64>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -177,7 +177,7 @@ impl PaginationCursorConversion for ReportCombinedView {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     let conn = &mut get_conn(pool).await?;
     let (prefix, id) = cursor.id_and_prefix()?;
 
@@ -190,7 +190,7 @@ impl PaginationCursorConversion for ReportCombinedView {
       'P' => query.filter(report_combined::post_report_id.eq(id)),
       'M' => query.filter(report_combined::private_message_report_id.eq(id)),
       'Y' => query.filter(report_combined::community_report_id.eq(id)),
-      _ => return Err(LemmyErrorType::CouldntParsePaginationToken.into()),
+      _ => return Err(StudyCycleErrorType::CouldntParsePaginationToken.into()),
     };
     let token = query.first(conn).await?;
 
@@ -216,7 +216,7 @@ impl ReportCombinedQuery {
     self,
     pool: &mut DbPool<'_>,
     user: &LocalUserView,
-  ) -> LemmyResult<PagedResponse<ReportCombinedView>> {
+  ) -> StudyCycleResult<PagedResponse<ReportCombinedView>> {
     let limit = limit_fetch(self.limit, None)?;
 
     let report_creator = aliases::person1.field(person::id);
@@ -438,7 +438,7 @@ mod tests {
   use chrono::{Days, Utc};
   use diesel::{ExpressionMethods, QueryDsl, update};
   use diesel_async::RunQueryDsl;
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     ReportType,
     assert_length,
     source::{
@@ -456,12 +456,12 @@ mod tests {
     },
     traits::{Bannable, Reportable},
   };
-  use lemmy_db_schema_file::schema::report_combined;
-  use lemmy_diesel_utils::{
+  use studycycle_db_schema_file::schema::report_combined;
+  use studycycle_diesel_utils::{
     connection::{DbPool, build_db_pool_for_tests, get_conn},
     traits::Crud,
   };
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -478,7 +478,7 @@ mod tests {
     comment: Comment,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> StudyCycleResult<Data> {
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld").await?;
 
     let timmy_form = PersonInsertForm::test_form(inserted_instance.id, "timmy_rcv");
@@ -559,7 +559,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
     Instance::delete(pool, data.instance.id).await?;
 
     Ok(())
@@ -567,7 +567,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn combined() -> LemmyResult<()> {
+  async fn combined() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -738,7 +738,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn private_message_reports() -> LemmyResult<()> {
+  async fn private_message_reports() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -803,7 +803,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn post_reports() -> LemmyResult<()> {
+  async fn post_reports() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -936,7 +936,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn comment_reports() -> LemmyResult<()> {
+  async fn comment_reports() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1059,7 +1059,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn community_reports() -> LemmyResult<()> {
+  async fn community_reports() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1131,7 +1131,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn violates_instance_rules() -> LemmyResult<()> {
+  async fn violates_instance_rules() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1221,7 +1221,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn my_reports_only() -> LemmyResult<()> {
+  async fn my_reports_only() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1272,7 +1272,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn ensure_creator_data_is_correct() -> LemmyResult<()> {
+  async fn ensure_creator_data_is_correct() -> StudyCycleResult<()> {
     // The creator_banned and other creator_data should be the content creator, not the report
     // creator.
 

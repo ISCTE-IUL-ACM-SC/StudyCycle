@@ -1,37 +1,37 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::notify_private_message,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_local_user_valid, get_url_blocklist, process_markdown, slur_regex},
 };
-use lemmy_db_schema::source::private_message::{PrivateMessage, PrivateMessageUpdateForm};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_private_message::{
+use studycycle_db_schema::source::private_message::{PrivateMessage, PrivateMessageUpdateForm};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_private_message::{
   PrivateMessageView,
   api::{EditPrivateMessage, PrivateMessageResponse},
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::validation::is_valid_body_field,
 };
 
 pub async fn edit_private_message(
   Json(data): Json<EditPrivateMessage>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PrivateMessageResponse>> {
+) -> StudyCycleResult<Json<PrivateMessageResponse>> {
   check_local_user_valid(&local_user_view)?;
   // Checking permissions
   let private_message_id = data.private_message_id;
   let orig_private_message = PrivateMessage::read(&mut context.pool(), private_message_id).await?;
   if local_user_view.person.id != orig_private_message.creator_id {
-    return Err(LemmyErrorType::EditPrivateMessageNotAllowed.into());
+    return Err(StudyCycleErrorType::EditPrivateMessageNotAllowed.into());
   }
 
   // Doing the update

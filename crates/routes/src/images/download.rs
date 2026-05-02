@@ -7,11 +7,11 @@ use actix_web::{
   http::StatusCode,
   web::{Data, *},
 };
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::source::images::RemoteImage;
-use lemmy_db_views_local_image::api::{ImageGetParams, ImageProxyParams};
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::source::images::RemoteImage;
+use studycycle_db_views_local_image::api::{ImageGetParams, ImageProxyParams};
+use studycycle_db_views_site::SiteView;
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
 use std::str::FromStr;
 use strum::{Display, EnumString};
@@ -21,8 +21,8 @@ pub async fn get_image(
   filename: Path<String>,
   Query(params): Query<ImageGetParams>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<HttpResponse> {
   let name = &filename.into_inner();
 
   // If there are no query params, the URL is original
@@ -46,8 +46,8 @@ pub async fn get_image(
 pub async fn image_proxy(
   Query(params): Query<ImageProxyParams>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Either<HttpResponse<()>, HttpResponse<BoxBody>>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Either<HttpResponse<()>, HttpResponse<BoxBody>>> {
   let url = Url::parse(&params.url)?;
   let encoded_url = utf8_percent_encode(&params.url, NON_ALPHANUMERIC).to_string();
 
@@ -86,7 +86,7 @@ pub async fn image_proxy(
     // Bypass proxy and redirect user to original image
     Ok(Either::Left(Redirect::to(url.to_string()).respond_to(&req)))
   } else {
-    // Proxy the image data through Lemmy
+    // Proxy the image data through StudyCycle
     Ok(Either::Right(
       do_get_image(processed_url, req, &context).await?,
     ))
@@ -96,8 +96,8 @@ pub async fn image_proxy(
 pub(super) async fn do_get_image(
   url: String,
   req: HttpRequest,
-  context: &LemmyContext,
-) -> LemmyResult<HttpResponse> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<HttpResponse> {
   let mut client_req = adapt_request(&req, url, context);
 
   if let Some(addr) = req.head().peer_addr {
@@ -137,21 +137,21 @@ enum PictrsFileType {
 }
 
 /// Take file type from param, name, or use jpg if nothing is given
-fn file_type(file_type: Option<String>, name: &str) -> LemmyResult<PictrsFileType> {
+fn file_type(file_type: Option<String>, name: &str) -> StudyCycleResult<PictrsFileType> {
   let type_str = file_type
     .clone()
     .unwrap_or_else(|| name.split('.').next_back().unwrap_or("jpg").to_string());
 
-  PictrsFileType::from_str(&type_str).with_lemmy_type(LemmyErrorType::NotAnImageType)
+  PictrsFileType::from_str(&type_str).with_studycycle_type(StudyCycleErrorType::NotAnImageType)
 }
 
 #[cfg(test)]
 mod tests {
   use crate::images::download::{PictrsFileType, file_type};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_utils::error::StudyCycleResult;
 
   #[tokio::test]
-  async fn image_file_type_tests() -> LemmyResult<()> {
+  async fn image_file_type_tests() -> StudyCycleResult<()> {
     // Make sure files type outputs are getting lower-cased
     assert_eq!(PictrsFileType::Jpg.to_string(), "jpg".to_string());
 

@@ -1,8 +1,8 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::notify_mod_action,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{
@@ -11,7 +11,7 @@ use lemmy_api_utils::{
     remove_or_restore_user_data_in_community,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     community::{Community, CommunityActions, CommunityPersonBanForm},
     local_user::LocalUser,
@@ -19,20 +19,20 @@ use lemmy_db_schema::{
   },
   traits::{Bannable, Followable},
 };
-use lemmy_db_views_community::api::BanFromCommunity;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::{PersonView, api::PersonResponse};
-use lemmy_diesel_utils::{connection::get_conn, traits::Crud};
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_db_views_community::api::BanFromCommunity;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_person::{PersonView, api::PersonResponse};
+use studycycle_diesel_utils::{connection::get_conn, traits::Crud};
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::validation::is_valid_body_field,
 };
 
 pub async fn ban_from_community(
   Json(data): Json<BanFromCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PersonResponse>> {
+) -> StudyCycleResult<Json<PersonResponse>> {
   let banned_person_id = data.person_id;
   let my_person_id = local_user_view.person.id;
   let expires_at = check_expire_time(data.expires_at)?;
@@ -86,7 +86,7 @@ pub async fn ban_from_community(
         let action = Modlog::create(&mut conn.into(), &[form]).await?;
 
         // Remove/Restore their data if that's desired
-        let ban_id = action.first().ok_or(LemmyErrorType::NotFound)?.id;
+        let ban_id = action.first().ok_or(StudyCycleErrorType::NotFound)?.id;
         if tx_data.remove_or_restore_data.unwrap_or(false) {
           let remove_data = tx_data.ban;
           remove_or_restore_user_data_in_community(

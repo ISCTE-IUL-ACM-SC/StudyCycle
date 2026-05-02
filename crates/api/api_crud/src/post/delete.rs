@@ -1,31 +1,31 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_post_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_community_user_action,
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::Community,
   post::{Post, PostUpdateForm},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::{DeletePost, PostResponse};
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::api::{DeletePost, PostResponse};
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn delete_post(
   Json(data): Json<DeletePost>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> StudyCycleResult<Json<PostResponse>> {
   let post_id = data.post_id;
   let orig_post = Post::read(&mut context.pool(), post_id).await?;
 
   // Dont delete it if its already been deleted.
   if orig_post.deleted == data.deleted {
-    return Err(LemmyErrorType::CouldntUpdate.into());
+    return Err(StudyCycleErrorType::CouldntUpdate.into());
   }
 
   let community = Community::read(&mut context.pool(), orig_post.community_id).await?;
@@ -33,7 +33,7 @@ pub async fn delete_post(
 
   // Verify that only the creator can delete
   if !Post::is_post_creator(local_user_view.person.id, orig_post.creator_id) {
-    return Err(LemmyErrorType::NoPostEditAllowed.into());
+    return Err(StudyCycleErrorType::NoPostEditAllowed.into());
   }
 
   // Update the post

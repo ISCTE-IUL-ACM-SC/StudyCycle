@@ -8,7 +8,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   CommunitySortType,
   MultiCommunityListingType,
   MultiCommunitySortType,
@@ -25,7 +25,7 @@ use lemmy_db_schema::{
     queries::filters::{filter_is_subscribed, filter_not_unlisted, filter_suggested_communities},
   },
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   enums::ListingType,
   joins::{
@@ -44,7 +44,7 @@ use lemmy_db_schema_file::{
     person,
   },
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -56,7 +56,7 @@ use lemmy_diesel_utils::{
   traits::Crud,
   utils::{LowerKey, fuzzy_search, now, seconds_to_pg_interval},
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl CommunityView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -77,7 +77,7 @@ impl CommunityView {
     community_id: CommunityId,
     my_local_user: Option<&'_ LocalUser>,
     is_mod_or_admin: bool,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let mut query = Self::joins(my_local_user.person_id())
       .filter(community::id.eq(community_id))
@@ -96,7 +96,7 @@ impl CommunityView {
     query
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -109,7 +109,7 @@ impl PaginationCursorConversion for CommunityView {
   async fn from_cursor(
     data: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     Community::read(pool, CommunityId(data.id()?)).await
   }
 }
@@ -133,8 +133,8 @@ impl CommunityQuery<'_> {
     self,
     site: &Site,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<PagedResponse<CommunityView>> {
-    use lemmy_db_schema::CommunitySortType::*;
+  ) -> StudyCycleResult<PagedResponse<CommunityView>> {
+    use studycycle_db_schema::CommunitySortType::*;
     let limit = limit_fetch(self.limit, None)?;
 
     let mut query = CommunityView::joins(self.local_user.person_id())
@@ -232,7 +232,7 @@ impl CommunityQuery<'_> {
     let res = pq
       .load::<CommunityView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
     paginate_response(res, limit, self.page_cursor)
   }
 }
@@ -253,7 +253,7 @@ impl MultiCommunityView {
     pool: &mut DbPool<'_>,
     id: MultiCommunityId,
     my_person_id: Option<PersonId>,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     Self::joins(my_person_id)
@@ -261,7 +261,7 @@ impl MultiCommunityView {
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -274,7 +274,7 @@ impl PaginationCursorConversion for MultiCommunityView {
   async fn from_cursor(
     data: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     MultiCommunity::read(pool, MultiCommunityId(data.id()?)).await
   }
 }
@@ -294,8 +294,8 @@ pub struct MultiCommunityQuery<'a> {
 }
 
 impl MultiCommunityQuery<'_> {
-  pub async fn list(self, pool: &mut DbPool<'_>) -> LemmyResult<PagedResponse<MultiCommunityView>> {
-    use lemmy_db_schema::{MultiCommunityListingType::*, MultiCommunitySortType::*};
+  pub async fn list(self, pool: &mut DbPool<'_>) -> StudyCycleResult<PagedResponse<MultiCommunityView>> {
+    use studycycle_db_schema::{MultiCommunityListingType::*, MultiCommunitySortType::*};
 
     let limit = limit_fetch(self.limit, self.no_limit)?;
     let mut query = MultiCommunityView::joins(self.local_user.person_id())
@@ -370,7 +370,7 @@ impl MultiCommunityQuery<'_> {
     let res = pq
       .load::<MultiCommunityView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
 
     paginate_response(res, limit, self.page_cursor)
   }
@@ -384,7 +384,7 @@ mod tests {
     CommunityView,
     impls::{CommunityQuery, MultiCommunityListingType, MultiCommunityQuery},
   };
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     CommunitySortType,
     assert_length,
     source::{
@@ -404,12 +404,12 @@ mod tests {
     },
     traits::Followable,
   };
-  use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
-  use lemmy_diesel_utils::{
+  use studycycle_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
+  use studycycle_diesel_utils::{
     connection::{DbPool, build_db_pool_for_tests},
     traits::Crud,
   };
-  use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+  use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
   use serial_test::serial;
   use std::collections::HashSet;
   use url::Url;
@@ -424,7 +424,7 @@ mod tests {
     site: Site,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> StudyCycleResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
 
     let person_name = "tegan".to_string();
@@ -517,7 +517,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
     for Community { id, .. } in data.communities {
       Community::delete(pool, id).await?;
     }
@@ -529,7 +529,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn follow_state() -> LemmyResult<()> {
+  async fn follow_state() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -601,7 +601,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn local_only_community() -> LemmyResult<()> {
+  async fn local_only_community() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -646,7 +646,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn community_sort_name() -> LemmyResult<()> {
+  async fn community_sort_name() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -657,7 +657,7 @@ mod tests {
     };
     let communities = query.list(&data.site, pool).await?;
     for (i, c) in communities.iter().enumerate().skip(1) {
-      let prev = communities.get(i - 1).ok_or(LemmyErrorType::NotFound)?;
+      let prev = communities.get(i - 1).ok_or(StudyCycleErrorType::NotFound)?;
       assert!(c.community.title.cmp(&prev.community.title).is_ge());
     }
 
@@ -667,7 +667,7 @@ mod tests {
     };
     let communities = query.list(&data.site, pool).await?;
     for (i, c) in communities.iter().enumerate().skip(1) {
-      let prev = communities.get(i - 1).ok_or(LemmyErrorType::NotFound)?;
+      let prev = communities.get(i - 1).ok_or(StudyCycleErrorType::NotFound)?;
       assert!(c.community.title.cmp(&prev.community.title).is_le());
     }
 
@@ -676,7 +676,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn can_mod() -> LemmyResult<()> {
+  async fn can_mod() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -723,7 +723,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_multi_community_list() -> LemmyResult<()> {
+  async fn test_multi_community_list() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -792,7 +792,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn search() -> LemmyResult<()> {
+  async fn search() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -844,7 +844,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn multi_community_search() -> LemmyResult<()> {
+  async fn multi_community_search() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

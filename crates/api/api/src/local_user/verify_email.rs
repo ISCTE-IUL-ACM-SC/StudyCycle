@@ -1,21 +1,21 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::check_local_user_valid};
-use lemmy_db_schema::source::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_local_user_valid};
+use studycycle_db_schema::source::{
   email_verification::EmailVerification,
   local_user::{LocalUser, LocalUserUpdateForm},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{
   SiteView,
   api::{SuccessResponse, VerifyEmail},
 };
-use lemmy_email::{account::send_email_verified_email, admin::send_new_applicant_email_to_admins};
-use lemmy_utils::error::LemmyResult;
+use studycycle_email::{account::send_email_verified_email, admin::send_new_applicant_email_to_admins};
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn verify_email(
   Json(data): Json<VerifyEmail>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<SuccessResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<SuccessResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let token = data.token.clone();
   let verification = EmailVerification::read_for_token(&mut context.pool(), &token).await?;

@@ -1,9 +1,9 @@
 use crate::util::{FederationQueueStateWithDomain, get_latest_activity_id};
 use chrono::Local;
-use lemmy_db_schema::newtypes::ActivityId;
-use lemmy_db_schema_file::InstanceId;
-use lemmy_diesel_utils::connection::{ActualDbPool, DbPool};
-use lemmy_utils::{error::LemmyResult, federate_retry_sleep_duration};
+use studycycle_db_schema::newtypes::ActivityId;
+use studycycle_db_schema_file::InstanceId;
+use studycycle_diesel_utils::connection::{ActualDbPool, DbPool};
+use studycycle_utils::{error::StudyCycleResult, federate_retry_sleep_duration};
 use std::{collections::HashMap, time::Duration};
 use tokio::{sync::mpsc::UnboundedReceiver, time::interval};
 use tracing::{debug, info, warn};
@@ -50,7 +50,7 @@ async fn print_stats(
 async fn print_stats_with_error(
   pool: &mut DbPool<'_>,
   stats: &HashMap<InstanceId, FederationQueueStateWithDomain>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let last_id = get_latest_activity_id(pool).await?.unwrap_or(ActivityId(0));
 
   // it's expected that the values are a bit out of date, everything < SAVE_STATE_EVERY should be

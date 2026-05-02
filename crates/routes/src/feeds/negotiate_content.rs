@@ -1,14 +1,14 @@
 use actix_web::{Error, HttpRequest, http::header::*, web};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{local_user_view_from_jwt, read_auth_token},
 };
-use lemmy_email::{translations::Lang, user_language};
+use studycycle_email::{translations::Lang, user_language};
 use rosetta_i18n::{Language, LanguageId};
 
 pub(crate) async fn get_lang_or_negotiate(
   req: &HttpRequest,
-  context: &web::Data<LemmyContext>,
+  context: &web::Data<StudyCycleContext>,
 ) -> Result<Lang, Error> {
   let jwt = read_auth_token(req)?;
 

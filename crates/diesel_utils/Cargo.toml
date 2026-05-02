@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_diesel_utils"
+name = "studycycle_diesel_utils"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -10,7 +10,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "lemmy_diesel_utils"
+name = "studycycle_diesel_utils"
 path = "src/lib.rs"
 doctest = false
 
@@ -33,7 +33,7 @@ full = [
   "tokio-postgres-rustls",
   "rustls",
   "i-love-jesus",
-  "lemmy_utils/full",
+  "studycycle_utils/full",
   "diesel",
   "activitypub_federation",
   "serde_urlencoded",
@@ -64,7 +64,7 @@ tokio-postgres = { workspace = true, optional = true }
 tokio-postgres-rustls = { workspace = true, optional = true }
 rustls = { workspace = true, optional = true }
 i-love-jesus = { workspace = true, optional = true }
-lemmy_utils = { workspace = true, features = ["full"], optional = true }
+studycycle_utils = { workspace = true, features = ["full"], optional = true }
 serde_urlencoded = { version = "0.7.1", optional = true }
 base64 = { workspace = true, optional = true }
 serde_with = { workspace = true }
@@ -77,6 +77,6 @@ itertools = { workspace = true }
 pathfinding = "4.15.0"
 unified-diff = { workspace = true }
 diesel_ltree = { workspace = true }
-lemmy_db_schema_file = { workspace = true, features = ["full"] }
-lemmy_utils = { workspace = true, features = ["full"] }
+studycycle_db_schema_file = { workspace = true, features = ["full"] }
+studycycle_utils = { workspace = true, features = ["full"] }
 pretty_assertions = { workspace = true }

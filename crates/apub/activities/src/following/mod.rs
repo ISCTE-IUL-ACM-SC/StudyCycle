@@ -1,4 +1,4 @@
-use super::{generate_activity_id, send_lemmy_activity};
+use super::{generate_activity_id, send_studycycle_activity};
 use crate::protocol::following::{
   accept::AcceptFollow,
   follow::Follow,
@@ -7,15 +7,15 @@ use crate::protocol::following::{
 };
 use activitypub_federation::{config::Data, kinds::activity::FollowType, traits::Activity};
 use either::Either::*;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::objects::{CommunityOrMulti, UserOrCommunityOrMulti, person::ApubPerson};
-use lemmy_db_schema::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::objects::{CommunityOrMulti, UserOrCommunityOrMulti, person::ApubPerson};
+use studycycle_db_schema::{
   newtypes::CommunityId,
   source::{activity::ActivitySendTargets, community::Community, person::Person},
 };
-use lemmy_db_schema_file::PersonId;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_db_schema_file::PersonId;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use serde::Serialize;
 
 pub(crate) mod accept;
@@ -27,8 +27,8 @@ pub async fn send_follow(
   target: CommunityOrMulti,
   person: Person,
   follow: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let actor: ApubPerson = person.into();
   if follow {
     Follow::send(&actor, &target, context).await
@@ -41,8 +41,8 @@ pub async fn send_accept_or_reject_follow(
   community_id: CommunityId,
   person_id: PersonId,
   accepted: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let community = Community::read(&mut context.pool(), community_id).await?;
   let person = Person::read(&mut context.pool(), person_id).await?;
 
@@ -62,19 +62,19 @@ pub async fn send_accept_or_reject_follow(
 
 /// Wrapper type which is needed because we cant implement ActorT for Either.
 async fn send_activity_from_user_or_community_or_multi<A>(
-  context: &Data<LemmyContext>,
+  context: &Data<StudyCycleContext>,
   activity: A,
   target: UserOrCommunityOrMulti,
   send_targets: ActivitySendTargets,
-) -> LemmyResult<()>
+) -> StudyCycleResult<()>
 where
-  A: Activity + Serialize + Send + Sync + Clone + Activity<Error = LemmyError>,
+  A: Activity + Serialize + Send + Sync + Clone + Activity<Error = StudyCycleError>,
 {
   match target {
-    Left(user) => send_lemmy_activity(context, activity, &user, send_targets, true).await,
+    Left(user) => send_studycycle_activity(context, activity, &user, send_targets, true).await,
     Right(Left(community)) => {
-      send_lemmy_activity(context, activity, &community, send_targets, true).await
+      send_studycycle_activity(context, activity, &community, send_targets, true).await
     }
-    Right(Right(multi)) => send_lemmy_activity(context, activity, &multi, send_targets, true).await,
+    Right(Right(multi)) => send_studycycle_activity(context, activity, &multi, send_targets, true).await,
   }
 }

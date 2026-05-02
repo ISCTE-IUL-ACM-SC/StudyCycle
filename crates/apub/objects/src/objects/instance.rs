@@ -21,20 +21,20 @@ use activitypub_federation::{
   traits::{Actor, Object},
 };
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{get_url_blocklist, process_markdown_opt, proxy_image_link_opt_apub, slur_regex},
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   actor_language::SiteLanguage,
   instance::Instance as DbInstance,
   site::{Site, SiteInsertForm},
 };
-use lemmy_db_schema_file::{InstanceId, enums::ActorType};
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{sensitive::SensitiveString, traits::Crud};
-use lemmy_utils::{
-  error::{LemmyError, LemmyResult, UntranslatedError},
+use studycycle_db_schema_file::{InstanceId, enums::ActorType};
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{sensitive::SensitiveString, traits::Crud};
+use studycycle_utils::{
+  error::{StudyCycleError, StudyCycleResult, UntranslatedError},
   utils::{markdown::markdown_to_html, slurs::remove_slurs},
 };
 use std::ops::Deref;
@@ -59,9 +59,9 @@ impl From<Site> for ApubSite {
 
 #[async_trait::async_trait]
 impl Object for ApubSite {
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = Instance;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     self.ap_id.inner()
@@ -71,7 +71,7 @@ impl Object for ApubSite {
     Some(self.last_refreshed_at)
   }
 
-  async fn read_from_id(object_id: Url, data: &Data<Self::DataType>) -> LemmyResult<Option<Self>> {
+  async fn read_from_id(object_id: Url, data: &Data<Self::DataType>) -> StudyCycleResult<Option<Self>> {
     Ok(
       Site::read_from_apub_id(&mut data.pool(), &object_id.into())
         .await?
@@ -79,11 +79,11 @@ impl Object for ApubSite {
     )
   }
 
-  async fn delete(&self, _data: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(&self, _data: &Data<Self::DataType>) -> StudyCycleResult<()> {
     Err(UntranslatedError::CantDeleteSite.into())
   }
 
-  async fn into_json(self, data: &Data<Self::DataType>) -> LemmyResult<Self::Kind> {
+  async fn into_json(self, data: &Data<Self::DataType>) -> StudyCycleResult<Self::Kind> {
     let site_id = self.id;
     let langs = SiteLanguage::read(&mut data.pool(), site_id).await?;
     let language = LanguageTag::new_multiple(langs, &mut data.pool()).await?;
@@ -114,7 +114,7 @@ impl Object for ApubSite {
     apub: &Self::Kind,
     expected_domain: &Url,
     data: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     check_apub_id_valid_with_strictness(apub.id.inner(), true, data).await?;
     verify_domains_match(expected_domain, apub.id.inner())?;
     verify_is_remote_object(&apub.id, data)?;
@@ -122,7 +122,7 @@ impl Object for ApubSite {
     Ok(())
   }
 
-  async fn from_json(apub: Self::Kind, context: &Data<Self::DataType>) -> LemmyResult<Self> {
+  async fn from_json(apub: Self::Kind, context: &Data<Self::DataType>) -> StudyCycleResult<Self> {
     let domain = apub
       .id
       .inner()
@@ -189,8 +189,8 @@ impl GetActorType for ApubSite {
 /// Try to fetch the instance actor (to make things like instance rules available).
 pub(crate) async fn fetch_instance_actor_for_object<T: Into<Url> + Clone>(
   object_id: &T,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<InstanceId> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<InstanceId> {
   let object_id: Url = object_id.clone().into();
   let instance_id = Site::instance_ap_id_from_url(object_id);
   let site = ObjectId::<ApubSite>::from(instance_id.clone())
@@ -199,7 +199,7 @@ pub(crate) async fn fetch_instance_actor_for_object<T: Into<Url> + Clone>(
   match site {
     Ok(s) => Ok(s.instance_id),
     Err(e) => {
-      // Failed to fetch instance actor, its probably not a lemmy instance
+      // Failed to fetch instance actor, its probably not a studycycle instance
       debug!("Failed to dereference site for {}: {}", &instance_id, e);
       let domain = instance_id
         .domain()
@@ -216,17 +216,17 @@ pub(crate) async fn fetch_instance_actor_for_object<T: Into<Url> + Clone>(
 #[cfg(test)]
 pub(crate) mod tests {
   use super::*;
-  use crate::utils::test::parse_lemmy_instance;
-  use lemmy_db_schema::{source::instance::Instance, test_data::TestData};
+  use crate::utils::test::parse_studycycle_instance;
+  use studycycle_db_schema::{source::instance::Instance, test_data::TestData};
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_instance() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_studycycle_instance() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
-    let site = parse_lemmy_instance(&context).await?;
+    let site = parse_studycycle_instance(&context).await?;
 
     assert_eq!(site.name, "Enterprise");
     assert_eq!(

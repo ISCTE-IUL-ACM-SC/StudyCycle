@@ -1,7 +1,7 @@
 use crate::newtypes::{CommentId, LanguageId, PostId};
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::PersonId;
-use lemmy_diesel_utils::dburl::DbUrl;
+use studycycle_db_schema_file::PersonId;
+use studycycle_diesel_utils::dburl::DbUrl;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
@@ -9,7 +9,7 @@ use {
   crate::newtypes::LtreeDef,
   diesel_ltree::Ltree,
   i_love_jesus::CursorKeysModule,
-  lemmy_db_schema_file::schema::{comment, comment_actions},
+  studycycle_db_schema_file::schema::{comment, comment_actions},
 };
 
 #[skip_serializing_none]

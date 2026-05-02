@@ -1,29 +1,29 @@
 use crate::federation::fetcher::resolve_community_identifier;
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{check_private_instance, is_mod_or_admin_opt, read_site_for_actor},
 };
-use lemmy_db_schema::source::actor_language::CommunityLanguage;
-use lemmy_db_views_community::{
+use studycycle_db_schema::source::actor_language::CommunityLanguage;
+use studycycle_db_views_community::{
   CommunityView,
   api::{GetCommunity, GetCommunityResponse},
 };
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::SiteView;
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn get_community(
   Query(data): Query<GetCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<GetCommunityResponse>> {
+) -> StudyCycleResult<Json<GetCommunityResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   if data.name.is_none() && data.id.is_none() {
-    return Err(LemmyErrorType::NoIdGiven.into());
+    return Err(StudyCycleErrorType::NoIdGiven.into());
   }
 
   check_private_instance(&local_user_view, &local_site)?;
@@ -32,7 +32,7 @@ pub async fn get_community(
 
   let community_id = resolve_community_identifier(&data.name, data.id, &context, &local_user_view)
     .await?
-    .ok_or(LemmyErrorType::NoIdGiven)?;
+    .ok_or(StudyCycleErrorType::NoIdGiven)?;
 
   let is_mod_or_admin = is_mod_or_admin_opt(
     &mut context.pool(),

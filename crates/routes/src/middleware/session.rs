@@ -7,19 +7,19 @@ use actix_web::{
 };
 use core::future::Ready;
 use futures_util::future::LocalBoxFuture;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{local_user_view_from_jwt, read_auth_token},
 };
 use std::{future::ready, rc::Rc};
 
 #[derive(Clone)]
 pub struct SessionMiddleware {
-  context: LemmyContext,
+  context: StudyCycleContext,
 }
 
 impl SessionMiddleware {
-  pub fn new(context: LemmyContext) -> Self {
+  pub fn new(context: StudyCycleContext) -> Self {
     SessionMiddleware { context }
   }
 }
@@ -45,7 +45,7 @@ where
 
 pub struct SessionService<S> {
   service: Rc<S>,
-  context: LemmyContext,
+  context: StudyCycleContext,
 }
 
 impl<S, B> Service<ServiceRequest> for SessionService<S>
@@ -101,21 +101,21 @@ where
 mod tests {
 
   use actix_web::test::TestRequest;
-  use lemmy_api_utils::{claims::Claims, context::LemmyContext};
-  use lemmy_db_schema::source::{
+  use studycycle_api_utils::{claims::Claims, context::StudyCycleContext};
+  use studycycle_db_schema::source::{
     instance::Instance,
     local_user::{LocalUser, LocalUserInsertForm},
     person::{Person, PersonInsertForm},
   };
-  use lemmy_diesel_utils::traits::Crud;
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::traits::Crud;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_session_auth() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_session_auth() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
 
     let inserted_instance = Instance::read_or_create(&mut context.pool(), "my_domain.tld").await?;
 

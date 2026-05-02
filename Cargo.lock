@@ -3221,977 +3221,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09edd9e8b54e49e587e4f6295a7d29c3ea94d469cb40ab8ca70b288248a81db2"
 
 [[package]]
-name = "lemmy_api"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "activitypub_federation",
- "actix-web",
- "anyhow",
- "bcrypt",
- "chrono",
- "diesel",
- "diesel-async",
- "either",
- "elementtree",
- "futures",
- "itertools",
- "lemmy_api_crud",
- "lemmy_api_utils",
- "lemmy_apub_objects",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_community_follower",
- "lemmy_db_views_community_follower_approval",
- "lemmy_db_views_community_moderator",
- "lemmy_db_views_local_image",
- "lemmy_db_views_local_user",
- "lemmy_db_views_modlog",
- "lemmy_db_views_notification",
- "lemmy_db_views_person",
- "lemmy_db_views_person_content_combined",
- "lemmy_db_views_person_liked_combined",
- "lemmy_db_views_person_saved_combined",
- "lemmy_db_views_post",
- "lemmy_db_views_post_comment_combined",
- "lemmy_db_views_registration_applications",
- "lemmy_db_views_report_combined",
- "lemmy_db_views_site",
- "lemmy_db_views_vote",
- "lemmy_diesel_utils",
- "lemmy_email",
- "lemmy_utils",
- "pretty_assertions",
- "regex",
- "serde",
- "serde_json",
- "serial_test",
- "sitemap-rs",
- "tokio",
- "totp-rs",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "lemmy_api_common"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_community_follower",
- "lemmy_db_views_community_follower_approval",
- "lemmy_db_views_community_moderator",
- "lemmy_db_views_custom_emoji",
- "lemmy_db_views_local_image",
- "lemmy_db_views_local_user",
- "lemmy_db_views_modlog",
- "lemmy_db_views_notification",
- "lemmy_db_views_person",
- "lemmy_db_views_person_content_combined",
- "lemmy_db_views_person_liked_combined",
- "lemmy_db_views_person_saved_combined",
- "lemmy_db_views_post",
- "lemmy_db_views_post_comment_combined",
- "lemmy_db_views_private_message",
- "lemmy_db_views_registration_applications",
- "lemmy_db_views_report_combined",
- "lemmy_db_views_site",
- "lemmy_db_views_vote",
- "lemmy_diesel_utils",
- "lemmy_utils",
-]
-
-[[package]]
-name = "lemmy_api_crud"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "accept-language",
- "activitypub_federation",
- "actix-web",
- "anyhow",
- "bcrypt",
- "chrono",
- "diesel-async",
- "futures",
- "futures-util",
- "lemmy_api_utils",
- "lemmy_apub_objects",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_community_follower",
- "lemmy_db_views_community_moderator",
- "lemmy_db_views_custom_emoji",
- "lemmy_db_views_local_user",
- "lemmy_db_views_person",
- "lemmy_db_views_post",
- "lemmy_db_views_private_message",
- "lemmy_db_views_registration_applications",
- "lemmy_db_views_site",
- "lemmy_diesel_utils",
- "lemmy_email",
- "lemmy_utils",
- "regex",
- "serde",
- "serde_json",
- "serde_with",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "lemmy_api_routes"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "actix-web",
- "lemmy_api",
- "lemmy_api_crud",
- "lemmy_routes",
- "lemmy_utils",
-]
-
-[[package]]
-name = "lemmy_api_utils"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "activitypub_federation",
- "actix-web",
- "actix-web-httpauth",
- "anyhow",
- "chrono",
- "derive-new",
- "diesel_ltree",
- "either",
- "encoding_rs",
- "enum-map",
- "extism",
- "extism-convert",
- "extism-manifest",
- "futures",
- "infer",
- "jsonwebtoken",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_community_follower_approval",
- "lemmy_db_views_community_moderator",
- "lemmy_db_views_local_image",
- "lemmy_db_views_local_user",
- "lemmy_db_views_notification",
- "lemmy_db_views_post",
- "lemmy_db_views_private_message",
- "lemmy_db_views_registration_applications",
- "lemmy_db_views_site",
- "lemmy_diesel_utils",
- "lemmy_email",
- "lemmy_utils",
- "mime",
- "mime_guess",
- "moka",
- "pretty_assertions",
- "regex",
- "reqwest 0.13.2",
- "reqwest-middleware",
- "rustls 0.23.37",
- "serde",
- "serial_test",
- "tokio",
- "tracing",
- "url",
- "urlencoding",
- "webmention",
- "webpage",
-]
-
-[[package]]
-name = "lemmy_apub"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "activitypub_federation",
- "actix-web",
- "async-trait",
- "chrono",
- "either",
- "futures",
- "lemmy_api_utils",
- "lemmy_apub_activities",
- "lemmy_apub_objects",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community_follower",
- "lemmy_db_views_community_follower_approval",
- "lemmy_db_views_community_moderator",
- "lemmy_db_views_post",
- "lemmy_db_views_site",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_json",
- "serial_test",
- "tokio",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "lemmy_apub_activities"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "activitypub_federation",
- "anyhow",
- "async-trait",
- "chrono",
- "diesel",
- "either",
- "enum_delegate",
- "futures",
- "futures-util",
- "lemmy_api_utils",
- "lemmy_apub_objects",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community",
- "lemmy_db_views_community_moderator",
- "lemmy_db_views_local_user",
- "lemmy_db_views_post",
- "lemmy_db_views_private_message",
- "lemmy_db_views_site",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "serde",
- "serde_json",
- "serde_with",
- "strum",
- "tracing",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "lemmy_apub_objects"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "activitypub_federation",
- "anyhow",
- "assert-json-diff",
- "async-trait",
- "chrono",
- "either",
- "futures",
- "futures-util",
- "html2md",
- "html2text",
- "itertools",
- "lemmy_api_utils",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community_moderator",
- "lemmy_db_views_local_user",
- "lemmy_db_views_private_message",
- "lemmy_db_views_site",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "moka",
- "pretty_assertions",
- "regex",
- "semver",
- "serde",
- "serde_json",
- "serde_with",
- "serial_test",
- "stringreader",
- "tokio",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "lemmy_apub_send"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "activitypub_federation",
- "actix-web",
- "anyhow",
- "async-trait",
- "chrono",
- "diesel",
- "diesel-async",
- "either",
- "futures",
- "lemmy_api_utils",
- "lemmy_apub_objects",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community_follower",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "mockall",
- "moka",
- "reqwest 0.13.2",
- "serde",
- "serde_json",
- "serial_test",
- "test-context",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-test",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "lemmy_db_schema"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "bcrypt",
- "chrono",
- "derive-new",
- "diesel",
- "diesel-async",
- "diesel-derive-newtype",
- "diesel-uplete",
- "diesel_ltree",
- "i-love-jesus",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_json",
- "serde_with",
- "serial_test",
- "strum",
- "tokio",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_schema_file"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-derive-enum",
- "diesel-derive-newtype",
- "diesel-uplete",
- "diesel_ltree",
- "serde",
- "strum",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_comment"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "diesel_ltree",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_local_user",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_community"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community_moderator",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_community_follower"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "serde",
- "serde_with",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_community_follower_approval"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_community_moderator"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "serde",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_custom_emoji"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "serde",
- "serde_with",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_local_image"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "serde",
- "serde_with",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_local_user"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "actix-web",
- "chrono",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_modlog"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_notification"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_modlog",
- "lemmy_db_views_notification_sql",
- "lemmy_db_views_post",
- "lemmy_db_views_private_message",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_notification_sql"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "lemmy_db_schema_file",
-]
-
-[[package]]
-name = "lemmy_db_views_person"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community",
- "lemmy_db_views_community_moderator",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_person_content_combined"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_local_user",
- "lemmy_db_views_post_comment_combined",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_person_liked_combined"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_local_user",
- "lemmy_db_views_post_comment_combined",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_person_saved_combined"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_local_user",
- "lemmy_db_views_post_comment_combined",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_post"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "diesel-uplete",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community",
- "lemmy_db_views_local_user",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "test-context",
- "tokio",
- "tracing",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_post_comment_combined"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "chrono",
- "diesel",
- "lemmy_db_schema",
- "lemmy_db_views_comment",
- "lemmy_db_views_post",
- "serde",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_private_message"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "serde",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_registration_applications"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "extism",
- "extism-convert",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_report_combined"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_local_user",
- "lemmy_db_views_report_combined_sql",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_report_combined_sql"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "lemmy_db_schema_file",
-]
-
-[[package]]
-name = "lemmy_db_views_site"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "anyhow",
- "diesel",
- "diesel-async",
- "extism",
- "extism-convert",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_community_follower",
- "lemmy_db_views_community_moderator",
- "lemmy_db_views_local_user",
- "lemmy_db_views_person",
- "lemmy_db_views_post",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_vote"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_diesel_utils"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "activitypub_federation",
- "anyhow",
- "base64 0.22.1",
- "chrono",
- "deadpool",
- "diesel",
- "diesel-async",
- "diesel-derive-newtype",
- "diesel_ltree",
- "diesel_migrations",
- "diff",
- "futures-util",
- "i-love-jesus",
- "itertools",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pathfinding",
- "pretty_assertions",
- "rustls 0.23.37",
- "serde",
- "serde_urlencoded",
- "serde_with",
- "serial_test",
- "tokio",
- "tokio-postgres",
- "tokio-postgres-rustls",
- "tracing",
- "ts-rs",
- "unified-diff",
- "url",
-]
-
-[[package]]
-name = "lemmy_email"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "html2text",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_local_user",
- "lemmy_diesel_utils",
- "lemmy_utils",
- "lettre",
- "rosetta-build",
- "rosetta-i18n",
- "uuid",
-]
-
-[[package]]
-name = "lemmy_routes"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "activitypub_federation",
- "actix-cors",
- "actix-web",
- "actix-web-prom",
- "chrono",
- "clokwerk",
- "diesel",
- "diesel-async",
- "diesel-uplete",
- "futures",
- "futures-util",
- "http 1.4.0",
- "lemmy_api_utils",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community",
- "lemmy_db_views_local_image",
- "lemmy_db_views_local_user",
- "lemmy_db_views_modlog",
- "lemmy_db_views_notification",
- "lemmy_db_views_person_content_combined",
- "lemmy_db_views_post",
- "lemmy_db_views_site",
- "lemmy_diesel_utils",
- "lemmy_email",
- "lemmy_utils",
- "percent-encoding",
- "pretty_assertions",
- "prometheus",
- "rand 0.10.0",
- "reqwest 0.13.2",
- "reqwest-middleware",
- "rosetta-i18n",
- "rss",
- "serde",
- "serial_test",
- "strum",
- "tokio",
- "tracing",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_server"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "activitypub_federation",
- "actix-web",
- "clap",
- "lemmy_api",
- "lemmy_api_routes",
- "lemmy_api_utils",
- "lemmy_apub",
- "lemmy_apub_activities",
- "lemmy_apub_objects",
- "lemmy_apub_send",
- "lemmy_db_schema",
- "lemmy_db_views_site",
- "lemmy_diesel_utils",
- "lemmy_routes",
- "lemmy_utils",
- "mimalloc",
- "reqwest-middleware",
- "reqwest-tracing",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-actix-web",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "lemmy_utils"
-version = "1.0.0-test-arm-qemu.0"
-dependencies = [
- "actix-extensible-rate-limit",
- "actix-web",
- "anyhow",
- "cfg-if",
- "chrono",
- "clearurls",
- "dashmap",
- "deser-hjson",
- "diesel",
- "doku",
- "enum-map",
- "futures",
- "git-version",
- "http 1.4.0",
- "invisible-characters",
- "itertools",
- "markdown-it",
- "markdown-it-block-spoiler",
- "markdown-it-footnote",
- "markdown-it-ruby",
- "markdown-it-sub",
- "markdown-it-sup",
- "moka",
- "pretty_assertions",
- "regex",
- "serde",
- "serde_json",
- "serde_with",
- "smart-default",
- "strum",
- "tokio",
- "tracing",
- "ts-rs",
- "unicode-segmentation",
- "unified-diff",
- "url",
- "urlencoding",
-]
-
-[[package]]
 name = "lettre"
 version = "0.11.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6534,6 +5563,977 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "studycycle_api"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "activitypub_federation",
+ "actix-web",
+ "anyhow",
+ "bcrypt",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "either",
+ "elementtree",
+ "futures",
+ "itertools",
+ "pretty_assertions",
+ "regex",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "sitemap-rs",
+ "studycycle_api_crud",
+ "studycycle_api_utils",
+ "studycycle_apub_objects",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_comment",
+ "studycycle_db_views_community",
+ "studycycle_db_views_community_follower",
+ "studycycle_db_views_community_follower_approval",
+ "studycycle_db_views_community_moderator",
+ "studycycle_db_views_local_image",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_modlog",
+ "studycycle_db_views_notification",
+ "studycycle_db_views_person",
+ "studycycle_db_views_person_content_combined",
+ "studycycle_db_views_person_liked_combined",
+ "studycycle_db_views_person_saved_combined",
+ "studycycle_db_views_post",
+ "studycycle_db_views_post_comment_combined",
+ "studycycle_db_views_registration_applications",
+ "studycycle_db_views_report_combined",
+ "studycycle_db_views_site",
+ "studycycle_db_views_vote",
+ "studycycle_diesel_utils",
+ "studycycle_email",
+ "studycycle_utils",
+ "tokio",
+ "totp-rs",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "studycycle_api_common"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_comment",
+ "studycycle_db_views_community",
+ "studycycle_db_views_community_follower",
+ "studycycle_db_views_community_follower_approval",
+ "studycycle_db_views_community_moderator",
+ "studycycle_db_views_custom_emoji",
+ "studycycle_db_views_local_image",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_modlog",
+ "studycycle_db_views_notification",
+ "studycycle_db_views_person",
+ "studycycle_db_views_person_content_combined",
+ "studycycle_db_views_person_liked_combined",
+ "studycycle_db_views_person_saved_combined",
+ "studycycle_db_views_post",
+ "studycycle_db_views_post_comment_combined",
+ "studycycle_db_views_private_message",
+ "studycycle_db_views_registration_applications",
+ "studycycle_db_views_report_combined",
+ "studycycle_db_views_site",
+ "studycycle_db_views_vote",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+]
+
+[[package]]
+name = "studycycle_api_crud"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "accept-language",
+ "activitypub_federation",
+ "actix-web",
+ "anyhow",
+ "bcrypt",
+ "chrono",
+ "diesel-async",
+ "futures",
+ "futures-util",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "studycycle_api_utils",
+ "studycycle_apub_objects",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_comment",
+ "studycycle_db_views_community",
+ "studycycle_db_views_community_follower",
+ "studycycle_db_views_community_moderator",
+ "studycycle_db_views_custom_emoji",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_person",
+ "studycycle_db_views_post",
+ "studycycle_db_views_private_message",
+ "studycycle_db_views_registration_applications",
+ "studycycle_db_views_site",
+ "studycycle_diesel_utils",
+ "studycycle_email",
+ "studycycle_utils",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "studycycle_api_routes"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "actix-web",
+ "studycycle_api",
+ "studycycle_api_crud",
+ "studycycle_routes",
+ "studycycle_utils",
+]
+
+[[package]]
+name = "studycycle_api_utils"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "activitypub_federation",
+ "actix-web",
+ "actix-web-httpauth",
+ "anyhow",
+ "chrono",
+ "derive-new",
+ "diesel_ltree",
+ "either",
+ "encoding_rs",
+ "enum-map",
+ "extism",
+ "extism-convert",
+ "extism-manifest",
+ "futures",
+ "infer",
+ "jsonwebtoken",
+ "mime",
+ "mime_guess",
+ "moka",
+ "pretty_assertions",
+ "regex",
+ "reqwest 0.13.2",
+ "reqwest-middleware",
+ "rustls 0.23.37",
+ "serde",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_comment",
+ "studycycle_db_views_community",
+ "studycycle_db_views_community_follower_approval",
+ "studycycle_db_views_community_moderator",
+ "studycycle_db_views_local_image",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_notification",
+ "studycycle_db_views_post",
+ "studycycle_db_views_private_message",
+ "studycycle_db_views_registration_applications",
+ "studycycle_db_views_site",
+ "studycycle_diesel_utils",
+ "studycycle_email",
+ "studycycle_utils",
+ "tokio",
+ "tracing",
+ "url",
+ "urlencoding",
+ "webmention",
+ "webpage",
+]
+
+[[package]]
+name = "studycycle_apub"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "activitypub_federation",
+ "actix-web",
+ "async-trait",
+ "chrono",
+ "either",
+ "futures",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "studycycle_api_utils",
+ "studycycle_apub_activities",
+ "studycycle_apub_objects",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_community_follower",
+ "studycycle_db_views_community_follower_approval",
+ "studycycle_db_views_community_moderator",
+ "studycycle_db_views_post",
+ "studycycle_db_views_site",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "studycycle_apub_activities"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "activitypub_federation",
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "diesel",
+ "either",
+ "enum_delegate",
+ "futures",
+ "futures-util",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "strum",
+ "studycycle_api_utils",
+ "studycycle_apub_objects",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_community",
+ "studycycle_db_views_community_moderator",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_post",
+ "studycycle_db_views_private_message",
+ "studycycle_db_views_site",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tracing",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "studycycle_apub_objects"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "activitypub_federation",
+ "anyhow",
+ "assert-json-diff",
+ "async-trait",
+ "chrono",
+ "either",
+ "futures",
+ "futures-util",
+ "html2md",
+ "html2text",
+ "itertools",
+ "moka",
+ "pretty_assertions",
+ "regex",
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serial_test",
+ "stringreader",
+ "studycycle_api_utils",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_community_moderator",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_private_message",
+ "studycycle_db_views_site",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "studycycle_apub_send"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "activitypub_federation",
+ "actix-web",
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "either",
+ "futures",
+ "mockall",
+ "moka",
+ "reqwest 0.13.2",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "studycycle_api_utils",
+ "studycycle_apub_objects",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_community_follower",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "test-context",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-test",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "studycycle_db_schema"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "bcrypt",
+ "chrono",
+ "derive-new",
+ "diesel",
+ "diesel-async",
+ "diesel-derive-newtype",
+ "diesel-uplete",
+ "diesel_ltree",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serial_test",
+ "strum",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "studycycle_db_schema_file"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-derive-enum",
+ "diesel-derive-newtype",
+ "diesel-uplete",
+ "diesel_ltree",
+ "serde",
+ "strum",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_comment"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "diesel_ltree",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_local_user",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_community"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_community_moderator",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "studycycle_db_views_community_follower"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "serde",
+ "serde_with",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_community_follower_approval"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_community_moderator"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "serde",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_custom_emoji"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "serde",
+ "serde_with",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_local_image"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "serde",
+ "serde_with",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "studycycle_db_views_local_user"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "actix-web",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_modlog"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_notification"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_comment",
+ "studycycle_db_views_modlog",
+ "studycycle_db_views_notification_sql",
+ "studycycle_db_views_post",
+ "studycycle_db_views_private_message",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_notification_sql"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "studycycle_db_schema_file",
+]
+
+[[package]]
+name = "studycycle_db_views_person"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_community",
+ "studycycle_db_views_community_moderator",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_person_content_combined"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_post_comment_combined",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_person_liked_combined"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_post_comment_combined",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_person_saved_combined"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_post_comment_combined",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_post"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "diesel-uplete",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_community",
+ "studycycle_db_views_local_user",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "test-context",
+ "tokio",
+ "tracing",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "studycycle_db_views_post_comment_combined"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "serde",
+ "studycycle_db_schema",
+ "studycycle_db_views_comment",
+ "studycycle_db_views_post",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_private_message"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "serde",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_registration_applications"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "extism",
+ "extism-convert",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_report_combined"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_report_combined_sql",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_db_views_report_combined_sql"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "studycycle_db_schema_file",
+]
+
+[[package]]
+name = "studycycle_db_views_site"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "anyhow",
+ "diesel",
+ "diesel-async",
+ "extism",
+ "extism-convert",
+ "i-love-jesus",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_comment",
+ "studycycle_db_views_community",
+ "studycycle_db_views_community_follower",
+ "studycycle_db_views_community_moderator",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_person",
+ "studycycle_db_views_post",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "studycycle_db_views_vote"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "studycycle_diesel_utils"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "activitypub_federation",
+ "anyhow",
+ "base64 0.22.1",
+ "chrono",
+ "deadpool",
+ "diesel",
+ "diesel-async",
+ "diesel-derive-newtype",
+ "diesel_ltree",
+ "diesel_migrations",
+ "diff",
+ "futures-util",
+ "i-love-jesus",
+ "itertools",
+ "pathfinding",
+ "pretty_assertions",
+ "rustls 0.23.37",
+ "serde",
+ "serde_urlencoded",
+ "serde_with",
+ "serial_test",
+ "studycycle_db_schema_file",
+ "studycycle_utils",
+ "tokio",
+ "tokio-postgres",
+ "tokio-postgres-rustls",
+ "tracing",
+ "ts-rs",
+ "unified-diff",
+ "url",
+]
+
+[[package]]
+name = "studycycle_email"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "html2text",
+ "lettre",
+ "rosetta-build",
+ "rosetta-i18n",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_local_user",
+ "studycycle_diesel_utils",
+ "studycycle_utils",
+ "uuid",
+]
+
+[[package]]
+name = "studycycle_routes"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "activitypub_federation",
+ "actix-cors",
+ "actix-web",
+ "actix-web-prom",
+ "chrono",
+ "clokwerk",
+ "diesel",
+ "diesel-async",
+ "diesel-uplete",
+ "futures",
+ "futures-util",
+ "http 1.4.0",
+ "percent-encoding",
+ "pretty_assertions",
+ "prometheus",
+ "rand 0.10.0",
+ "reqwest 0.13.2",
+ "reqwest-middleware",
+ "rosetta-i18n",
+ "rss",
+ "serde",
+ "serial_test",
+ "strum",
+ "studycycle_api_utils",
+ "studycycle_db_schema",
+ "studycycle_db_schema_file",
+ "studycycle_db_views_community",
+ "studycycle_db_views_local_image",
+ "studycycle_db_views_local_user",
+ "studycycle_db_views_modlog",
+ "studycycle_db_views_notification",
+ "studycycle_db_views_person_content_combined",
+ "studycycle_db_views_post",
+ "studycycle_db_views_site",
+ "studycycle_diesel_utils",
+ "studycycle_email",
+ "studycycle_utils",
+ "tokio",
+ "tracing",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "studycycle_server"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "activitypub_federation",
+ "actix-web",
+ "clap",
+ "mimalloc",
+ "reqwest-middleware",
+ "reqwest-tracing",
+ "serde_json",
+ "studycycle_api",
+ "studycycle_api_routes",
+ "studycycle_api_utils",
+ "studycycle_apub",
+ "studycycle_apub_activities",
+ "studycycle_apub_objects",
+ "studycycle_apub_send",
+ "studycycle_db_schema",
+ "studycycle_db_views_site",
+ "studycycle_diesel_utils",
+ "studycycle_routes",
+ "studycycle_utils",
+ "tokio",
+ "tracing",
+ "tracing-actix-web",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "studycycle_utils"
+version = "1.0.0-test-arm-qemu.0"
+dependencies = [
+ "actix-extensible-rate-limit",
+ "actix-web",
+ "anyhow",
+ "cfg-if",
+ "chrono",
+ "clearurls",
+ "dashmap",
+ "deser-hjson",
+ "diesel",
+ "doku",
+ "enum-map",
+ "futures",
+ "git-version",
+ "http 1.4.0",
+ "invisible-characters",
+ "itertools",
+ "markdown-it",
+ "markdown-it-block-spoiler",
+ "markdown-it-footnote",
+ "markdown-it-ruby",
+ "markdown-it-sub",
+ "markdown-it-sup",
+ "moka",
+ "pretty_assertions",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "smart-default",
+ "strum",
+ "tokio",
+ "tracing",
+ "ts-rs",
+ "unicode-segmentation",
+ "unified-diff",
+ "url",
+ "urlencoding",
 ]
 
 [[package]]

@@ -24,19 +24,19 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use diesel_ltree::{Ltree, dsl::LtreeExtensions};
 use diesel_uplete::{UpleteCount, uplete};
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   schema::{comment, comment_actions, community, post},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   dburl::DbUrl,
   traits::Crud,
   utils::functions::{coalesce, hot_rank},
 };
-use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult, UntranslatedError},
+use studycycle_utils::{
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult, UntranslatedError},
   settings::structs::Settings,
 };
 use url::Url;
@@ -45,7 +45,7 @@ impl Comment {
   pub async fn permadelete_for_creator(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(comment::table.filter(comment::creator_id.eq(creator_id)))
@@ -56,14 +56,14 @@ impl Comment {
       ))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   pub async fn update_removed_for_creator(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     removed: bool,
-  ) -> LemmyResult<Vec<Comment>> {
+  ) -> StudyCycleResult<Vec<Comment>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(comment::table.filter(comment::creator_id.eq(creator_id)))
       .set((
@@ -72,7 +72,7 @@ impl Comment {
       ))
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   /// Diesel can't update from join unfortunately, so you'll need to loop over these
@@ -80,7 +80,7 @@ impl Comment {
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     community_id: CommunityId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     comment::table
@@ -90,7 +90,7 @@ impl Comment {
       .select(Self::as_select())
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   /// Diesel can't update from join unfortunately, so you'll need to loop over these
@@ -98,7 +98,7 @@ impl Comment {
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     instance_id: InstanceId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     let community_join = community::table.on(post::community_id.eq(community::id));
 
@@ -110,7 +110,7 @@ impl Comment {
       .select(Self::as_select())
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn update_removed_for_creator_and_community(
@@ -118,7 +118,7 @@ impl Comment {
     creator_id: PersonId,
     community_id: CommunityId,
     removed: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let comments = Self::creator_comments_in_community(pool, creator_id, community_id).await?;
     let comment_ids: Vec<_> = comments.iter().map(|c| c.id).collect();
 
@@ -141,7 +141,7 @@ impl Comment {
     creator_id: PersonId,
     instance_id: InstanceId,
     removed: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let comments = Self::creator_comments_in_instance(pool, creator_id, instance_id).await?;
     let comment_ids: Vec<_> = comments.iter().map(|c| c.id).collect();
     let conn = &mut get_conn(pool).await?;
@@ -162,7 +162,7 @@ impl Comment {
     pool: &mut DbPool<'_>,
     comment_form: &CommentInsertForm,
     parent_path: Option<&Ltree>,
-  ) -> LemmyResult<Comment> {
+  ) -> StudyCycleResult<Comment> {
     Self::insert_apub(pool, None, comment_form, parent_path).await
   }
 
@@ -171,7 +171,7 @@ impl Comment {
     timestamp: Option<DateTime<Utc>>,
     comment_form: &CommentInsertForm,
     parent_path: Option<&Ltree>,
-  ) -> LemmyResult<Comment> {
+  ) -> StudyCycleResult<Comment> {
     let conn = &mut get_conn(pool).await?;
     let comment_form = (comment_form, parent_path.map(|p| comment::path.eq(p)));
 
@@ -190,20 +190,20 @@ impl Comment {
         .get_result::<Self>(conn)
         .await
     }
-    .with_lemmy_type(LemmyErrorType::CouldntCreate)
+    .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
   pub async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: DbUrl,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     comment::table
       .filter(comment::ap_id.eq(object_id))
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub fn parent_comment_id(&self) -> Option<CommentId> {
@@ -217,22 +217,22 @@ impl Comment {
       None
     }
   }
-  pub async fn update_hot_rank(pool: &mut DbPool<'_>, comment_id: CommentId) -> LemmyResult<Self> {
+  pub async fn update_hot_rank(pool: &mut DbPool<'_>, comment_id: CommentId) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(comment::table.find(comment_id))
       .set(comment::hot_rank.eq(hot_rank(comment::score, comment::published_at)))
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
-  pub fn local_url(&self, settings: &Settings) -> LemmyResult<Url> {
+  pub fn local_url(&self, settings: &Settings) -> StudyCycleResult<Url> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/comment/{}", self.id))?)
   }
 
   /// The comment was created locally and sent back, indicating that the community accepted it
-  pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
     if self.local && self.federation_pending {
       let form = CommentUpdateForm {
         federation_pending: Some(false),
@@ -248,7 +248,7 @@ impl Comment {
     pool: &mut DbPool<'_>,
     comment_path: &Ltree,
     locked: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let form = CommentUpdateForm {
       locked: Some(locked),
       ..Default::default()
@@ -261,7 +261,7 @@ impl Comment {
     pool: &mut DbPool<'_>,
     comment_path: &Ltree,
     removed: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let form = CommentUpdateForm {
       removed: Some(removed),
       ..Default::default()
@@ -276,14 +276,14 @@ impl Comment {
     pool: &mut DbPool<'_>,
     comment_path: &Ltree,
     form: &CommentUpdateForm,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(comment::table)
       .filter(comment::path.contained_by(comment_path))
       .set(form)
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   /// Update the remove field for all the comments under a post.
@@ -291,7 +291,7 @@ impl Comment {
     pool: &mut DbPool<'_>,
     post_id: PostId,
     removed: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(comment::table)
       .filter(comment::post_id.eq(post_id))
@@ -301,13 +301,13 @@ impl Comment {
       ))
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   pub async fn read_ap_ids_for_post(
     post_id: PostId,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<DbUrl>> {
+  ) -> StudyCycleResult<Vec<DbUrl>> {
     let conn = &mut get_conn(pool).await?;
     comment::table
       .filter(comment::post_id.eq(post_id))
@@ -318,7 +318,7 @@ impl Comment {
       .select(comment::ap_id)
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -328,7 +328,7 @@ impl Crud for Comment {
   type IdType = CommentId;
 
   /// Use [[Comment::create]]
-  async fn create(_pool: &mut DbPool<'_>, _comment_form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(_pool: &mut DbPool<'_>, _comment_form: &Self::InsertForm) -> StudyCycleResult<Self> {
     Err(UntranslatedError::Unreachable.into())
   }
 
@@ -336,13 +336,13 @@ impl Crud for Comment {
     pool: &mut DbPool<'_>,
     comment_id: CommentId,
     comment_form: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(comment::table.find(comment_id))
       .set(comment_form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
@@ -350,7 +350,7 @@ impl Likeable for CommentActions {
   type Form = CommentLikeForm;
   type IdType = CommentId;
 
-  async fn like(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn like(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(comment_actions::table)
@@ -361,13 +361,13 @@ impl Likeable for CommentActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
   async fn remove_all_likes(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
 
     uplete(comment_actions::table.filter(comment_actions::person_id.eq(creator_id)))
@@ -375,14 +375,14 @@ impl Likeable for CommentActions {
       .set_null(comment_actions::voted_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   async fn remove_likes_in_community(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     community_id: CommunityId,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let comments = Comment::creator_comments_in_community(pool, creator_id, community_id).await?;
     let comment_ids: Vec<_> = comments.iter().map(|c| c.id).collect();
 
@@ -393,13 +393,13 @@ impl Likeable for CommentActions {
       .set_null(comment_actions::voted_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
 impl Saveable for CommentActions {
   type Form = CommentSavedForm;
-  async fn save(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn save(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(comment_actions::table)
       .values(form)
@@ -409,15 +409,15 @@ impl Saveable for CommentActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
-  async fn unsave(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<UpleteCount> {
+  async fn unsave(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(comment_actions::table.find((form.person_id, form.comment_id)))
       .set_null(comment_actions::saved_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
@@ -426,14 +426,14 @@ impl CommentActions {
     pool: &mut DbPool<'_>,
     comment_id: CommentId,
     person_id: PersonId,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     comment_actions::table
       .find((person_id, comment_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -453,15 +453,15 @@ mod tests {
     utils::RANK_DEFAULT,
   };
   use diesel_ltree::Ltree;
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -504,7 +504,7 @@ mod tests {
       published_at: inserted_comment.published_at,
       updated_at: None,
       ap_id: Url::parse(&format!(
-        "https://lemmy-alpha/comment/{}",
+        "https://studycycle-alpha/comment/{}",
         inserted_comment.id
       ))?
       .into(),
@@ -575,7 +575,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_aggregates() -> LemmyResult<()> {
+  async fn test_aggregates() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -672,7 +672,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_update_children() -> LemmyResult<()> {
+  async fn test_update_children() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -739,7 +739,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_remove_post_children() -> LemmyResult<()> {
+  async fn test_remove_post_children() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

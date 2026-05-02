@@ -4,23 +4,23 @@ use crate::{
   protocol::deletion::{delete::Delete, undo_delete::UndoDelete},
 };
 use activitypub_federation::{config::Data, kinds::activity::UndoType, traits::Activity};
-use lemmy_api_utils::{context::LemmyContext, notify::notify_mod_action};
-use lemmy_apub_objects::objects::person::ApubPerson;
-use lemmy_db_schema::source::{
+use studycycle_api_utils::{context::StudyCycleContext, notify::notify_mod_action};
+use studycycle_apub_objects::objects::person::ApubPerson;
+use studycycle_db_schema::source::{
   comment::{Comment, CommentUpdateForm},
   community::{Community, CommunityUpdateForm},
   modlog::{Modlog, ModlogInsertForm},
   post::{Post, PostUpdateForm},
 };
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult, UntranslatedError};
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult, UntranslatedError};
 use url::Url;
 
 #[async_trait::async_trait]
 impl Activity for UndoDelete {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -36,7 +36,7 @@ impl Activity for UndoDelete {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     if let Some(reason) = self.object.summary {
       UndoDelete::receive_undo_remove_action(
         &self.actor.dereference(context).await?,
@@ -60,8 +60,8 @@ impl UndoDelete {
     community: Option<&Community>,
     summary: Option<String>,
     with_replies: Option<bool>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<UndoDelete> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<UndoDelete> {
     let object = Delete::new(
       actor,
       object,
@@ -90,8 +90,8 @@ impl UndoDelete {
     object: &Url,
     reason: String,
     with_replies: Option<bool>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     match DeletableObjects::read_from_db(object, context).await? {
       DeletableObjects::Community(community) => {
         if community.local {
@@ -213,8 +213,8 @@ impl UndoDelete {
         }
       }
       // TODO these need to be implemented yet, for now, return errors
-      DeletableObjects::PrivateMessage(_) => return Err(LemmyErrorType::NotFound.into()),
-      DeletableObjects::Person(_) => return Err(LemmyErrorType::NotFound.into()),
+      DeletableObjects::PrivateMessage(_) => return Err(StudyCycleErrorType::NotFound.into()),
+      DeletableObjects::Person(_) => return Err(StudyCycleErrorType::NotFound.into()),
     }
     Ok(())
   }

@@ -7,20 +7,20 @@ use crate::federation::{
 };
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_private_instance};
-use lemmy_db_schema::source::comment::Comment;
-use lemmy_db_views_comment::{CommentSlimView, CommentView, api::GetComments, impls::CommentQuery};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{pagination::PagedResponse, traits::Crud};
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_private_instance};
+use studycycle_db_schema::source::comment::Comment;
+use studycycle_db_views_comment::{CommentSlimView, CommentView, api::GetComments, impls::CommentQuery};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{pagination::PagedResponse, traits::Crud};
+use studycycle_utils::error::StudyCycleResult;
 
 /// A common fetcher for both the CommentView, and CommentSlimView.
 async fn list_comments_common(
   data: GetComments,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<PagedResponse<CommentView>> {
+) -> StudyCycleResult<PagedResponse<CommentView>> {
   let SiteView {
     site, local_site, ..
   } = SiteView::read_local(&mut context.pool()).await?;
@@ -93,9 +93,9 @@ async fn list_comments_common(
 
 pub async fn list_comments(
   Query(data): Query<GetComments>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<PagedResponse<CommentView>>> {
+) -> StudyCycleResult<Json<PagedResponse<CommentView>>> {
   let common = list_comments_common(data, context, local_user_view).await?;
 
   Ok(Json(common))
@@ -103,9 +103,9 @@ pub async fn list_comments(
 
 pub async fn list_comments_slim(
   Query(data): Query<GetComments>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<PagedResponse<CommentSlimView>>> {
+) -> StudyCycleResult<Json<PagedResponse<CommentSlimView>>> {
   let common = list_comments_common(data, context, local_user_view).await?;
 
   let data = common

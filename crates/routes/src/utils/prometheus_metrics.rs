@@ -1,8 +1,8 @@
 use actix_web::{App, HttpServer, rt::System, web};
 use actix_web_prom::{PrometheusMetrics, PrometheusMetricsBuilder};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   settings::structs::PrometheusConfig,
 };
 use prometheus::{Encoder, Gauge, Opts, TextEncoder, default_registry};
@@ -10,17 +10,17 @@ use std::{sync::Arc, thread};
 use tracing::error;
 
 /// Creates a middleware that populates http metrics for each path, method, and status code
-pub fn new_prometheus_metrics() -> LemmyResult<PrometheusMetrics> {
+pub fn new_prometheus_metrics() -> StudyCycleResult<PrometheusMetrics> {
   Ok(
-    PrometheusMetricsBuilder::new("lemmy_api")
+    PrometheusMetricsBuilder::new("studycycle_api")
       .registry(default_registry().clone())
       .build()
-      .map_err(|e| LemmyErrorType::Unknown(format!("Should always be buildable: {e}")))?,
+      .map_err(|e| StudyCycleErrorType::Unknown(format!("Should always be buildable: {e}")))?,
   )
 }
 
 struct PromContext {
-  lemmy: LemmyContext,
+  studycycle: StudyCycleContext,
   db_pool_metrics: DbPoolMetrics,
 }
 
@@ -30,9 +30,9 @@ struct DbPoolMetrics {
   available: Gauge,
 }
 
-pub fn serve_prometheus(config: PrometheusConfig, lemmy_context: LemmyContext) -> LemmyResult<()> {
+pub fn serve_prometheus(config: PrometheusConfig, studycycle_context: StudyCycleContext) -> StudyCycleResult<()> {
   let context = Arc::new(PromContext {
-    lemmy: lemmy_context,
+    studycycle: studycycle_context,
     db_pool_metrics: create_db_pool_metrics()?,
   });
 
@@ -59,7 +59,7 @@ pub fn serve_prometheus(config: PrometheusConfig, lemmy_context: LemmyContext) -
 }
 
 // handler for the /metrics path
-async fn metrics(context: web::Data<Arc<PromContext>>) -> LemmyResult<String> {
+async fn metrics(context: web::Data<Arc<PromContext>>) -> StudyCycleResult<String> {
   // collect metrics
   collect_db_pool_metrics(&context);
 
@@ -74,19 +74,19 @@ async fn metrics(context: web::Data<Arc<PromContext>>) -> LemmyResult<String> {
   Ok(output)
 }
 
-// create lemmy_db_pool_* metrics and register them with the default registry
-fn create_db_pool_metrics() -> LemmyResult<DbPoolMetrics> {
+// create studycycle_db_pool_* metrics and register them with the default registry
+fn create_db_pool_metrics() -> StudyCycleResult<DbPoolMetrics> {
   let metrics = DbPoolMetrics {
     max_size: Gauge::with_opts(Opts::new(
-      "lemmy_db_pool_max_connections",
+      "studycycle_db_pool_max_connections",
       "Maximum number of connections in the pool",
     ))?,
     size: Gauge::with_opts(Opts::new(
-      "lemmy_db_pool_connections",
+      "studycycle_db_pool_connections",
       "Current number of connections in the pool",
     ))?,
     available: Gauge::with_opts(Opts::new(
-      "lemmy_db_pool_available_connections",
+      "studycycle_db_pool_available_connections",
       "Number of available connections in the pool",
     ))?,
   };
@@ -102,7 +102,7 @@ fn create_db_pool_metrics() -> LemmyResult<DbPoolMetrics> {
 /// https://stackoverflow.com/q/35974890
 #[expect(clippy::as_conversions)]
 fn collect_db_pool_metrics(context: &PromContext) {
-  let pool_status = context.lemmy.inner_pool().status();
+  let pool_status = context.studycycle.inner_pool().status();
   context
     .db_pool_metrics
     .max_size

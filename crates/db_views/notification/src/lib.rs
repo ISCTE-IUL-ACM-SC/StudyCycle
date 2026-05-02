@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   comment::{Comment, CommentActions},
   community::{Community, CommunityActions},
   community_tag::CommunityTagsView,
@@ -11,19 +11,19 @@ use lemmy_db_schema::source::{
   post::{Post, PostActions},
   private_message::PrivateMessage,
 };
-use lemmy_db_schema::{NotificationTypeFilter, source::notification::Notification};
-use lemmy_db_schema_file::PersonId;
-use lemmy_db_views_comment::CommentView;
-use lemmy_db_views_modlog::ModlogView;
-use lemmy_db_views_post::PostView;
-use lemmy_db_views_private_message::PrivateMessageView;
-use lemmy_diesel_utils::pagination::PaginationCursor;
+use studycycle_db_schema::{NotificationTypeFilter, source::notification::Notification};
+use studycycle_db_schema_file::PersonId;
+use studycycle_db_views_comment::CommentView;
+use studycycle_db_views_modlog::ModlogView;
+use studycycle_db_views_post::PostView;
+use studycycle_db_views_private_message::PrivateMessageView;
+use studycycle_diesel_utils::pagination::PaginationCursor;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::{
+  studycycle_db_schema::{
     Person1AliasAllColumnsTuple,
     utils::queries::selects::{
       CreatorLocalHomeBanExpiresType,

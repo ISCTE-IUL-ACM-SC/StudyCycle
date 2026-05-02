@@ -1,12 +1,12 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::notify_mod_action,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_expire_time, is_admin, remove_or_restore_user_data},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     instance::{InstanceActions, InstanceBanForm},
     local_user::LocalUser,
@@ -14,21 +14,21 @@ use lemmy_db_schema::{
   },
   traits::Bannable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_person::{
   PersonView,
   api::{BanPerson, PersonResponse},
 };
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::validation::is_valid_body_field,
 };
 
 pub async fn ban_from_site(
   Json(data): Json<BanPerson>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PersonResponse>> {
+) -> StudyCycleResult<Json<PersonResponse>> {
   let local_instance_id = local_user_view.person.instance_id;
   let my_person_id = local_user_view.person.id;
 
@@ -72,7 +72,7 @@ pub async fn ban_from_site(
       data.person_id,
       removed,
       &data.reason,
-      action.first().ok_or(LemmyErrorType::NotFound)?.id,
+      action.first().ok_or(StudyCycleErrorType::NotFound)?.id,
       &context,
     )
     .await?;

@@ -3,15 +3,15 @@ use actix_web::{
   http::header::{self, CacheDirective},
   web::Data,
 };
-use lemmy_api_utils::{context::LemmyContext, utils::check_private_instance};
-use lemmy_db_schema::source::post::Post;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::dburl::DbUrl;
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_private_instance};
+use studycycle_db_schema::source::post::Post;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::dburl::DbUrl;
+use studycycle_utils::error::StudyCycleResult;
 use sitemap_rs::{url::Url, url_set::UrlSet};
 use tracing::info;
 
-fn generate_urlset(posts: Vec<(DbUrl, chrono::DateTime<chrono::Utc>)>) -> LemmyResult<UrlSet> {
+fn generate_urlset(posts: Vec<(DbUrl, chrono::DateTime<chrono::Utc>)>) -> StudyCycleResult<UrlSet> {
   let urls = posts
     .into_iter()
     .map_while(|(url, date_time)| {
@@ -25,7 +25,7 @@ fn generate_urlset(posts: Vec<(DbUrl, chrono::DateTime<chrono::Utc>)>) -> LemmyR
   Ok(UrlSet::new(urls)?)
 }
 
-pub async fn get_sitemap(context: Data<LemmyContext>) -> LemmyResult<HttpResponse> {
+pub async fn get_sitemap(context: Data<StudyCycleContext>) -> StudyCycleResult<HttpResponse> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   check_private_instance(&None, &local_site)?;
 
@@ -50,13 +50,13 @@ pub(crate) mod tests {
   use crate::sitemap::generate_urlset;
   use chrono::{DateTime, NaiveDate, Utc};
   use elementtree::Element;
-  use lemmy_diesel_utils::dburl::DbUrl;
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::dburl::DbUrl;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use url::Url;
 
   #[tokio::test]
-  async fn test_generate_urlset() -> LemmyResult<()> {
+  async fn test_generate_urlset() -> StudyCycleResult<()> {
     let posts: Vec<(DbUrl, DateTime<Utc>)> = vec![
       (
         Url::parse("https://example.com")?.into(),

@@ -1,23 +1,23 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{get_url_blocklist, is_admin, process_markdown, slur_regex},
 };
-use lemmy_db_schema::source::tagline::{Tagline, TaglineInsertForm};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
+use studycycle_db_schema::source::tagline::{Tagline, TaglineInsertForm};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{
   SiteView,
   api::{CreateTagline, TaglineResponse},
 };
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::LemmyError;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::StudyCycleError;
 
 pub async fn create_tagline(
   Json(data): Json<CreateTagline>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> Result<Json<TaglineResponse>, LemmyError> {
+) -> Result<Json<TaglineResponse>, StudyCycleError> {
   // Make sure user is an admin
   is_admin(&local_user_view)?;
 
