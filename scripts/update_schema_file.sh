@@ -7,9 +7,9 @@ cd "$CWD/../"
 
 source scripts/start_dev_db.sh
 
-cargo run --package lemmy_diesel_utils --features full
+cargo run --package studycycle_diesel_utils --features full
 diesel print-schema >crates/db_schema_file/src/schema.rs
-cargo +nightly fmt --package lemmy_db_schema_file
+cargo +nightly fmt --package studycycle_db_schema_file
 
 pg_ctl stop
 rm -rf $PGDATA
