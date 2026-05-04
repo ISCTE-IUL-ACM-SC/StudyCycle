@@ -1,9 +1,9 @@
 // This is meant to be used with an already-filled / production db with lots of history.
 // Requires env vars:
 //
-// LEMMY_SERVER_URL (ex http://localhost:8536)
-// LEMMY_LOGIN
-// LEMMY_PASSWORD
+// STUDYCYCLE_SERVER_URL (ex http://localhost:8536)
+// STUDYCYCLE_LOGIN
+// STUDYCYCLE_PASSWORD
 
 jest.setTimeout(120000);
 
@@ -27,8 +27,8 @@ import { fetchFunction } from "./shared";
 import * as fs from "fs";
 
 const defaultServerUrl = "http://localhost:8536";
-const defaultLogin = "lemmy";
-const defaultPassword = "lemmylemmy";
+const defaultLogin = "studycycle";
+const defaultPassword = "studycyclestudycycle";
 const postCommentsMaxDepth = 8;
 
 const samplePerson = "dessalines";
@@ -101,12 +101,12 @@ let api: LemmyHttp;
 let report: string[] = [];
 
 beforeAll(async () => {
-  api = new LemmyHttp(process.env.LEMMY_SERVER_URL ?? defaultServerUrl, {
+  api = new LemmyHttp(process.env.STUDYCYCLE_SERVER_URL ?? defaultServerUrl, {
     fetchFunction,
   });
   const login: Login = {
-    username_or_email: process.env.LEMMY_LOGIN ?? defaultLogin,
-    password: process.env.LEMMY_PASSWORD ?? defaultPassword,
+    username_or_email: process.env.STUDYCYCLE_LOGIN ?? defaultLogin,
+    password: process.env.STUDYCYCLE_PASSWORD ?? defaultPassword,
   };
   const res = await api.login(login);
   api.setHeaders({ Authorization: `Bearer ${res.jwt ?? ""}` });

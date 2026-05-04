@@ -40,7 +40,7 @@ import {
   lockComment,
   statusNotFound,
   statusBadRequest,
-  jestLemmyError,
+  jestStudyCycleError,
   getUnreadCounts,
 } from "./shared";
 import {
@@ -103,7 +103,7 @@ test("Create a comment", async () => {
 });
 
 test("Create a comment in a non-existent post", async () => {
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => createComment(alpha, -1),
     new LemmyError("not_found", statusNotFound),
   );
@@ -284,7 +284,7 @@ test("Remove a comment from admin and community on different instance", async ()
 test("Unlike a comment", async () => {
   let commentRes = await createComment(alpha, postOnAlphaRes.post_view.post.id);
 
-  // Lemmy automatically creates 1 like (vote) by author of comment.
+  // StudyCycle automatically creates 1 like (vote) by author of comment.
   // Make sure that comment is liked (voted up) on gamma, downstream peer
   // This is testing replication from remote-home-remote (alpha-beta-gamma)
 
@@ -450,7 +450,7 @@ test("Bot reply notifications are filtered when bots are hidden", async () => {
 
   const alphaCommunity = await resolveCommunity(
     alpha,
-    "!main@lemmy-alpha:8541",
+    "!main@studycycle-alpha:8541",
   );
 
   if (!alphaCommunity) {
@@ -498,7 +498,7 @@ test("Mention beta from alpha comment", async () => {
   // Create a new branch, trunk-level comment branch, from alpha instance
   let commentRes = await createComment(alpha, postOnAlphaRes.post_view.post.id);
   // Create a reply comment to previous comment, this has a mention in body
-  let mentionContent = "A test mention of @lemmy_beta@lemmy-beta:8551";
+  let mentionContent = "A test mention of @studycycle_beta@studycycle-beta:8551";
   let mentionRes = await createComment(
     alpha,
     postOnAlphaRes.post_view.post.id,
@@ -563,7 +563,7 @@ test("Comment Search", async () => {
 
 test("A and G subscribe to B (center) A posts, G mentions B, it gets announced to A", async () => {
   // Create a local post
-  let alphaCommunity = await resolveCommunity(alpha, "!main@lemmy-alpha:8541");
+  let alphaCommunity = await resolveCommunity(alpha, "!main@studycycle-alpha:8541");
   if (!alphaCommunity) {
     throw "Missing alpha community";
   }
@@ -586,7 +586,7 @@ test("A and G subscribe to B (center) A posts, G mentions B, it gets announced t
   }
 
   let commentContent =
-    "A jest test federated comment announce, lets mention @lemmy_beta@lemmy-beta:8551";
+    "A jest test federated comment announce, lets mention @studycycle_beta@studycycle-beta:8551";
   let commentRes = await createComment(
     gamma,
     gammaPost.post.id,
@@ -859,7 +859,7 @@ test("Dont send a comment reply to a blocked community", async () => {
 test("Fetch a deeply nested comment", async () => {
   const alphaCommunity = await resolveCommunity(
     alpha,
-    "!main@lemmy-alpha:8541",
+    "!main@studycycle-alpha:8541",
   );
   if (!alphaCommunity) {
     throw "Missing alpha community";
@@ -911,7 +911,7 @@ test("Lock comment", async () => {
 
   const alphaCommunity = await resolveCommunity(
     alpha,
-    "!main@lemmy-alpha:8541",
+    "!main@studycycle-alpha:8541",
   );
   if (!alphaCommunity) {
     throw "Missing alpha community";
@@ -966,7 +966,7 @@ test("Lock comment", async () => {
   );
 
   // Make sure newBeta can't respond to comment3
-  await jestLemmyError(
+  await jestStudyCycleError(
     () =>
       createComment(
         newBetaApi,
@@ -985,7 +985,7 @@ test("Lock comment", async () => {
 test("Remove children", async () => {
   const alphaCommunity = await resolveCommunity(
     alpha,
-    "!main@lemmy-alpha:8541",
+    "!main@studycycle-alpha:8541",
   );
   if (!alphaCommunity) {
     throw "Missing alpha community";

@@ -35,7 +35,7 @@ import {
   assertCommunityFederation,
   listReports,
   statusBadRequest,
-  jestLemmyError,
+  jestStudyCycleError,
   resolveMultiCommunity,
   searchPostLocal,
 } from "./shared";
@@ -60,13 +60,13 @@ test("Create community", async () => {
 
   // A dupe check
   let prevName = communityRes.community_view.community.name;
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => createCommunity(alpha, prevName),
     new LemmyError("already_exists", statusBadRequest),
   );
 
   // Cache the community on beta, make sure it has the other fields
-  let searchShort = `!${prevName}@lemmy-alpha:8541`;
+  let searchShort = `!${prevName}@studycycle-alpha:8541`;
   let betaCommunity = await resolveCommunity(beta, searchShort);
   assertCommunityFederation(betaCommunity, communityRes.community_view);
 });
@@ -75,7 +75,7 @@ test("Delete community", async () => {
   let communityRes = await createCommunity(beta);
 
   // Cache the community on Alpha
-  let searchShort = `!${communityRes.community_view.community.name}@lemmy-beta:8551`;
+  let searchShort = `!${communityRes.community_view.community.name}@studycycle-beta:8551`;
   let alphaCommunity = await resolveCommunity(alpha, searchShort);
   if (!alphaCommunity) {
     throw "Missing alpha community";
@@ -127,7 +127,7 @@ test("Remove community", async () => {
   let communityRes = await createCommunity(beta);
 
   // Cache the community on Alpha
-  let searchShort = `!${communityRes.community_view.community.name}@lemmy-beta:8551`;
+  let searchShort = `!${communityRes.community_view.community.name}@studycycle-beta:8551`;
   let alphaCommunity = await resolveCommunity(alpha, searchShort);
   if (!alphaCommunity) {
     throw "Missing alpha community";
@@ -254,7 +254,7 @@ test("Search for beta community", async () => {
   let communityRes = await createCommunity(beta);
   expect(communityRes.community_view.community.name).toBeDefined();
 
-  let searchShort = `!${communityRes.community_view.community.name}@lemmy-beta:8551`;
+  let searchShort = `!${communityRes.community_view.community.name}@studycycle-beta:8551`;
   let alphaCommunity = await resolveCommunity(alpha, searchShort);
   assertCommunityFederation(alphaCommunity, communityRes.community_view);
 });
@@ -400,13 +400,13 @@ test("Get community for different casing on domain", async () => {
 
   // A dupe check
   let prevName = communityRes.community_view.community.name;
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => createCommunity(alpha, prevName),
     new LemmyError("already_exists", statusBadRequest),
   );
 
   // Cache the community on beta, make sure it has the other fields
-  let communityName = `${communityRes.community_view.community.name}@LEMMY-ALPHA:8541`;
+  let communityName = `${communityRes.community_view.community.name}@STUDYCYCLE-ALPHA:8541`;
   let betaCommunity = (await getCommunityByName(beta, communityName))
     .community_view;
   assertCommunityFederation(betaCommunity, communityRes.community_view);
@@ -526,7 +526,7 @@ test("Dont receive community activities after unsubscribe", async () => {
 
   // temporarily block alpha, so that it doesn't know about unfollow
   let allow_instance_params: AdminAllowInstanceParams = {
-    instance: "lemmy-alpha",
+    instance: "studycycle-alpha",
     allow: false,
     reason: "allow",
   };
@@ -595,7 +595,7 @@ test("Content in local-only community doesn't federate", async () => {
   await editCommunity(alpha, form);
 
   // cant resolve the community from another instance
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => resolveCommunity(beta, communityRes.ap_id),
     new LemmyError("resolve_object_failed", statusBadRequest),
     false,
@@ -603,7 +603,7 @@ test("Content in local-only community doesn't federate", async () => {
 
   // create a post, also cant resolve it
   let postRes = await createPost(alpha, communityRes.id);
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => resolvePost(beta, postRes.post_view.post),
     new LemmyError("resolve_object_failed", statusBadRequest),
     false,
@@ -620,7 +620,7 @@ test("Remote mods can edit communities", async () => {
   if (!betaCommunity?.community) {
     throw "Missing beta community";
   }
-  let betaOnAlpha = await resolvePerson(alpha, "lemmy_beta@lemmy-beta:8551");
+  let betaOnAlpha = await resolvePerson(alpha, "studycycle_beta@studycycle-beta:8551");
 
   let form: AddModToCommunity = {
     community_id: communityRes.community_view.community.id,
@@ -653,8 +653,8 @@ test("Remote mods can add mods", async () => {
   if (!betaCommunity?.community) {
     throw "Missing beta community";
   }
-  let betaOnAlpha = await resolvePerson(alpha, "lemmy_beta@lemmy-beta:8551");
-  let gammaOnBeta = await resolvePerson(beta, "lemmy_gamma@lemmy-gamma:8561");
+  let betaOnAlpha = await resolvePerson(alpha, "studycycle_beta@studycycle-beta:8551");
+  let gammaOnBeta = await resolvePerson(beta, "studycycle_gamma@studycycle-gamma:8561");
 
   // Follow so we get activities
   await followCommunity(beta, true, betaCommunity.community.id);
@@ -702,7 +702,7 @@ test("Community name with non-ascii chars", async () => {
   let alphaCommunity2 = await getCommunityByName(alpha, name);
   expect(alphaCommunity2.community_view.community.name).toBe(name);
 
-  let fediName = `${communityRes.community_view.community.name}@LEMMY-ALPHA:8541`;
+  let fediName = `${communityRes.community_view.community.name}@STUDYCYCLE-ALPHA:8541`;
   let betaCommunity2 = await getCommunityByName(beta, fediName);
   expect(betaCommunity2.community_view.community.name).toBe(name);
 
@@ -723,7 +723,7 @@ test("Multi-community", async () => {
   let myUser = await getMyUser(alpha);
   expect(res.multi_community_view.multi.name).toBe(multiName);
   expect(res.multi_community_view.multi.ap_id).toBe(
-    `http://lemmy-alpha:8541/m/${multiName}`,
+    `http://studycycle-alpha:8541/m/${multiName}`,
   );
   expect(res.multi_community_view.owner.id).toBe(
     myUser.local_user_view.person.id,

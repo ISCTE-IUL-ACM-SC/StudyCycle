@@ -1,9 +1,9 @@
 {
   "name": "api_tests",
   "version": "0.0.1",
-  "description": "API tests for lemmy backend",
+  "description": "API tests for studycycle backend",
   "main": "index.js",
-  "repository": "https://github.com/LemmyNet/lemmy",
+  "repository": "https://github.com/ISCTE-IUL-ACM-SC/StudyCycle",
   "author": "Dessalines",
   "license": "AGPL-3.0",
   "packageManager": "pnpm@10.25.0+sha512.5e82639027af37cf832061bcc6d639c219634488e0f2baebe785028a793de7b525ffcd3f7ff574f5e9860654e098fe852ba8ac5dd5cefe1767d23a020a92f501",

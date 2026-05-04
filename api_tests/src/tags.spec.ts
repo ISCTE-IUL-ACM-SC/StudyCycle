@@ -136,7 +136,7 @@ test("Remote mod creates and updates post tag", async () => {
   let alphaCommunity = communityRes.community_view;
 
   // add gamma as remote mod
-  let gammaOnAlpha = await resolvePerson(alpha, "lemmy_gamma@lemmy-gamma:8561");
+  let gammaOnAlpha = await resolvePerson(alpha, "studycycle_gamma@studycycle-gamma:8561");
 
   let form: AddModToCommunity = {
     community_id: communityRes.community_view.community.id,

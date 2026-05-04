@@ -17,8 +17,8 @@ afterAll(unfollows);
 
 test("API v3", async () => {
   let login_form: Login = {
-    username_or_email: "lemmy_beta",
-    password: "lemmylemmy",
+    username_or_email: "studycycle_beta",
+    password: "studycyclestudycycle",
   };
   const login = await beta.login(login_form);
   expect(login.jwt).toBeDefined();
@@ -28,7 +28,7 @@ test("API v3", async () => {
   });
 
   let resolve_form: ResolveObject = {
-    q: "!main@lemmy-beta:8551",
+    q: "!main@studycycle-beta:8551",
   };
   const community = await user
     .resolveObject(resolve_form)
