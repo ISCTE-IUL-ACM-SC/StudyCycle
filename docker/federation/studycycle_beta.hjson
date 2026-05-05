@@ -1,0 +1,16 @@
+{
+  hostname: studycycle-beta:8551
+  port: 8551
+  tls_enabled: false
+  setup: {
+    admin_username: studycycle_beta
+    admin_password: studycyclestudycycle
+    site_name: studycycle-beta
+  }
+  database: {
+    connection: "postgres://studycycle:password@postgres_beta:5432/studycycle"
+  }
+  pictrs: {
+    api_key: "my-pictrs-key"
+  }
+}

@@ -69,27 +69,27 @@ LOG_DIR=target/log
 mkdir -p $LOG_DIR
 
 echo "start alpha"
-STUDYCYCLE_CONFIG_LOCATION=./docker/federation/lemmy_alpha.hjson \
+STUDYCYCLE_CONFIG_LOCATION=./docker/federation/studycycle_alpha.hjson \
   STUDYCYCLE_DATABASE_URL="${STUDYCYCLE_DATABASE_URL}/studycycle_alpha" \
   target/studycycle_server >$LOG_DIR/studycycle_alpha.out 2>&1 &
 
 echo "start beta"
-STUDYCYCLE_CONFIG_LOCATION=./docker/federation/lemmy_beta.hjson \
+STUDYCYCLE_CONFIG_LOCATION=./docker/federation/studycycle_beta.hjson \
   STUDYCYCLE_DATABASE_URL="${STUDYCYCLE_DATABASE_URL}/studycycle_beta" \
   target/studycycle_server >$LOG_DIR/studycycle_beta.out 2>&1 &
 
 echo "start gamma"
-STUDYCYCLE_CONFIG_LOCATION=./docker/federation/lemmy_gamma.hjson \
+STUDYCYCLE_CONFIG_LOCATION=./docker/federation/studycycle_gamma.hjson \
   STUDYCYCLE_DATABASE_URL="${STUDYCYCLE_DATABASE_URL}/studycycle_gamma" \
   target/studycycle_server >$LOG_DIR/studycycle_gamma.out 2>&1 &
 
 echo "start delta"
-STUDYCYCLE_CONFIG_LOCATION=./docker/federation/lemmy_delta.hjson \
+STUDYCYCLE_CONFIG_LOCATION=./docker/federation/studycycle_delta.hjson \
   STUDYCYCLE_DATABASE_URL="${STUDYCYCLE_DATABASE_URL}/studycycle_delta" \
   target/studycycle_server >$LOG_DIR/studycycle_delta.out 2>&1 &
 
 echo "start epsilon"
-STUDYCYCLE_CONFIG_LOCATION=./docker/federation/lemmy_epsilon.hjson \
+STUDYCYCLE_CONFIG_LOCATION=./docker/federation/studycycle_epsilon.hjson \
   STUDYCYCLE_PLUGIN_PATH=api_tests/plugins \
   STUDYCYCLE_DATABASE_URL="${STUDYCYCLE_DATABASE_URL}/studycycle_epsilon" \
   target/studycycle_server >$LOG_DIR/studycycle_epsilon.out 2>&1 &

@@ -1,0 +1,16 @@
+{
+  hostname: studycycle-gamma:8561
+  port: 8561
+  tls_enabled: false
+  setup: {
+    admin_username: studycycle_gamma
+    admin_password: studycyclestudycycle
+    site_name: studycycle-gamma
+  }
+  database: {
+    connection: "postgres://studycycle:password@postgres_gamma:5432/studycycle"
+  }
+  pictrs: {
+    api_key: "my-pictrs-key"
+  }
+}
