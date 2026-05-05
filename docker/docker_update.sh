@@ -5,7 +5,7 @@ Help() {
   # Display help
   echo "Usage: ./docker_update.sh [OPTIONS]"
   echo ""
-  echo "Start all docker containers required to run Lemmy."
+  echo "Start all docker containers required to run StudyCycle."
   echo ""
   echo "Options:"
   echo "-u Docker username. Only required if managing Docker via Docker Desktop with a personal access token."
@@ -28,7 +28,7 @@ while getopts ":hu:" option; do
   esac
 done
 
-LOG_PREFIX="[🐀 lemmy]"
+LOG_PREFIX="[studycycle]"
 ARCH=$(uname -m 2>/dev/null || echo 'unknown') # uname may not exist on windows machines; default to unknown to be safe.
 
 mkdir -p volumes/pictrs

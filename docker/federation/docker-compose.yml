@@ -3,28 +3,28 @@ version: "3.7"
 x-ui-default: &ui-default
   init: true
   image: dessalines/lemmy-ui:0.19.14
-  # assuming lemmy-ui is cloned besides lemmy directory
+  # assuming lemmy-ui is cloned besides studycycle directory
   # build:
   #   context: ../../../lemmy-ui
   #   dockerfile: dev.dockerfile
   environment:
     - LEMMY_UI_HTTPS=false
 
-x-lemmy-default: &lemmy-default
+x-studycycle-default: &studycycle-default
   build:
     context: ../..
     dockerfile: docker/Dockerfile
   environment:
     - RUST_BACKTRACE=1
-    - RUST_LOG="warn,lemmy_server=debug,lemmy_api=debug,lemmy_api_common=debug,lemmy_api_crud=debug,lemmy_apub=debug,lemmy_db_schema=debug,lemmy_db_views=debug,lemmy_routes=debug,lemmy_utils=debug,lemmy_websocket=debug"
+    - RUST_LOG="warn,studycycle_server=debug,studycycle_api=debug,studycycle_api_common=debug,studycycle_api_crud=debug,studycycle_apub=debug,studycycle_db_schema=debug,studycycle_db_views=debug,studycycle_routes=debug,studycycle_utils=debug,studycycle_websocket=debug"
   restart: always
 
 x-postgres-default: &postgres-default
   image: pgautoupgrade/pgautoupgrade:18-alpine
   environment:
-    - POSTGRES_USER=lemmy
+    - POSTGRES_USER=studycycle
     - POSTGRES_PASSWORD=password
-    - POSTGRES_DB=lemmy
+    - POSTGRES_DB=studycycle
   restart: always
 
 services:
@@ -41,11 +41,11 @@ services:
     restart: always
     depends_on:
       - pictrs
-      - lemmy-alpha-ui
-      - lemmy-beta-ui
-      - lemmy-gamma-ui
-      - lemmy-delta-ui
-      - lemmy-epsilon-ui
+      - studycycle-alpha-ui
+      - studycycle-beta-ui
+      - studycycle-gamma-ui
+      - studycycle-delta-ui
+      - studycycle-epsilon-ui
 
   pictrs:
     restart: always
@@ -56,17 +56,17 @@ services:
     environment:
       - PICTRS__SERVER__API_KEY=my-pictrs-key
 
-  lemmy-alpha-ui:
+  studycycle-alpha-ui:
     <<: *ui-default
     environment:
-      - LEMMY_UI_LEMMY_INTERNAL_HOST=lemmy-alpha:8541
+      - LEMMY_UI_LEMMY_INTERNAL_HOST=studycycle-alpha:8541
       - LEMMY_UI_LEMMY_EXTERNAL_HOST=localhost:8541
     depends_on:
-      - lemmy-alpha
-  lemmy-alpha:
-    <<: *lemmy-default
+      - studycycle-alpha
+  studycycle-alpha:
+    <<: *studycycle-default
     volumes:
-      - ./lemmy_alpha.hjson:/config/config.hjson:Z
+      - ./studycycle_alpha.hjson:/config/config.hjson:Z
     depends_on:
       - postgres_alpha
     ports:
@@ -76,17 +76,17 @@ services:
     volumes:
       - ./volumes/postgres_alpha:/var/lib/postgresql:Z
 
-  lemmy-beta-ui:
+  studycycle-beta-ui:
     <<: *ui-default
     environment:
-      - LEMMY_UI_LEMMY_INTERNAL_HOST=lemmy-beta:8551
+      - LEMMY_UI_LEMMY_INTERNAL_HOST=studycycle-beta:8551
       - LEMMY_UI_LEMMY_EXTERNAL_HOST=localhost:8551
     depends_on:
-      - lemmy-beta
-  lemmy-beta:
-    <<: *lemmy-default
+      - studycycle-beta
+  studycycle-beta:
+    <<: *studycycle-default
     volumes:
-      - ./lemmy_beta.hjson:/config/config.hjson:Z
+      - ./studycycle_beta.hjson:/config/config.hjson:Z
     depends_on:
       - postgres_beta
     ports:
@@ -96,17 +96,17 @@ services:
     volumes:
       - ./volumes/postgres_beta:/var/lib/postgresql:Z
 
-  lemmy-gamma-ui:
+  studycycle-gamma-ui:
     <<: *ui-default
     environment:
-      - LEMMY_UI_LEMMY_INTERNAL_HOST=lemmy-gamma:8561
+      - LEMMY_UI_LEMMY_INTERNAL_HOST=studycycle-gamma:8561
       - LEMMY_UI_LEMMY_EXTERNAL_HOST=localhost:8561
     depends_on:
-      - lemmy-gamma
-  lemmy-gamma:
-    <<: *lemmy-default
+      - studycycle-gamma
+  studycycle-gamma:
+    <<: *studycycle-default
     volumes:
-      - ./lemmy_gamma.hjson:/config/config.hjson:Z
+      - ./studycycle_gamma.hjson:/config/config.hjson:Z
     depends_on:
       - postgres_gamma
     ports:
@@ -117,17 +117,17 @@ services:
       - ./volumes/postgres_gamma:/var/lib/postgresql:Z
 
   # An instance with only an allowlist for beta
-  lemmy-delta-ui:
+  studycycle-delta-ui:
     <<: *ui-default
     environment:
-      - LEMMY_UI_LEMMY_INTERNAL_HOST=lemmy-delta:8571
+      - LEMMY_UI_LEMMY_INTERNAL_HOST=studycycle-delta:8571
       - LEMMY_UI_LEMMY_EXTERNAL_HOST=localhost:8571
     depends_on:
-      - lemmy-delta
-  lemmy-delta:
-    <<: *lemmy-default
+      - studycycle-delta
+  studycycle-delta:
+    <<: *studycycle-default
     volumes:
-      - ./lemmy_delta.hjson:/config/config.hjson:Z
+      - ./studycycle_delta.hjson:/config/config.hjson:Z
     depends_on:
       - postgres_delta
     ports:
@@ -137,18 +137,18 @@ services:
     volumes:
       - ./volumes/postgres_delta:/var/lib/postgresql:Z
 
-  # An instance who has a blocklist, with lemmy-alpha blocked
-  lemmy-epsilon-ui:
+  # An instance who has a blocklist, with studycycle-alpha blocked
+  studycycle-epsilon-ui:
     <<: *ui-default
     environment:
-      - LEMMY_UI_LEMMY_INTERNAL_HOST=lemmy-epsilon:8581
+      - LEMMY_UI_LEMMY_INTERNAL_HOST=studycycle-epsilon:8581
       - LEMMY_UI_LEMMY_EXTERNAL_HOST=localhost:8581
     depends_on:
-      - lemmy-epsilon
-  lemmy-epsilon:
-    <<: *lemmy-default
+      - studycycle-epsilon
+  studycycle-epsilon:
+    <<: *studycycle-default
     volumes:
-      - ./lemmy_epsilon.hjson:/config/config.hjson:Z
+      - ./studycycle_epsilon.hjson:/config/config.hjson:Z
     depends_on:
       - postgres_epsilon
     ports:
