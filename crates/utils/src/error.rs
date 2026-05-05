@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, panic::Location};
 use strum::{Display, EnumIter};
 
-/// Errors used in the API, all of these are translated in studycycle-ui.
+/// Errors used in the API, all of these are translated in lemmy-ui.
 #[derive(Display, Debug, Serialize, Deserialize, Clone, PartialEq, EnumIter, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
