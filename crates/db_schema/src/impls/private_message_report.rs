@@ -10,22 +10,22 @@ use diesel::{
   dsl::{insert_into, update},
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::{PersonId, schema::private_message_report};
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult, UntranslatedError};
+use studycycle_db_schema_file::{PersonId, schema::private_message_report};
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult, UntranslatedError};
 
 impl Reportable for PrivateMessageReport {
   type Form = PrivateMessageReportForm;
   type IdType = PrivateMessageReportId;
   type ObjectIdType = PrivateMessageId;
 
-  async fn report(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn report(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(private_message_report::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
   async fn update_resolved(
@@ -33,7 +33,7 @@ impl Reportable for PrivateMessageReport {
     report_id: Self::IdType,
     by_resolver_id: PersonId,
     is_resolved: bool,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     update(private_message_report::table.find(report_id))
       .set((
@@ -43,14 +43,14 @@ impl Reportable for PrivateMessageReport {
       ))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
   async fn resolve_apub(
     _pool: &mut DbPool<'_>,
     _object_id: Self::ObjectIdType,
     _report_creator_id: PersonId,
     _resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     Err(UntranslatedError::Unreachable.into())
   }
 
@@ -59,7 +59,7 @@ impl Reportable for PrivateMessageReport {
     _pool: &mut DbPool<'_>,
     _pm_id_: PrivateMessageId,
     _by_resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
-    Err(LemmyErrorType::NotFound.into())
+  ) -> StudyCycleResult<usize> {
+    Err(StudyCycleErrorType::NotFound.into())
   }
 }

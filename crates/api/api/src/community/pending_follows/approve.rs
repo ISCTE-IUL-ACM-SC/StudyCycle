@@ -1,22 +1,22 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::is_mod_or_admin,
 };
-use lemmy_db_schema::source::community::CommunityActions;
-use lemmy_db_schema_file::enums::CommunityFollowerState;
-use lemmy_db_views_community::api::ApproveCommunityPendingFollower;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_schema::source::community::CommunityActions;
+use studycycle_db_schema_file::enums::CommunityFollowerState;
+use studycycle_db_views_community::api::ApproveCommunityPendingFollower;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::api::SuccessResponse;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn post_pending_follows_approve(
   Json(data): Json<ApproveCommunityPendingFollower>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   is_mod_or_admin(&mut context.pool(), &local_user_view, data.community_id).await?;
 
   let (state, activity_data) = if data.approve {

@@ -8,7 +8,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   PersonListingType,
   PersonSortType,
   impls::local_user::LocalUserOptionHelper,
@@ -19,7 +19,7 @@ use lemmy_db_schema::{
   },
   utils::limit_fetch,
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   joins::{
@@ -29,7 +29,7 @@ use lemmy_db_schema_file::{
   },
   schema::{local_user, person},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -41,7 +41,7 @@ use lemmy_diesel_utils::{
   traits::Crud,
   utils::fuzzy_search,
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl PaginationCursorConversion for PersonView {
   type PaginatedType = Person;
@@ -53,7 +53,7 @@ impl PaginationCursorConversion for PersonView {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     Person::read(pool, PersonId(cursor.id()?)).await
   }
 }
@@ -78,7 +78,7 @@ impl PersonView {
     my_person_id: Option<PersonId>,
     local_instance_id: InstanceId,
     is_admin: bool,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let mut query = Self::joins(my_person_id, local_instance_id)
       .filter(person::id.eq(person_id))
@@ -92,14 +92,14 @@ impl PersonView {
     query
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn list_admins(
     my_person_id: Option<PersonId>,
     local_instance_id: InstanceId,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<PersonView>> {
+  ) -> StudyCycleResult<Vec<PersonView>> {
     let conn = &mut get_conn(pool).await?;
 
     Self::joins(my_person_id, local_instance_id)
@@ -112,7 +112,7 @@ impl PersonView {
       .select(Self::as_select())
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -132,7 +132,7 @@ impl PersonQuery<'_> {
     self,
     site: &Site,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<PagedResponse<PersonView>> {
+  ) -> StudyCycleResult<PagedResponse<PersonView>> {
     use PersonSortType::*;
     let limit = limit_fetch(self.limit, None)?;
 
@@ -182,7 +182,7 @@ impl PersonQuery<'_> {
     let res = pq
       .load::<PersonView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
     paginate_response(res, limit, self.page_cursor)
   }
 }
@@ -192,7 +192,7 @@ impl PersonQuery<'_> {
 mod tests {
 
   use super::*;
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     assert_length,
     source::{
       community::{Community, CommunityInsertForm},
@@ -204,11 +204,11 @@ mod tests {
     },
     traits::Likeable,
   };
-  use lemmy_diesel_utils::{
+  use studycycle_diesel_utils::{
     connection::{DbPool, build_db_pool_for_tests},
     traits::Crud,
   };
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -219,7 +219,7 @@ mod tests {
     bob: Person,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> StudyCycleResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
     let site_form = SiteInsertForm::new("test_site".to_string(), instance.id);
     let site = Site::create(pool, &site_form).await?;
@@ -266,14 +266,14 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
     Instance::delete(pool, data.bob.instance_id).await?;
     Ok(())
   }
 
   #[tokio::test]
   #[serial]
-  async fn exclude_deleted() -> LemmyResult<()> {
+  async fn exclude_deleted() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -300,7 +300,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn list_admins() -> LemmyResult<()> {
+  async fn list_admins() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -334,7 +334,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn note() -> LemmyResult<()> {
+  async fn note() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -365,7 +365,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn search() -> LemmyResult<()> {
+  async fn search() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

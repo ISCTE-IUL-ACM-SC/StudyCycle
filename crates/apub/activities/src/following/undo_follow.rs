@@ -2,7 +2,7 @@ use crate::{
   check_community_deleted_or_removed,
   generate_activity_id,
   protocol::following::{follow::Follow, undo_follow::UndoFollow},
-  send_lemmy_activity,
+  send_studycycle_activity,
 };
 use activitypub_federation::{
   config::Data,
@@ -11,9 +11,9 @@ use activitypub_federation::{
   traits::{Activity, Actor, Object},
 };
 use either::Either::*;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::objects::{CommunityOrMulti, person::ApubPerson};
-use lemmy_db_schema::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::objects::{CommunityOrMulti, person::ApubPerson};
+use studycycle_db_schema::{
   source::{
     activity::ActivitySendTargets,
     community::CommunityActions,
@@ -24,15 +24,15 @@ use lemmy_db_schema::{
   },
   traits::Followable,
 };
-use lemmy_utils::error::{LemmyError, LemmyResult, UntranslatedError};
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult, UntranslatedError};
 use url::Url;
 
 impl UndoFollow {
   pub async fn send(
     actor: &ApubPerson,
     target: &CommunityOrMulti,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     let object = Follow::new(actor, target, context)?;
     let undo = UndoFollow {
       actor: actor.id().clone().into(),
@@ -42,14 +42,14 @@ impl UndoFollow {
       id: generate_activity_id(UndoType::Undo, context)?,
     };
     let inbox = ActivitySendTargets::to_inbox(target.shared_inbox_or_inbox());
-    send_lemmy_activity(context, undo, actor, inbox, true).await
+    send_studycycle_activity(context, undo, actor, inbox, true).await
   }
 }
 
 #[async_trait::async_trait]
 impl Activity for UndoFollow {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -59,7 +59,7 @@ impl Activity for UndoFollow {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     verify_urls_match(self.actor.inner(), self.object.actor.inner())?;
     self.object.verify(context).await?;
     if let Some(to) = &self.to {
@@ -68,7 +68,7 @@ impl Activity for UndoFollow {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     let actor = self.actor.dereference(context).await?;
     let object = self.object.object.dereference(context).await?;
 

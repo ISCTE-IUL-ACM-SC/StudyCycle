@@ -1,9 +1,9 @@
 use crate::community_use_pending;
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_comment_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   notify::NotifyData,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
@@ -18,7 +18,7 @@ use lemmy_api_utils::{
     update_read_comments,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   impls::actor_language::validate_post_language,
   source::{
     comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
@@ -26,21 +26,21 @@ use lemmy_db_schema::{
   },
   traits::Likeable,
 };
-use lemmy_db_views_comment::api::{CommentResponse, CreateComment};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::PostView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_db_views_comment::api::{CommentResponse, CreateComment};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::PostView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::validation::is_valid_body_field,
 };
 
 pub async fn create_comment(
   Json(data): Json<CreateComment>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommentResponse>> {
+) -> StudyCycleResult<Json<CommentResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   let slur_regex = slur_regex(&context).await?;
@@ -92,14 +92,14 @@ pub async fn create_comment(
   // comment we also lock all of its children.
   let locked = post.locked || parent_opt.as_ref().is_some_and(|p| p.locked);
   if locked && !is_mod_or_admin {
-    return Err(LemmyErrorType::Locked.into());
+    return Err(StudyCycleErrorType::Locked.into());
   }
 
   // If there's a parent_id, check to make sure that comment is in that post
   // Strange issue where sometimes the post ID of the parent comment is incorrect
   if let Some(parent) = parent_opt.as_ref() {
     if parent.post_id != post_id {
-      return Err(LemmyErrorType::CouldntCreate.into());
+      return Err(StudyCycleErrorType::CouldntCreate.into());
     }
     check_comment_depth(parent)?;
   }

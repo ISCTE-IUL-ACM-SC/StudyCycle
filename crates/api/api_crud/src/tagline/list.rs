@@ -1,14 +1,14 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::source::tagline::Tagline;
-use lemmy_db_views_site::api::ListTaglines;
-use lemmy_diesel_utils::pagination::PagedResponse;
-use lemmy_utils::error::LemmyError;
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::source::tagline::Tagline;
+use studycycle_db_views_site::api::ListTaglines;
+use studycycle_diesel_utils::pagination::PagedResponse;
+use studycycle_utils::error::StudyCycleError;
 
 pub async fn list_taglines(
   Query(data): Query<ListTaglines>,
-  context: Data<LemmyContext>,
-) -> Result<Json<PagedResponse<Tagline>>, LemmyError> {
+  context: Data<StudyCycleContext>,
+) -> Result<Json<PagedResponse<Tagline>>, StudyCycleError> {
   let taglines = Tagline::list(&mut context.pool(), data.page_cursor, data.limit).await?;
 
   Ok(Json(taglines))

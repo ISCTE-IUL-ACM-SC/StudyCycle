@@ -30,7 +30,7 @@ import {
   listPersonContent,
   waitUntil,
   password,
-  jestLemmyError,
+  jestStudyCycleError,
   statusBadRequest,
   randomString,
 } from "./shared";
@@ -63,7 +63,7 @@ test("Create user", async () => {
 
   let myUser = await getMyUser(user);
   expect(myUser).toBeDefined();
-  apShortname = `${myUser.local_user_view.person.name}@lemmy-alpha:8541`;
+  apShortname = `${myUser.local_user_view.person.name}@studycycle-alpha:8541`;
 });
 
 test("Set some user settings, check that they are federated", async () => {
@@ -88,7 +88,7 @@ test("Delete user", async () => {
   let person_id = user_profile.local_user_view.person.id;
 
   // make a local post and comment
-  let alphaCommunity = await resolveCommunity(user, "main@lemmy-alpha:8541");
+  let alphaCommunity = await resolveCommunity(user, "main@studycycle-alpha:8541");
   if (!alphaCommunity) {
     throw "Missing alpha community";
   }
@@ -114,12 +114,12 @@ test("Delete user", async () => {
   await deleteUser(user);
 
   // Wait, in order to make sure it federates
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => getMyUser(user),
     new LemmyError("incorrect_login", statusUnauthorized),
   );
 
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => getPersonDetails(user, person_id),
     new LemmyError("not_found", statusNotFound),
   );
@@ -144,7 +144,7 @@ test("Delete user", async () => {
     () => alpha.getComment({ id: remoteComment.id }),
     c => c.comment_view.comment.deleted,
   );
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => getPersonDetails(user, remoteComment.creator_id),
     new LemmyError("not_found", statusNotFound),
   );
@@ -155,7 +155,7 @@ test("Requests with invalid auth should be treated as unauthenticated", async ()
     headers: { Authorization: "Bearer foobar" },
     fetchFunction,
   });
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => getMyUser(invalid_auth),
     new LemmyError("incorrect_login", statusUnauthorized),
   );
@@ -174,7 +174,7 @@ test("Create user with Arabic name", async () => {
 
   let my_user = await getMyUser(user);
   expect(my_user).toBeDefined();
-  apShortname = `${my_user.local_user_view.person.name}@lemmy-alpha:8541`;
+  apShortname = `${my_user.local_user_view.person.name}@studycycle-alpha:8541`;
 
   let betaPerson1 = await resolvePerson(beta, apShortname);
   expect(betaPerson1!.person.name).toBe(name);
@@ -189,11 +189,11 @@ test("Create user with accept-language", async () => {
   };
   await alpha.editSite(edit);
 
-  let lemmy_http = new LemmyHttp(alphaUrl, {
+  let studycycle_http = new LemmyHttp(alphaUrl, {
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language#syntax
     headers: { "Accept-Language": "fr-CH, en;q=0.8, *;q=0.5" },
   });
-  let user = await registerUser(lemmy_http, alphaUrl);
+  let user = await registerUser(studycycle_http, alphaUrl);
 
   let my_user = await getMyUser(user);
   expect(my_user).toBeDefined();
@@ -253,7 +253,7 @@ test("Make sure banned user can delete their account", async () => {
   let myUser = await getMyUser(user);
 
   // make a local post
-  let alphaCommunity = await resolveCommunity(user, "main@lemmy-alpha:8541");
+  let alphaCommunity = await resolveCommunity(user, "main@studycycle-alpha:8541");
   if (!alphaCommunity) {
     throw "Missing alpha community";
   }
@@ -288,10 +288,10 @@ test("Make sure banned user can delete their account", async () => {
 test("Admins can view and ban deleted accounts", async () => {
   let user = await registerUser(beta, betaUrl);
   let myUser = await getMyUser(user);
-  let apShortname = `${myUser.local_user_view.person.name}@lemmy-beta:8551`;
+  let apShortname = `${myUser.local_user_view.person.name}@studycycle-beta:8551`;
   let userOnAlpha = await resolvePerson(alpha, apShortname);
 
-  let alphaCommunity = await resolveCommunity(user, "main@lemmy-alpha:8541");
+  let alphaCommunity = await resolveCommunity(user, "main@studycycle-alpha:8541");
   if (!alphaCommunity) {
     throw "Missing alpha community";
   }
@@ -363,14 +363,14 @@ test("Make sure a denied user is given denial reason", async () => {
   expect(login.jwt).toBeUndefined();
 
   // Try to login with a bad password first
-  await jestLemmyError(
+  await jestStudyCycleError(
     () =>
       alpha.login({ username_or_email: username, password: "wrong_password" }),
     new LemmyError("incorrect_login", statusUnauthorized),
   );
 
   // Try to login without approval yet, should return is pending
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => alpha.login({ username_or_email: username, password }),
     new LemmyError("registration_application_is_pending", statusBadRequest),
   );
@@ -389,7 +389,7 @@ test("Make sure a denied user is given denial reason", async () => {
   });
 
   // Should give the denial reason in the error.
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => alpha.login({ username_or_email: username, password }),
     new LemmyError("registration_denied", statusBadRequest, denyReason),
   );

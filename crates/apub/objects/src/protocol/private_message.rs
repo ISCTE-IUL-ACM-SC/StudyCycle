@@ -34,7 +34,7 @@ pub struct PrivateMessage {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum PrivateMessageType {
-  /// Deprecated, for compatibility with Lemmy 0.19 and earlier
+  /// Deprecated, for compatibility with StudyCycle 0.19 and earlier
   /// https://docs.pleroma.social/backend/development/ap_extensions/#chatmessages
   ChatMessage,
   Note,

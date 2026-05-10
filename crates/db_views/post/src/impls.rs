@@ -16,7 +16,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::{SortDirection, asc_if};
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CommunityId, MultiCommunityId, PostId},
   source::{
@@ -34,7 +34,7 @@ use lemmy_db_schema::{
     queries::filters::{filter_blocked, filter_not_unlisted},
   },
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   enums::{CommunityFollowerState, CommunityVisibility, ListingType, PostSortType},
@@ -53,7 +53,7 @@ use lemmy_db_schema_file::{
   },
   schema::{community, community_actions, person, post, post_actions},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -65,8 +65,8 @@ use lemmy_diesel_utils::{
   traits::Crud,
   utils::{CoalesceKey, Commented, fuzzy_search, now, seconds_to_pg_interval},
 };
-use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult},
   utils::validation::clean_url,
 };
 use tracing::debug;
@@ -81,7 +81,7 @@ impl PaginationCursorConversion for PostView {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     Post::read(pool, PostId(cursor.id()?)).await
   }
 }
@@ -97,7 +97,7 @@ impl PaginationCursorConversion for PostViewDummy {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     let [post_id, person_id] = cursor.multi()?;
     PostActions::read(pool, PostId(post_id), PersonId(person_id)).await
   }
@@ -175,7 +175,7 @@ impl PostView {
     my_local_user: Option<&'_ LocalUser>,
     local_instance_id: InstanceId,
     is_mod_or_admin: bool,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let my_person_id = my_local_user.person_id();
 
@@ -224,7 +224,7 @@ impl PostView {
       .text("PostView::read")
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   /// List all the read posts for your person, ordered by the read date.
@@ -234,7 +234,7 @@ impl PostView {
     page_cursor: Option<PaginationCursor>,
     limit: Option<i64>,
     no_limit: Option<bool>,
-  ) -> LemmyResult<PagedResponse<PostView>> {
+  ) -> StudyCycleResult<PagedResponse<PostView>> {
     let limit = limit_fetch(limit, no_limit)?;
     let query = PostView::post_action_joins(Some(my_person.id), my_person.instance_id)
       .filter(post_actions::person_id.eq(my_person.id))
@@ -255,7 +255,7 @@ impl PostView {
     let res = paginated_query
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
     paginate_response(res, limit, page_cursor)
   }
 
@@ -266,7 +266,7 @@ impl PostView {
     page_cursor: Option<PaginationCursor>,
     limit: Option<i64>,
     no_limit: Option<bool>,
-  ) -> LemmyResult<PagedResponse<PostView>> {
+  ) -> StudyCycleResult<PagedResponse<PostView>> {
     let limit = limit_fetch(limit, no_limit)?;
     let query = PostView::post_action_joins(Some(my_person.id), my_person.instance_id)
       .filter(post_actions::person_id.eq(my_person.id))
@@ -287,7 +287,7 @@ impl PostView {
     let res = paginated_query
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
     paginate_response(res, limit, page_cursor)
   }
 }
@@ -331,14 +331,14 @@ impl PostQuery<'_> {
     &self,
     pool: &mut DbPool<'_>,
     local_site: &LocalSite,
-  ) -> LemmyResult<Option<Vec<CommunityId>>> {
+  ) -> StudyCycleResult<Option<Vec<CommunityId>>> {
     // First, check the given community or multi community id, then if both are none, check the
     // listing types
     let community_ids = match (self.community_id, self.multi_community_id) {
       (Some(id), None) => Some(vec![id]),
       (None, Some(id)) => Some(MultiCommunityEntry::list_community_ids(pool, id).await?),
       (Some(_), Some(_)) => {
-        return Err(LemmyErrorType::CannotCombineCommunityIdAndMultiCommunityId.into());
+        return Err(StudyCycleErrorType::CannotCombineCommunityIdAndMultiCommunityId.into());
       }
       (None, None) => {
         // If no community or multi_community is given, then parse the listing_types
@@ -379,7 +379,7 @@ impl PostQuery<'_> {
     pool: &mut DbPool<'_>,
     site: &Site,
     local_site: &LocalSite,
-  ) -> LemmyResult<PagedResponse<PostView>> {
+  ) -> StudyCycleResult<PagedResponse<PostView>> {
     // Pre-fetching some important items, to prevent costly joins.
     let community_ids = self.prefetch_community_ids(pool, local_site).await?;
     let language_ids = LocalUserLanguage::read_opt(pool, self.local_user.map(|l| l.id)).await?;
@@ -583,7 +583,7 @@ impl PostQuery<'_> {
       .text("PostQuery::list")
       .load::<PostView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
     paginate_response(res, limit, self.page_cursor)
   }
 }

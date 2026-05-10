@@ -20,22 +20,22 @@ use activitypub_federation::{
   traits::{Actor, Object},
 };
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{process_markdown_opt, slur_regex},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     multi_community::{MultiCommunity, MultiCommunityInsertForm},
     person::Person,
   },
   traits::ApubActor,
 };
-use lemmy_db_schema_file::enums::ActorType;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{sensitive::SensitiveString, traits::Crud};
-use lemmy_utils::{
-  error::{LemmyError, LemmyErrorType, LemmyResult},
+use studycycle_db_schema_file::enums::ActorType;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{sensitive::SensitiveString, traits::Crud};
+use studycycle_utils::{
+  error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult},
   utils::{
     markdown::markdown_to_html,
     slurs::remove_slurs,
@@ -70,9 +70,9 @@ impl From<MultiCommunity> for ApubMultiCommunity {
 
 #[async_trait::async_trait]
 impl Object for ApubMultiCommunity {
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = Feed;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     self.ap_id.inner()
@@ -85,7 +85,7 @@ impl Object for ApubMultiCommunity {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     Ok(
       MultiCommunity::read_from_apub_id(&mut context.pool(), &object_id.into())
         .await?
@@ -93,15 +93,15 @@ impl Object for ApubMultiCommunity {
     )
   }
 
-  async fn delete(&self, _context: &Data<Self::DataType>) -> LemmyResult<()> {
-    Err(LemmyErrorType::NotFound.into())
+  async fn delete(&self, _context: &Data<Self::DataType>) -> StudyCycleResult<()> {
+    Err(StudyCycleErrorType::NotFound.into())
   }
 
   fn is_deleted(&self) -> bool {
     self.deleted
   }
 
-  async fn into_json(self, context: &Data<Self::DataType>) -> LemmyResult<Self::Kind> {
+  async fn into_json(self, context: &Data<Self::DataType>) -> StudyCycleResult<Self::Kind> {
     let site_view = SiteView::read_local(&mut context.pool()).await?;
     let site = ApubSite(site_view.site.clone());
     let creator = Person::read(&mut context.pool(), self.creator_id).await?;
@@ -125,8 +125,8 @@ impl Object for ApubMultiCommunity {
   async fn verify(
     json: &Self::Kind,
     expected_domain: &Url,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     check_apub_id_valid_with_strictness(json.id.inner(), true, context).await?;
     verify_domains_match(expected_domain, json.id.inner())?;
     verify_is_remote_object(&json.id, context)?;
@@ -134,7 +134,7 @@ impl Object for ApubMultiCommunity {
     Ok(())
   }
 
-  async fn from_json(json: Self::Kind, context: &Data<LemmyContext>) -> LemmyResult<Self> {
+  async fn from_json(json: Self::Kind, context: &Data<StudyCycleContext>) -> StudyCycleResult<Self> {
     let creator = json.attributed_to.dereference(context).await?;
     let slur_regex = slur_regex(context).await?;
     let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;

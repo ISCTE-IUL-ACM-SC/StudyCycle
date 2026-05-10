@@ -1,16 +1,16 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::source::post::PostActions;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::MarkManyPostsAsRead;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::{error::LemmyResult, utils::validation::check_api_elements_count};
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::source::post::PostActions;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::api::MarkManyPostsAsRead;
+use studycycle_db_views_site::api::SuccessResponse;
+use studycycle_utils::{error::StudyCycleResult, utils::validation::check_api_elements_count};
 
 pub async fn mark_posts_as_read(
   Json(data): Json<MarkManyPostsAsRead>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   let post_ids = &data.post_ids;
   check_api_elements_count(post_ids.len())?;
 

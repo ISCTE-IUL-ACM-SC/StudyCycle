@@ -1,10 +1,10 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{check_local_user_valid, get_url_blocklist, process_markdown_opt, slur_regex},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     actor_language::LocalUserLanguage,
     keyword_block::LocalUserKeywordBlock,
@@ -13,18 +13,18 @@ use lemmy_db_schema::{
   },
   utils::limit_fetch_check,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{
   SiteView,
   api::{SaveUserSettings, SuccessResponse},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   traits::Crud,
   utils::{diesel_opt_number_update, diesel_string_update},
 };
-use lemmy_email::account::send_verification_email;
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_email::account::send_verification_email;
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::validation::{
     check_blocking_keywords_are_valid,
     is_valid_bio_field,
@@ -36,9 +36,9 @@ use std::ops::Deref;
 
 pub async fn save_user_settings(
   Json(data): Json<SaveUserSettings>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   check_local_user_valid(&local_user_view)?;
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
@@ -83,7 +83,7 @@ pub async fn save_user_settings(
     && email.is_none()
     && local_site.email_verification_required
   {
-    return Err(LemmyErrorType::EmailRequired.into());
+    return Err(StudyCycleErrorType::EmailRequired.into());
   }
 
   if let Some(Some(bio)) = &bio {
@@ -102,7 +102,7 @@ pub async fn save_user_settings(
     && local_site.email_notifications_disabled
     && send_notifications_to_email
   {
-    return Err(LemmyErrorType::EmailNotificationsDisabled.into());
+    return Err(StudyCycleErrorType::EmailNotificationsDisabled.into());
   }
 
   let local_user_id = local_user_view.local_user.id;

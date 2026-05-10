@@ -1,8 +1,8 @@
 use crate::newtypes::{LocalSiteId, MultiCommunityId, SiteId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::local_site;
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::schema::local_site;
+use studycycle_db_schema_file::{
   PersonId,
   enums::{
     CommentSortType,

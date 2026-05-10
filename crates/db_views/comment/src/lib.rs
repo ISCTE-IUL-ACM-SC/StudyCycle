@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   comment::{Comment, CommentActions},
   community::{Community, CommunityActions},
   community_tag::CommunityTagsView,
@@ -11,7 +11,7 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::selects::{
+  studycycle_db_schema::utils::queries::selects::{
     CreatorLocalHomeCommunityBanExpiresType,
     comment_creator_is_admin,
     comment_select_remove_deletes,

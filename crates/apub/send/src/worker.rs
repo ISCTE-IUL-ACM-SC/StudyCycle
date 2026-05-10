@@ -11,17 +11,17 @@ use crate::{
 use activitypub_federation::config::FederationConfig;
 use anyhow::{Context, Result};
 use chrono::{DateTime, Days, TimeZone, Utc};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::{
   newtypes::ActivityId,
   source::{
     federation_queue_state::FederationQueueState,
     instance::{Instance, InstanceForm},
   },
 };
-use lemmy_diesel_utils::connection::{ActualDbPool, DbPool};
-use lemmy_utils::{
-  error::LemmyResult,
+use studycycle_diesel_utils::connection::{ActualDbPool, DbPool};
+use studycycle_utils::{
+  error::StudyCycleResult,
   federate_retry_sleep_duration,
   settings::structs::FederationWorkerConfig,
 };
@@ -61,7 +61,7 @@ const MIN_ACTIVITY_SEND_RESULTS_TO_HANDLE: usize = 0;
 pub(crate) struct InstanceWorker {
   instance: Instance,
   stop: CancellationToken,
-  federation_lib_config: FederationConfig<LemmyContext>,
+  federation_lib_config: FederationConfig<StudyCycleContext>,
   federation_worker_config: FederationWorkerConfig,
   state: FederationQueueState,
   last_state_insert: DateTime<Utc>,
@@ -83,11 +83,11 @@ pub(crate) struct InstanceWorker {
 impl InstanceWorker {
   pub(crate) async fn init_and_loop(
     instance: Instance,
-    config: FederationConfig<LemmyContext>,
+    config: FederationConfig<StudyCycleContext>,
     federation_worker_config: FederationWorkerConfig,
     stop: CancellationToken,
     stats_sender: UnboundedSender<FederationQueueStateWithDomain>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let pool = config.to_request_data().inner_pool().clone();
     let state = FederationQueueState::load(&mut DbPool::Pool(&pool), instance.id).await?;
     let (report_send_result, receive_send_result) =
@@ -117,7 +117,7 @@ impl InstanceWorker {
   /// loop fetch new activities from db and send them to the inboxes of the given instances
   /// this worker only returns if (a) there is an internal error or (b) the cancellation token is
   /// cancelled (graceful exit)
-  async fn loop_until_stopped(&mut self) -> LemmyResult<()> {
+  async fn loop_until_stopped(&mut self) -> StudyCycleResult<()> {
     self.initial_fail_sleep().await?;
     let mut last_sent_id = self.get_last_sent_id().await?;
 
@@ -355,7 +355,7 @@ impl InstanceWorker {
   /// we collect the relevant inboxes in the main instance worker task, and only spawn the send task
   /// if we have inboxes to send to this limits CPU usage and reduces overhead for the (many)
   /// cases where we don't have any inboxes
-  async fn spawn_send_if_needed(&mut self, activity_id: ActivityId) -> LemmyResult<()> {
+  async fn spawn_send_if_needed(&mut self, activity_id: ActivityId) -> StudyCycleResult<()> {
     let Ok(Some(ele)) = get_activity_cached(&mut self.pool(), activity_id).await else {
       tracing::debug!("{}: {:?} does not exist", self.instance.domain, activity_id);
       self
@@ -459,14 +459,14 @@ mod test {
   };
   use actix_web::{App, HttpResponse, HttpServer, dev::ServerHandle, web};
   use futures::future::try_join_all;
-  use lemmy_api_utils::utils::generate_inbox_url;
-  use lemmy_db_schema::source::{
+  use studycycle_api_utils::utils::generate_inbox_url;
+  use studycycle_db_schema::source::{
     activity::{SentActivity, SentActivityForm},
     person::{Person, PersonInsertForm},
   };
-  use lemmy_db_schema_file::enums::ActorType;
-  use lemmy_diesel_utils::{dburl::DbUrl, traits::Crud};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_db_schema_file::enums::ActorType;
+  use studycycle_diesel_utils::{dburl::DbUrl, traits::Crud};
+  use studycycle_utils::error::StudyCycleResult;
   use serde_json::{Value, json};
   use serial_test::serial;
   use std::sync::{Arc, RwLock};
@@ -479,7 +479,7 @@ mod test {
   use url::Url;
 
   struct Data {
-    context: activitypub_federation::config::Data<LemmyContext>,
+    context: activitypub_federation::config::Data<StudyCycleContext>,
     instance: Instance,
     person: Person,
     stats_receiver: UnboundedReceiver<FederationQueueStateWithDomain>,
@@ -492,8 +492,8 @@ mod test {
   }
 
   impl Data {
-    async fn init() -> LemmyResult<Self> {
-      let context = LemmyContext::init_test_federation_config().await;
+    async fn init() -> StudyCycleResult<Self> {
+      let context = StudyCycleContext::init_test_federation_config().await;
       let instance = Instance::read_or_create(&mut context.pool(), "localhost").await?;
 
       let actor_keypair = generate_actor_keypair()?;
@@ -514,7 +514,7 @@ mod test {
       let respond_with_error = Arc::new(RwLock::new(false));
       let wait_stop_server = listen_activities(inbox_sender, respond_with_error.clone())?;
 
-      let concurrent_sends_per_instance = std::env::var("LEMMY_TEST_FEDERATION_CONCURRENT_SENDS")
+      let concurrent_sends_per_instance = std::env::var("STUDYCYCLE_TEST_FEDERATION_CONCURRENT_SENDS")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(10);
@@ -546,7 +546,7 @@ mod test {
       })
     }
 
-    async fn cleanup(&mut self) -> LemmyResult<()> {
+    async fn cleanup(&mut self) -> StudyCycleResult<()> {
       if self.cleaned_up {
         return Ok(());
       }
@@ -575,7 +575,7 @@ mod test {
   #[tokio::test]
   #[traced_test]
   #[serial]
-  async fn test_stats(data: &mut Data) -> LemmyResult<()> {
+  async fn test_stats(data: &mut Data) -> StudyCycleResult<()> {
     tracing::debug!("hello world");
 
     // first receive at startup
@@ -615,7 +615,7 @@ mod test {
   #[tokio::test]
   #[traced_test]
   #[serial]
-  async fn test_send_40(data: &mut Data) -> LemmyResult<()> {
+  async fn test_send_40(data: &mut Data) -> StudyCycleResult<()> {
     tracing::debug!("hello world");
 
     // first receive at startup
@@ -641,7 +641,7 @@ mod test {
   #[serial]
   /// this test sends 15 activities, waits and checks they have all been received, then sends 50,
   /// etc
-  async fn test_send_15_20_30(data: &mut Data) -> LemmyResult<()> {
+  async fn test_send_15_20_30(data: &mut Data) -> StudyCycleResult<()> {
     tracing::debug!("hello world");
 
     // first receive at startup
@@ -668,7 +668,7 @@ mod test {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn test_update_instance(data: &mut Data) -> LemmyResult<()> {
+  async fn test_update_instance(data: &mut Data) -> StudyCycleResult<()> {
     let form = InstanceForm::new(data.instance.domain.clone());
     Instance::update(&mut data.context.pool(), data.instance.id, form).await?;
 
@@ -686,7 +686,7 @@ mod test {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn test_errors(data: &mut Data) -> LemmyResult<()> {
+  async fn test_errors(data: &mut Data) -> StudyCycleResult<()> {
     let form = InstanceForm::new(data.instance.domain.clone());
     Instance::update(&mut data.context.pool(), data.instance.id, form).await?;
 
@@ -734,7 +734,7 @@ mod test {
   fn listen_activities(
     inbox_sender: UnboundedSender<String>,
     respond_with_error: Arc<RwLock<bool>>,
-  ) -> LemmyResult<ServerHandle> {
+  ) -> StudyCycleResult<ServerHandle> {
     let run = HttpServer::new(move || {
       App::new()
         .app_data(actix_web::web::Data::new(inbox_sender.clone()))
@@ -771,9 +771,9 @@ mod test {
 
   async fn send_activity(
     ap_id: DbUrl,
-    context: &LemmyContext,
+    context: &StudyCycleContext,
     wait: bool,
-  ) -> LemmyResult<SentActivity> {
+  ) -> StudyCycleResult<SentActivity> {
     // create outgoing activity
     let id = format!(
       "http://ds9.lemmy.ml/activities/like/{}",

@@ -1,6 +1,6 @@
-use lemmy_diesel_utils::sensitive::SensitiveString;
-use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType},
+use studycycle_diesel_utils::sensitive::SensitiveString;
+use studycycle_utils::{
+  error::{StudyCycleErrorExt, StudyCycleErrorType},
   settings::structs::Settings,
   spawn_try_task,
 };
@@ -25,7 +25,7 @@ pub(crate) fn send_email(
 ) {
   spawn_try_task(async move {
     static MAILER: OnceLock<AsyncSmtpTransport> = OnceLock::new();
-    let email_config = settings.email.clone().ok_or(LemmyErrorType::NoEmailSetup)?;
+    let email_config = settings.email.clone().ok_or(StudyCycleErrorType::NoEmailSetup)?;
 
     #[expect(clippy::expect_used)]
     let mailer = MAILER.get_or_init(|| {
@@ -44,24 +44,24 @@ pub(crate) fn send_email(
       .from(
         smtp_from_address
           .parse()
-          .with_lemmy_type(LemmyErrorType::InvalidEmailAddress(
+          .with_studycycle_type(StudyCycleErrorType::InvalidEmailAddress(
             smtp_from_address.into(),
           ))?,
       )
       .to(Mailbox::new(
         Some(to_username.clone()),
         Address::from_str(&to_email)
-          .with_lemmy_type(LemmyErrorType::InvalidEmailAddress(to_email.into_inner()))?,
+          .with_studycycle_type(StudyCycleErrorType::InvalidEmailAddress(to_email.into_inner()))?,
       ))
       .message_id(Some(format!("<{}@{}>", Uuid::new_v4(), settings.hostname)))
       .subject(subject)
       .multipart(MultiPart::alternative_plain_html(plain_text, html.clone()))
-      .with_lemmy_type(LemmyErrorType::EmailSendFailed)?;
+      .with_studycycle_type(StudyCycleErrorType::EmailSendFailed)?;
 
     mailer
       .send(email)
       .await
-      .with_lemmy_type(LemmyErrorType::EmailSendFailed)?;
+      .with_studycycle_type(StudyCycleErrorType::EmailSendFailed)?;
 
     Ok(())
   })

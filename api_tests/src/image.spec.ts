@@ -73,7 +73,7 @@ test("Upload image and delete it", async () => {
 
   // Make sure the uploader is correct
   expect(listMediaRes.items[0].person.ap_id).toBe(
-    `http://lemmy-alpha:8541/u/lemmy_alpha`,
+    `http://studycycle-alpha:8541/u/studycycle_alpha`,
   );
 
   // delete image
@@ -182,11 +182,11 @@ test("Images in remote image post are proxied if setting enabled", async () => {
   // remote image gets proxied after upload
   expect(
     post.thumbnail_url?.startsWith(
-      "http://lemmy-gamma:8561/api/v4/image/proxy?url",
+      "http://studycycle-gamma:8561/api/v4/image/proxy?url",
     ),
   ).toBeTruthy();
   expect(
-    post.body?.startsWith("![](http://lemmy-gamma:8561/api/v4/image/proxy?url"),
+    post.body?.startsWith("![](http://studycycle-gamma:8561/api/v4/image/proxy?url"),
   ).toBeTruthy();
 
   // Make sure that it contains `jpg`, to be sure its an image
@@ -205,12 +205,12 @@ test("Images in remote image post are proxied if setting enabled", async () => {
 
   expect(
     epsilonPost.thumbnail_url?.startsWith(
-      "http://lemmy-epsilon:8581/api/v4/image/proxy?url",
+      "http://studycycle-epsilon:8581/api/v4/image/proxy?url",
     ),
   ).toBeTruthy();
   expect(
     epsilonPost.body?.startsWith(
-      "![](http://lemmy-epsilon:8581/api/v4/image/proxy?url",
+      "![](http://studycycle-epsilon:8581/api/v4/image/proxy?url",
     ),
   ).toBeTruthy();
 
@@ -232,7 +232,7 @@ test("Thumbnail of remote image link is proxied if setting enabled", async () =>
   // remote image gets proxied after upload
   expect(
     post.thumbnail_url?.startsWith(
-      "http://lemmy-gamma:8561/api/v4/image/proxy?url",
+      "http://studycycle-gamma:8561/api/v4/image/proxy?url",
     ),
   ).toBeTruthy();
 
@@ -250,7 +250,7 @@ test("Thumbnail of remote image link is proxied if setting enabled", async () =>
 
   expect(
     epsilonPost.thumbnail_url?.startsWith(
-      "http://lemmy-epsilon:8581/api/v4/image/proxy?url",
+      "http://studycycle-epsilon:8581/api/v4/image/proxy?url",
     ),
   ).toBeTruthy();
 
@@ -281,7 +281,7 @@ test("No image proxying if setting is disabled", async () => {
 
   // remote image doesn't get proxied after upload
   expect(
-    post.post_view.post.url?.startsWith("http://lemmy-beta:8551/api/v4/image/"),
+    post.post_view.post.url?.startsWith("http://studycycle-beta:8551/api/v4/image/"),
   ).toBeTruthy();
   expect(post.post_view.post.body).toBe(`![](${sampleImage})`);
 
@@ -292,7 +292,7 @@ test("No image proxying if setting is disabled", async () => {
 
   // remote image doesn't get proxied after federation
   expect(
-    betaPost!.post.url?.startsWith("http://lemmy-beta:8551/api/v4/image/"),
+    betaPost!.post.url?.startsWith("http://studycycle-beta:8551/api/v4/image/"),
   ).toBeTruthy();
   expect(betaPost!.post.body).toBe(`![](${sampleImage})`);
   // Make sure the alt text got federated

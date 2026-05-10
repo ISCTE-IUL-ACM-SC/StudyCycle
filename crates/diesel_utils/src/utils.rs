@@ -12,8 +12,8 @@ use diesel::{
 };
 use futures_util::future::BoxFuture;
 use i_love_jesus::CursorKey;
-use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult},
   utils::validation::clean_url,
 };
 use url::Url;
@@ -183,37 +183,37 @@ pub fn diesel_required_string_update(opt: Option<&str>) -> Option<String> {
 
 /// Takes an optional API URL-type input, and converts it to an optional diesel DB update.
 /// Also cleans the url params.
-pub fn diesel_url_update(opt: Option<&str>) -> LemmyResult<Option<Option<DbUrl>>> {
+pub fn diesel_url_update(opt: Option<&str>) -> StudyCycleResult<Option<Option<DbUrl>>> {
   match opt {
     // An empty string is an erase
     Some("") => Ok(Some(None)),
     Some(str_url) => Url::parse(str_url)
       .map(|u| Some(Some(clean_url(&u).into())))
-      .with_lemmy_type(LemmyErrorType::InvalidUrl),
+      .with_studycycle_type(StudyCycleErrorType::InvalidUrl),
     None => Ok(None),
   }
 }
 
 /// Takes an optional API URL-type input, and converts it to an optional diesel DB update (for non
 /// nullable properties). Also cleans the url params.
-pub fn diesel_required_url_update(opt: Option<&str>) -> LemmyResult<Option<DbUrl>> {
+pub fn diesel_required_url_update(opt: Option<&str>) -> StudyCycleResult<Option<DbUrl>> {
   match opt {
     // An empty string is no change
     Some("") => Ok(None),
     Some(str_url) => Url::parse(str_url)
       .map(|u| Some(clean_url(&u).into()))
-      .with_lemmy_type(LemmyErrorType::InvalidUrl),
+      .with_studycycle_type(StudyCycleErrorType::InvalidUrl),
     None => Ok(None),
   }
 }
 
 /// Takes an optional API URL-type input, and converts it to an optional diesel DB create.
 /// Also cleans the url params.
-pub fn diesel_url_create(opt: Option<&str>) -> LemmyResult<Option<DbUrl>> {
+pub fn diesel_url_create(opt: Option<&str>) -> StudyCycleResult<Option<DbUrl>> {
   match opt {
     Some(str_url) => Url::parse(str_url)
       .map(|u| Some(clean_url(&u).into()))
-      .with_lemmy_type(LemmyErrorType::InvalidUrl),
+      .with_studycycle_type(StudyCycleErrorType::InvalidUrl),
     None => Ok(None),
   }
 }
@@ -292,7 +292,7 @@ mod tests {
   }
 
   #[test]
-  fn test_diesel_option_overwrite_to_url() -> LemmyResult<()> {
+  fn test_diesel_option_overwrite_to_url() -> StudyCycleResult<()> {
     assert!(matches!(diesel_url_update(None), Ok(None)));
     assert!(matches!(diesel_url_update(Some("")), Ok(Some(None))));
     assert!(diesel_url_update(Some("invalid_url")).is_err());

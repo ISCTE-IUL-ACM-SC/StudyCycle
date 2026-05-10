@@ -1,1 +1,1 @@
-pub use lemmy_utils::error::{LemmyErrorType, UntranslatedError};
+pub use studycycle_utils::error::{StudyCycleErrorType, UntranslatedError};

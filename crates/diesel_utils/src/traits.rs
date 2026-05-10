@@ -10,7 +10,7 @@ use diesel_async::{
   RunQueryDsl,
   methods::{ExecuteDsl, LoadQuery},
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 use std::future::Future;
 
 /// Returned by `diesel::delete`
@@ -36,9 +36,9 @@ where
   fn create(
     pool: &mut DbPool<'_>,
     form: &Self::InsertForm,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send;
+  ) -> impl Future<Output = StudyCycleResult<Self>> + Send;
 
-  fn read(pool: &mut DbPool<'_>, id: Self::IdType) -> impl Future<Output = LemmyResult<Self>> + Send
+  fn read(pool: &mut DbPool<'_>, id: Self::IdType) -> impl Future<Output = StudyCycleResult<Self>> + Send
   where
     Self: Send,
   {
@@ -48,7 +48,7 @@ where
       query
         .first(conn)
         .await
-        .with_lemmy_type(LemmyErrorType::NotFound)
+        .with_studycycle_type(StudyCycleErrorType::NotFound)
     }
   }
 
@@ -58,19 +58,19 @@ where
     pool: &mut DbPool<'_>,
     id: Self::IdType,
     form: &Self::UpdateForm,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send;
+  ) -> impl Future<Output = StudyCycleResult<Self>> + Send;
 
   fn delete(
     pool: &mut DbPool<'_>,
     id: Self::IdType,
-  ) -> impl Future<Output = LemmyResult<usize>> + Send {
+  ) -> impl Future<Output = StudyCycleResult<usize>> + Send {
     async {
       let query: Delete<Find<Self>> = diesel::delete(Self::table().find(id));
       let conn = &mut *get_conn(pool).await?;
       query
         .execute(conn)
         .await
-        .with_lemmy_type(LemmyErrorType::Deleted)
+        .with_studycycle_type(StudyCycleErrorType::Deleted)
     }
   }
 }

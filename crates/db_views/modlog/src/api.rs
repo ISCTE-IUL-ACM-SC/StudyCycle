@@ -1,9 +1,9 @@
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   ModlogKindFilter,
   newtypes::{CommentId, CommunityId, ModlogId, PostId},
 };
-use lemmy_db_schema_file::{PersonId, enums::ListingType};
-use lemmy_diesel_utils::pagination::PaginationCursor;
+use studycycle_db_schema_file::{PersonId, enums::ListingType};
+use studycycle_diesel_utils::pagination::PaginationCursor;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

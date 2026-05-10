@@ -1,17 +1,17 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::check_local_user_valid};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_local_user_valid};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{
   SiteView,
   api::{ResendVerificationEmail, SuccessResponse},
 };
-use lemmy_email::account::send_verification_email_if_required;
-use lemmy_utils::error::LemmyResult;
+use studycycle_email::account::send_verification_email_if_required;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn resend_verification_email(
   Json(data): Json<ResendVerificationEmail>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<SuccessResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<SuccessResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let email = data.email.to_string();
 

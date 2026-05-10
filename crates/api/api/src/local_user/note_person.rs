@@ -1,25 +1,25 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{check_local_user_valid, get_url_blocklist, process_markdown, slur_regex},
 };
-use lemmy_db_schema::source::person::{PersonActions, PersonNoteForm};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::{
+use studycycle_db_schema::source::person::{PersonActions, PersonNoteForm};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_person::{
   PersonView,
   api::{NotePerson, PersonResponse},
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_db_views_site::SiteView;
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::{slurs::check_slurs, validation::is_valid_body_field},
 };
 
 pub async fn user_note_person(
   Json(data): Json<NotePerson>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PersonResponse>> {
+) -> StudyCycleResult<Json<PersonResponse>> {
   check_local_user_valid(&local_user_view)?;
 
   let target_id = data.person_id;
@@ -31,7 +31,7 @@ pub async fn user_note_person(
 
   // Don't let a person note themselves
   if target_id == my_person_id {
-    return Err(LemmyErrorType::CantNoteYourself.into());
+    return Err(StudyCycleErrorType::CantNoteYourself.into());
   }
 
   // If the note is empty, delete it

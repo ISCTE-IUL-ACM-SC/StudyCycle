@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_api"
+name = "studycycle_api"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -11,7 +11,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "lemmy_api"
+name = "studycycle_api"
 path = "src/lib.rs"
 doctest = false
 
@@ -22,37 +22,37 @@ workspace = true
 full = []
 
 [dependencies]
-lemmy_db_views_comment = { workspace = true, features = ["full"] }
-lemmy_db_views_community = { workspace = true, features = ["full"] }
-lemmy_db_views_community_moderator = { workspace = true, features = ["full"] }
-lemmy_db_views_community_follower_approval = { workspace = true, features = [
+studycycle_db_views_comment = { workspace = true, features = ["full"] }
+studycycle_db_views_community = { workspace = true, features = ["full"] }
+studycycle_db_views_community_moderator = { workspace = true, features = ["full"] }
+studycycle_db_views_community_follower_approval = { workspace = true, features = [
   "full",
 ] }
-lemmy_db_views_community_follower = { workspace = true, features = ["full"] }
-lemmy_apub_objects = { workspace = true, features = ["full"] }
-lemmy_db_views_post = { workspace = true, features = ["full"] }
-lemmy_db_views_vote = { workspace = true, features = ["full"] }
-lemmy_db_views_local_user = { workspace = true, features = ["full"] }
-lemmy_db_views_person = { workspace = true, features = ["full"] }
-lemmy_db_views_local_image = { workspace = true, features = ["full"] }
-lemmy_db_views_notification = { workspace = true, features = ["full"] }
-lemmy_db_views_modlog = { workspace = true, features = ["full"] }
-lemmy_db_views_person_saved_combined = { workspace = true, features = ["full"] }
-lemmy_db_views_person_liked_combined = { workspace = true, features = ["full"] }
-lemmy_db_views_post_comment_combined = { workspace = true, features = ["full"] }
-lemmy_db_views_person_content_combined = { workspace = true, features = [
+studycycle_db_views_community_follower = { workspace = true, features = ["full"] }
+studycycle_apub_objects = { workspace = true, features = ["full"] }
+studycycle_db_views_post = { workspace = true, features = ["full"] }
+studycycle_db_views_vote = { workspace = true, features = ["full"] }
+studycycle_db_views_local_user = { workspace = true, features = ["full"] }
+studycycle_db_views_person = { workspace = true, features = ["full"] }
+studycycle_db_views_local_image = { workspace = true, features = ["full"] }
+studycycle_db_views_notification = { workspace = true, features = ["full"] }
+studycycle_db_views_modlog = { workspace = true, features = ["full"] }
+studycycle_db_views_person_saved_combined = { workspace = true, features = ["full"] }
+studycycle_db_views_person_liked_combined = { workspace = true, features = ["full"] }
+studycycle_db_views_post_comment_combined = { workspace = true, features = ["full"] }
+studycycle_db_views_person_content_combined = { workspace = true, features = [
   "full",
 ] }
-lemmy_db_views_report_combined = { workspace = true, features = ["full"] }
-lemmy_db_views_site = { workspace = true, features = ["full"] }
-lemmy_db_views_registration_applications = { workspace = true, features = [
+studycycle_db_views_report_combined = { workspace = true, features = ["full"] }
+studycycle_db_views_site = { workspace = true, features = ["full"] }
+studycycle_db_views_registration_applications = { workspace = true, features = [
   "full",
 ] }
-lemmy_utils = { workspace = true }
-lemmy_db_schema = { workspace = true, features = ["full"] }
-lemmy_api_utils = { workspace = true }
-lemmy_db_schema_file = { workspace = true }
-lemmy_email = { workspace = true }
+studycycle_utils = { workspace = true }
+studycycle_db_schema = { workspace = true, features = ["full"] }
+studycycle_api_utils = { workspace = true }
+studycycle_db_schema_file = { workspace = true }
+studycycle_email = { workspace = true }
 activitypub_federation = { workspace = true }
 tracing = { workspace = true }
 bcrypt = { workspace = true }
@@ -70,11 +70,11 @@ serde = { workspace = true }
 itertools = { workspace = true }
 serde_json = { workspace = true }
 diesel = { workspace = true }
-lemmy_diesel_utils = { workspace = true }
+studycycle_diesel_utils = { workspace = true }
 
 [dev-dependencies]
 serial_test = { workspace = true }
 tokio = { workspace = true }
 elementtree = "1.2.3"
 pretty_assertions = { workspace = true }
-lemmy_api_crud = { workspace = true }
+studycycle_api_crud = { workspace = true }

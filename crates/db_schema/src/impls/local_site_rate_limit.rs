@@ -8,35 +8,35 @@ use crate::{
 };
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::local_site_rate_limit;
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_db_schema_file::schema::local_site_rate_limit;
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl LocalSiteRateLimit {
-  pub async fn read(pool: &mut DbPool<'_>) -> LemmyResult<Option<Self>> {
+  pub async fn read(pool: &mut DbPool<'_>) -> StudyCycleResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     local_site_rate_limit::table
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn create(
     pool: &mut DbPool<'_>,
     form: &LocalSiteRateLimitInsertForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(local_site_rate_limit::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
   pub async fn update(
     pool: &mut DbPool<'_>,
     form: &LocalSiteRateLimitUpdateForm,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     // avoid error "There are no changes to save. This query cannot be built"
     if form.is_empty() {
       return Ok(());

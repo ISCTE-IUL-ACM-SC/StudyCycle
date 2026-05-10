@@ -1,13 +1,13 @@
 use crate::PrivateMessageView;
 use diesel::{BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::{newtypes::PrivateMessageId, source::person::Person};
-use lemmy_db_schema_file::{
+use studycycle_db_schema::{newtypes::PrivateMessageId, source::person::Person};
+use studycycle_db_schema_file::{
   aliases,
   schema::{instance_actions, person, person_actions, private_message},
 };
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl PrivateMessageView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -40,14 +40,14 @@ impl PrivateMessageView {
     pool: &mut DbPool<'_>,
     private_message_id: PrivateMessageId,
     my_person: Option<&Person>,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let mut pm = Self::joins()
       .filter(private_message::id.eq(private_message_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
 
     pm.private_message.clear_deleted_by_recipient(my_person);
     Ok(pm)

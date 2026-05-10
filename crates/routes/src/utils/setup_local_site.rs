@@ -5,8 +5,8 @@ use diesel::{
   query_builder::AsQuery,
 };
 use diesel_async::{RunQueryDsl, scoped_futures::ScopedFutureExt};
-use lemmy_api_utils::utils::generate_inbox_url;
-use lemmy_db_schema::{
+use studycycle_api_utils::utils::generate_inbox_url;
+use studycycle_db_schema::{
   source::{
     instance::Instance,
     local_site::{LocalSite, LocalSiteInsertForm},
@@ -17,22 +17,22 @@ use lemmy_db_schema::{
   },
   traits::ApubActor,
 };
-use lemmy_db_schema_file::schema::local_site;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{
+use studycycle_db_schema_file::schema::local_site;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   sensitive::SensitiveString,
   traits::Crud,
 };
-use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult},
   settings::structs::Settings,
 };
 use rand::{RngExt, distr::Alphanumeric};
 use tracing::info;
 use url::Url;
 
-pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> LemmyResult<SiteView> {
+pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> StudyCycleResult<SiteView> {
   let conn = &mut get_conn(pool).await?;
   // Check to see if local_site exists, without the cache wrapper
   if select(not(exists(local_site::table.as_query())))
@@ -43,7 +43,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Lem
 
     let domain = settings
       .get_hostname_without_port()
-      .with_lemmy_type(LemmyErrorType::Unknown("must have domain".into()))?;
+      .with_studycycle_type(StudyCycleErrorType::Unknown("must have domain".into()))?;
 
     conn
       .run_transaction(|conn| {
@@ -100,7 +100,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Lem
             .take(14)
             .map(char::from)
             .collect();
-          let name = format!("lemmy_{}", r);
+          let name = format!("studycycle_{}", r);
           let form = PersonInsertForm {
             private_key: site.private_key.map(SensitiveString::into_inner),
             inbox_url: Some(site.inbox_url),

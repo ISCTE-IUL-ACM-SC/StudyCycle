@@ -1,7 +1,7 @@
 use crate::CommentView;
-use lemmy_db_schema::newtypes::{CommentId, CommunityId, LanguageId, PostId};
-use lemmy_db_schema_file::enums::{CommentSortType, ListingType};
-use lemmy_diesel_utils::pagination::PaginationCursor;
+use studycycle_db_schema::newtypes::{CommentId, CommunityId, LanguageId, PostId};
+use studycycle_db_schema_file::enums::{CommentSortType, ListingType};
+use studycycle_diesel_utils::pagination::PaginationCursor;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

@@ -11,19 +11,19 @@ use activitypub_federation::{
   kinds::activity::AddType,
   traits::{Activity, Actor, Object},
 };
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::notify_mod_action,
   utils::{generate_featured_url, generate_moderators_url},
 };
-use lemmy_apub_objects::{
+use studycycle_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson, post::ApubPost},
   utils::{
     functions::{generate_to, verify_mod_action, verify_visibility},
     protocol::InCommunity,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   impls::community::CollectionType,
   newtypes::CommunityId,
   source::{
@@ -34,9 +34,9 @@ use lemmy_db_schema::{
     post::{Post, PostUpdateForm},
   },
 };
-use lemmy_db_schema_file::PersonId;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_db_schema_file::PersonId;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use url::Url;
 
 impl CollectionAdd {
@@ -44,8 +44,8 @@ impl CollectionAdd {
     community: &ApubCommunity,
     added_mod: &ApubPerson,
     actor: &ApubPerson,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     let id = generate_activity_id(AddType::Add, context)?;
     let add = CollectionAdd {
       actor: actor.id().clone().into(),
@@ -67,8 +67,8 @@ impl CollectionAdd {
     community: &ApubCommunity,
     featured_post: &ApubPost,
     actor: &ApubPerson,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     let id = generate_activity_id(AddType::Add, context)?;
     let add = CollectionAdd {
       actor: actor.id().clone().into(),
@@ -95,8 +95,8 @@ impl CollectionAdd {
 
 #[async_trait::async_trait]
 impl Activity for CollectionAdd {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -106,7 +106,7 @@ impl Activity for CollectionAdd {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     let community = self.community(context).await?;
     verify_visibility(&self.to, &self.cc, &community)?;
     verify_mod_action(&self.actor, &community, context).await?;
@@ -114,7 +114,7 @@ impl Activity for CollectionAdd {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     let (community, collection_type) =
       Community::get_by_collection_url(&mut context.pool(), &self.target.clone().into()).await?;
 
@@ -162,8 +162,8 @@ pub(crate) async fn send_add_mod_to_community(
   community_id: CommunityId,
   updated_mod_id: PersonId,
   added: bool,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let actor: ApubPerson = actor.into();
   let community: ApubCommunity = Community::read(&mut context.pool(), community_id)
     .await?
@@ -182,8 +182,8 @@ pub(crate) async fn send_feature_post(
   post: Post,
   actor: Person,
   featured: bool,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let actor: ApubPerson = actor.into();
   let post: ApubPost = post.into();
   let community = Community::read(&mut context.pool(), post.community_id)

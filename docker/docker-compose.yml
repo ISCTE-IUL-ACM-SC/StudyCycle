@@ -21,17 +21,17 @@ services:
       - lemmy-ui
     logging: *default-logging
 
-  lemmy:
+  studycycle:
     build:
       context: ../
       dockerfile: docker/Dockerfile
-    hostname: lemmy
+    hostname: studycycle
     restart: unless-stopped
     environment:
-      - RUST_LOG=warn,extism=info,lemmy_server=debug,lemmy_api=debug,lemmy_api_common=debug,lemmy_api_crud=debug,lemmy_apub=debug,lemmy_db_schema=debug,lemmy_db_views=debug,lemmy_routes=debug,lemmy_utils=debug,lemmy_websocket=debug
-      - LEMMY_DISABLE_ACTIVITY_SENDING=true
+      - RUST_LOG=warn,extism=info,studycycle_server=debug,studycycle_api=debug,studycycle_api_common=debug,studycycle_api_crud=debug,studycycle_apub=debug,studycycle_db_schema=debug,studycycle_db_views=debug,studycycle_routes=debug,studycycle_utils=debug,studycycle_websocket=debug
+      - STUDYCYCLE_DISABLE_ACTIVITY_SENDING=true
     volumes:
-      - ./lemmy.hjson:/config/config.hjson:Z
+      - ./studycycle.hjson:/config/config.hjson:Z
       - ./plugins:/plugins:Z
     depends_on:
       - postgres
@@ -46,23 +46,23 @@ services:
     # run: docker compose up --build
 
     # build:
-    #   context: ../../lemmy-ui # assuming lemmy-ui is cloned besides lemmy directory
+    #   context: ../../lemmy-ui # assuming lemmy-ui is cloned besides studycycle directory
     #   dockerfile: dev.dockerfile
     environment:
-      # this needs to match the hostname defined in the lemmy service
-      - LEMMY_UI_BACKEND=lemmy:8536
+      # this needs to match the hostname defined in the studycycle service
+      - LEMMY_UI_BACKEND=studycycle:8536
       # set the outside hostname here
       - LEMMY_UI_HTTPS=false
       - LEMMY_UI_ERUDA=true
     depends_on:
-      - lemmy
+      - studycycle
     restart: unless-stopped
     logging: *default-logging
     init: true
 
   pictrs:
     image: asonix/pictrs:0.5.17-pre.9
-    # this needs to match the pictrs url in lemmy.hjson
+    # this needs to match the pictrs url in studycycle.hjson
     hostname: pictrs
     # we can set options to pictrs like this, here we set max. image size and forced format for conversion
     # entrypoint: /sbin/tini -- /usr/local/bin/pict-rs -p /mnt -m 4 --image-format webp
@@ -82,7 +82,7 @@ services:
 
   postgres:
     image: pgautoupgrade/pgautoupgrade:18-alpine
-    # this needs to match the database host in lemmy.hson
+    # this needs to match the database host in studycycle.hjson
     # Tune your settings via
     # https://pgtune.leopard.in.ua/#/
     # You can use this technique to add them here
@@ -93,9 +93,9 @@ services:
       # use a different port so it doesn't conflict with potential postgres db running on the host
       - "5433:5432"
     environment:
-      - POSTGRES_USER=lemmy
+      - POSTGRES_USER=studycycle
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=lemmy
+      - POSTGRES_DB=studycycle
     volumes:
       - ./volumes/postgres:/var/lib/postgresql:Z
       - ./customPostgresql.conf:/etc/postgresql.conf:Z

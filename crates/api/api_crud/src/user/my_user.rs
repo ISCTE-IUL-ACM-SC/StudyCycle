@@ -1,6 +1,6 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::check_local_user_deleted};
-use lemmy_db_schema::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_local_user_deleted};
+use studycycle_db_schema::{
   MultiCommunityListingType,
   MultiCommunitySortType,
   source::{
@@ -12,17 +12,17 @@ use lemmy_db_schema::{
   },
   traits::Blockable,
 };
-use lemmy_db_views_community::impls::MultiCommunityQuery;
-use lemmy_db_views_community_follower::CommunityFollowerView;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::MyUserInfo;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_community::impls::MultiCommunityQuery;
+use studycycle_db_views_community_follower::CommunityFollowerView;
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::api::MyUserInfo;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn get_my_user(
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<MyUserInfo>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<MyUserInfo>> {
   check_local_user_deleted(&local_user_view)?;
 
   // Build the local user with parallel queries and add it to site response
@@ -41,7 +41,7 @@ pub async fn get_my_user(
     multi_community_follows,
     keyword_blocks,
     discussion_languages,
-  ) = lemmy_diesel_utils::try_join_with_pool!(pool => (
+  ) = studycycle_diesel_utils::try_join_with_pool!(pool => (
     |pool| CommunityFollowerView::for_person(pool, person_id),
     |pool| CommunityActions::read_blocks_for_person(pool, person_id),
     |pool| InstanceActions::read_communities_block_for_person(pool, person_id),

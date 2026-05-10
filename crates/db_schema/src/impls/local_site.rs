@@ -1,35 +1,35 @@
 use crate::source::local_site::{LocalSite, LocalSiteInsertForm, LocalSiteUpdateForm};
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::local_site;
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_db_schema_file::schema::local_site;
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl LocalSite {
-  pub async fn create(pool: &mut DbPool<'_>, form: &LocalSiteInsertForm) -> LemmyResult<Self> {
+  pub async fn create(pool: &mut DbPool<'_>, form: &LocalSiteInsertForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(local_site::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
-  pub async fn update(pool: &mut DbPool<'_>, form: &LocalSiteUpdateForm) -> LemmyResult<Self> {
+  pub async fn update(pool: &mut DbPool<'_>, form: &LocalSiteUpdateForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(local_site::table)
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
-  pub async fn delete(pool: &mut DbPool<'_>) -> LemmyResult<usize> {
+  pub async fn delete(pool: &mut DbPool<'_>) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     diesel::delete(local_site::table)
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_studycycle_type(StudyCycleErrorType::Deleted)
   }
 }
 
@@ -48,25 +48,25 @@ mod tests {
     },
     test_data::TestData,
   };
-  use lemmy_diesel_utils::{
+  use studycycle_diesel_utils::{
     connection::{DbPool, build_db_pool_for_tests},
     traits::Crud,
   };
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
-  async fn read_local_site(pool: &mut DbPool<'_>) -> LemmyResult<LocalSite> {
+  async fn read_local_site(pool: &mut DbPool<'_>) -> StudyCycleResult<LocalSite> {
     let conn = &mut get_conn(pool).await?;
     local_site::table
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   async fn prepare_site_with_community(
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<(TestData, Person, Community)> {
+  ) -> StudyCycleResult<(TestData, Person, Community)> {
     let data = TestData::create(pool).await?;
 
     let new_person = PersonInsertForm::test_form(data.instance.id, "thommy_site_agg");
@@ -86,7 +86,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_aggregates() -> LemmyResult<()> {
+  async fn test_aggregates() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -156,7 +156,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_soft_delete() -> LemmyResult<()> {
+  async fn test_soft_delete() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

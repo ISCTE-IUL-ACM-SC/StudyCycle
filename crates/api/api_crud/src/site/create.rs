@@ -3,8 +3,8 @@ use crate::site::{application_question_check, site_default_post_listing_type_che
 use activitypub_federation::{config::Data, http_signatures::generate_actor_keypair};
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{
     generate_inbox_url,
     get_url_blocklist,
@@ -14,7 +14,7 @@ use lemmy_api_utils::{
     slur_regex,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::MultiCommunityId,
   source::{
     local_site::{LocalSite, LocalSiteUpdateForm},
@@ -22,18 +22,18 @@ use lemmy_db_schema::{
     site::{Site, SiteUpdateForm},
   },
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{
   SiteView,
   api::{CreateSite, SiteResponse},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   dburl::DbUrl,
   traits::Crud,
   utils::{diesel_opt_number_update, diesel_string_update},
 };
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::{
     slurs::check_slurs,
     validation::{
@@ -48,9 +48,9 @@ use url::Url;
 
 pub async fn create_site(
   Json(data): Json<CreateSite>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SiteResponse>> {
+) -> StudyCycleResult<Json<SiteResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   // Make sure user is an admin; other types of users should not create site data...
@@ -168,10 +168,10 @@ pub async fn create_site(
   Ok(Json(SiteResponse { site_view }))
 }
 
-fn validate_create_payload(local_site: &LocalSite, create_site: &CreateSite) -> LemmyResult<()> {
+fn validate_create_payload(local_site: &LocalSite, create_site: &CreateSite) -> StudyCycleResult<()> {
   // Make sure the site hasn't already been set up...
   if local_site.site_setup {
-    return Err(LemmyErrorType::AlreadyExists.into());
+    return Err(StudyCycleErrorType::AlreadyExists.into());
   };
 
   // Check that the slur regex compiles, and returns the regex if valid...
@@ -210,17 +210,17 @@ fn validate_create_payload(local_site: &LocalSite, create_site: &CreateSite) -> 
 #[cfg(test)]
 mod tests {
   use crate::site::create::validate_create_payload;
-  use lemmy_db_schema::source::local_site::LocalSite;
-  use lemmy_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
-  use lemmy_db_views_site::api::CreateSite;
-  use lemmy_utils::error::LemmyErrorType;
+  use studycycle_db_schema::source::local_site::LocalSite;
+  use studycycle_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
+  use studycycle_db_views_site::api::CreateSite;
+  use studycycle_utils::error::StudyCycleErrorType;
 
   #[test]
   fn test_validate_invalid_create_payload() {
     let invalid_payloads = [
       (
         "CreateSite attempted on set up LocalSite",
-        &LemmyErrorType::AlreadyExists,
+        &StudyCycleErrorType::AlreadyExists,
         &LocalSite {
           site_setup: true,
           private_instance: true,
@@ -235,7 +235,7 @@ mod tests {
       ),
       (
         "CreateSite name matches LocalSite slur filter",
-        &LemmyErrorType::Slurs,
+        &StudyCycleErrorType::Slurs,
         &LocalSite {
           site_setup: false,
           private_instance: true,
@@ -251,7 +251,7 @@ mod tests {
       ),
       (
         "CreateSite name matches new slur filter",
-        &LemmyErrorType::Slurs,
+        &StudyCycleErrorType::Slurs,
         &LocalSite {
           site_setup: false,
           private_instance: true,
@@ -268,7 +268,7 @@ mod tests {
       ),
       (
         "CreateSite listing type is Subscribed, which is invalid",
-        &LemmyErrorType::InvalidDefaultPostListingType,
+        &StudyCycleErrorType::InvalidDefaultPostListingType,
         &LocalSite {
           site_setup: false,
           private_instance: true,
@@ -284,7 +284,7 @@ mod tests {
       ),
       (
         "CreateSite requires application, but neither it nor LocalSite has an application question",
-        &LemmyErrorType::ApplicationQuestionRequired,
+        &StudyCycleErrorType::ApplicationQuestionRequired,
         &LocalSite {
           site_setup: false,
           private_instance: true,

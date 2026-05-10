@@ -6,14 +6,14 @@ use activitypub_federation::{
   protocol::{helpers::deserialize_one_or_many, tombstone::Tombstone},
 };
 use anyhow::anyhow;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson},
   utils::protocol::InCommunity,
 };
-use lemmy_db_schema::source::{community::Community, post::Post};
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_schema::source::{community::Community, post::Post};
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::StudyCycleResult;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
@@ -35,7 +35,7 @@ pub struct Delete {
   #[serde(default)]
   #[serde(skip_serializing_if = "Vec::is_empty")]
   pub(crate) cc: Vec<Url>,
-  /// If summary is present, this is a mod action (Remove in Lemmy terms). Otherwise, its a user
+  /// If summary is present, this is a mod action (Remove in StudyCycle terms). Otherwise, its a user
   /// deleting their own content.
   pub(crate) summary: Option<String>,
   /// Nonstandard field, only valid if object refers to a Person. If present, all content from the
@@ -49,7 +49,7 @@ pub struct Delete {
 }
 
 impl InCommunity for Delete {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<ApubCommunity> {
     if let Some(audience) = &self.audience {
       return audience.dereference(context).await;
     }

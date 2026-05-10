@@ -1,32 +1,32 @@
 use crate::check_report_reason;
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   plugins::plugin_hook_after,
   utils::{check_local_user_valid, slur_regex},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     private_message::PrivateMessage,
     private_message_report::{PrivateMessageReport, PrivateMessageReportForm},
   },
   traits::Reportable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_report_combined::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_report_combined::{
   ReportCombinedViewInternal,
   api::{CreatePrivateMessageReport, PrivateMessageReportResponse},
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_email::admin::send_new_report_email_to_admins;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_email::admin::send_new_report_email_to_admins;
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn create_pm_report(
   Json(data): Json<CreatePrivateMessageReport>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PrivateMessageReportResponse>> {
+) -> StudyCycleResult<Json<PrivateMessageReportResponse>> {
   check_local_user_valid(&local_user_view)?;
   let reason = data.reason.trim().to_string();
   let slur_regex = slur_regex(&context).await?;
@@ -38,7 +38,7 @@ pub async fn create_pm_report(
 
   // Make sure that only the recipient of the private message can create a report
   if person.id != private_message.recipient_id {
-    return Err(LemmyErrorType::CouldntCreate.into());
+    return Err(StudyCycleErrorType::CouldntCreate.into());
   }
 
   let report_form = PrivateMessageReportForm {

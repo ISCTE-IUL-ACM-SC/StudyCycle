@@ -1,8 +1,8 @@
 use crate::request::client_builder;
 use activitypub_federation::config::{Data, FederationConfig};
-use lemmy_db_schema::source::secret::Secret;
-use lemmy_diesel_utils::connection::{ActualDbPool, DbPool, build_db_pool_for_tests};
-use lemmy_utils::{
+use studycycle_db_schema::source::secret::Secret;
+use studycycle_diesel_utils::connection::{ActualDbPool, DbPool, build_db_pool_for_tests};
+use studycycle_utils::{
   rate_limit::RateLimit,
   settings::{SETTINGS, structs::Settings},
 };
@@ -10,7 +10,7 @@ use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use std::sync::Arc;
 
 #[derive(Clone)]
-pub struct LemmyContext {
+pub struct StudyCycleContext {
   pool: ActualDbPool,
   client: Arc<ClientWithMiddleware>,
   /// Pictrs requests must bypass proxy. Unfortunately no_proxy can only be set on ClientBuilder
@@ -20,15 +20,15 @@ pub struct LemmyContext {
   rate_limit_cell: RateLimit,
 }
 
-impl LemmyContext {
+impl StudyCycleContext {
   pub fn create(
     pool: ActualDbPool,
     client: ClientWithMiddleware,
     pictrs_client: ClientWithMiddleware,
     secret: Secret,
     rate_limit_cell: RateLimit,
-  ) -> LemmyContext {
-    LemmyContext {
+  ) -> StudyCycleContext {
+    StudyCycleContext {
       pool,
       client: Arc::new(client),
       pictrs_client: Arc::new(pictrs_client),
@@ -62,7 +62,7 @@ impl LemmyContext {
   ///
   /// Do not use this in production code.
   #[expect(clippy::expect_used)]
-  pub async fn init_test_federation_config() -> FederationConfig<LemmyContext> {
+  pub async fn init_test_federation_config() -> FederationConfig<StudyCycleContext> {
     // call this to run migrations
     let pool = build_db_pool_for_tests();
 
@@ -76,7 +76,7 @@ impl LemmyContext {
 
     let rate_limit_cell = RateLimit::with_debug_config();
 
-    let context = LemmyContext::create(
+    let context = StudyCycleContext::create(
       pool,
       client.clone(),
       client,
@@ -94,7 +94,7 @@ impl LemmyContext {
       .await
       .expect("build federation config")
   }
-  pub async fn init_test_context() -> Data<LemmyContext> {
+  pub async fn init_test_context() -> Data<StudyCycleContext> {
     let config = Self::init_test_federation_config().await;
     config.to_request_data()
   }

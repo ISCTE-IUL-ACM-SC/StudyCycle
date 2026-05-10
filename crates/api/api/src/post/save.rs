@@ -1,21 +1,21 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::check_local_user_valid};
-use lemmy_db_schema::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_local_user_valid};
+use studycycle_db_schema::{
   source::post::{PostActions, PostSavedForm},
   traits::Saveable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::{
   PostView,
   api::{PostResponse, SavePost},
 };
-use lemmy_utils::error::LemmyResult;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn save_post(
   Json(data): Json<SavePost>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> StudyCycleResult<Json<PostResponse>> {
   check_local_user_valid(&local_user_view)?;
   let post_saved_form = PostSavedForm::new(data.post_id, local_user_view.person.id);
 

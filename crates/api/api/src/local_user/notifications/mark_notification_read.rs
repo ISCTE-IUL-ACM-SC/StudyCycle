@@ -1,16 +1,16 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::source::notification::Notification;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_notification::api::MarkNotificationAsRead;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::source::notification::Notification;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_notification::api::MarkNotificationAsRead;
+use studycycle_db_views_site::api::SuccessResponse;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn mark_notification_as_read(
   Json(data): Json<MarkNotificationAsRead>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   Notification::mark_read_by_id_and_person(
     &mut context.pool(),
     data.notification_id,

@@ -11,19 +11,19 @@ use activitypub_federation::{
   protocol::verification::{verify_domains_match, verify_urls_match},
   traits::{Activity, Object},
 };
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::NotifyData,
   utils::{check_is_mod_or_admin, check_post_deleted_or_removed},
 };
-use lemmy_apub_objects::{
+use studycycle_apub_objects::{
   objects::{comment::ApubComment, community::ApubCommunity, person::ApubPerson},
   utils::{
     functions::{generate_to, verify_person_in_community, verify_visibility},
     protocol::InCommunity,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     comment::{Comment, CommentActions, CommentLikeForm},
     community::Community,
@@ -32,10 +32,10 @@ use lemmy_db_schema::{
   },
   traits::Likeable,
 };
-use lemmy_db_schema_file::PersonId;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_db_schema_file::PersonId;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use serde_json::{from_value, to_value};
 use url::Url;
 
@@ -44,8 +44,8 @@ impl CreateOrUpdateNote {
     comment: Comment,
     person_id: PersonId,
     kind: CreateOrUpdateType,
-    context: Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     // TODO: might be helpful to add a comment method to retrieve community directly
     let post_id = comment.post_id;
     let post = Post::read(&mut context.pool(), post_id).await?;
@@ -82,8 +82,8 @@ impl CreateOrUpdateNote {
 
 #[async_trait::async_trait]
 impl Activity for CreateOrUpdateNote {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -93,7 +93,7 @@ impl Activity for CreateOrUpdateNote {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     let post = self.object.get_parents(context).await?.0;
     let community = self.community(context).await?;
     verify_visibility(&self.to, &self.cc, &community)?;
@@ -108,7 +108,7 @@ impl Activity for CreateOrUpdateNote {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     let site_view = SiteView::read_local(&mut context.pool()).await?;
 
     // Need to do this check here instead of Note::from_json because we need the person who

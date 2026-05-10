@@ -1,23 +1,23 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_notification::{NotificationData, impls::NotificationQuery};
-use lemmy_db_views_person_content_combined::impls::PersonContentCombinedQuery;
-use lemmy_db_views_person_liked_combined::impls::PersonLikedCombinedQuery;
-use lemmy_db_views_post::PostView;
-use lemmy_db_views_post_comment_combined::PostCommentCombinedView;
-use lemmy_db_views_site::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_notification::{NotificationData, impls::NotificationQuery};
+use studycycle_db_views_person_content_combined::impls::PersonContentCombinedQuery;
+use studycycle_db_views_person_liked_combined::impls::PersonLikedCombinedQuery;
+use studycycle_db_views_post::PostView;
+use studycycle_db_views_post_comment_combined::PostCommentCombinedView;
+use studycycle_db_views_site::{
   api::{ExportDataResponse, PostOrCommentOrPrivateMessage},
   impls::user_backup_list_to_user_settings_backup,
 };
-use lemmy_utils::{self, error::LemmyResult};
+use studycycle_utils::{self, error::StudyCycleResult};
 
 pub async fn export_user_data(
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<ExportDataResponse>> {
+) -> StudyCycleResult<Json<ExportDataResponse>> {
   use PostOrCommentOrPrivateMessage::*;
 
   let local_instance_id = local_user_view.person.instance_id;

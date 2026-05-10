@@ -1,6 +1,6 @@
 use crate::CustomEmojiView;
-use lemmy_db_schema::newtypes::CustomEmojiId;
-use lemmy_diesel_utils::dburl::DbUrl;
+use studycycle_db_schema::newtypes::CustomEmojiId;
+use studycycle_diesel_utils::dburl::DbUrl;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

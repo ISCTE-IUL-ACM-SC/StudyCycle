@@ -1,21 +1,21 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_community_mod_of_any_or_admin_action};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_report_combined::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_community_mod_of_any_or_admin_action};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_report_combined::{
   ReportCombinedView,
   api::ListReports,
   impls::ReportCombinedQuery,
 };
-use lemmy_diesel_utils::pagination::PagedResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_diesel_utils::pagination::PagedResponse;
+use studycycle_utils::error::StudyCycleResult;
 
 /// Lists reports for a community if an id is supplied
 /// or returns all reports for communities a user moderates
 pub async fn list_reports(
   Query(data): Query<ListReports>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PagedResponse<ReportCombinedView>>> {
+) -> StudyCycleResult<Json<PagedResponse<ReportCombinedView>>> {
   let my_reports_only = data.my_reports_only;
 
   // Only check mod or admin status when not viewing my reports

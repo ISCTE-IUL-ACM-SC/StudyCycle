@@ -3,7 +3,7 @@ use activitypub_federation::{
   kinds::activity::FollowType,
   protocol::helpers::deserialize_skip_error,
 };
-use lemmy_apub_objects::objects::{UserOrCommunity, UserOrCommunityOrMulti};
+use studycycle_apub_objects::objects::{UserOrCommunity, UserOrCommunityOrMulti};
 use serde::{Deserialize, Serialize};
 use url::Url;
 

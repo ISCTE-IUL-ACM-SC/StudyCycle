@@ -1,8 +1,8 @@
-use lemmy_db_schema::PersonContentType;
-use lemmy_db_schema_file::PersonId;
+use studycycle_db_schema::PersonContentType;
+use studycycle_db_schema_file::PersonId;
 #[cfg(feature = "full")]
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::pagination::PaginationCursor;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::pagination::PaginationCursor;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

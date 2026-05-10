@@ -1,5 +1,5 @@
-use lemmy_db_schema_file::enums::{ListingType, RegistrationMode};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_db_schema_file::enums::{ListingType, RegistrationMode};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub mod create;
 pub mod read;
@@ -8,11 +8,11 @@ pub mod update;
 /// Checks whether the default post listing type is valid for a site.
 pub fn site_default_post_listing_type_check(
   default_post_listing_type: &Option<ListingType>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   if let Some(listing_type) = default_post_listing_type {
     // Dont allow Subscribed or ModeratorView as default listing type
     if [ListingType::Subscribed, ListingType::ModeratorView].contains(listing_type) {
-      Err(LemmyErrorType::InvalidDefaultPostListingType.into())
+      Err(StudyCycleErrorType::InvalidDefaultPostListingType.into())
     } else {
       Ok(())
     }
@@ -26,7 +26,7 @@ pub fn application_question_check(
   current_application_question: &Option<String>,
   new_application_question: &Option<String>,
   registration_mode: RegistrationMode,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let has_no_question: bool =
     current_application_question.is_none() && new_application_question.is_none();
   let is_nullifying_question: bool = new_application_question == &Some(String::new());
@@ -34,7 +34,7 @@ pub fn application_question_check(
   if registration_mode == RegistrationMode::RequireApplication
     && (has_no_question || is_nullifying_question)
   {
-    Err(LemmyErrorType::ApplicationQuestionRequired.into())
+    Err(StudyCycleErrorType::ApplicationQuestionRequired.into())
   } else {
     Ok(())
   }
@@ -51,7 +51,7 @@ fn not_zero(val: Option<i32>) -> Option<i32> {
 mod tests {
 
   use crate::site::{application_question_check, not_zero, site_default_post_listing_type_check};
-  use lemmy_db_schema_file::enums::{ListingType, RegistrationMode};
+  use studycycle_db_schema_file::enums::{ListingType, RegistrationMode};
 
   #[test]
   fn test_site_default_post_listing_type_check() {

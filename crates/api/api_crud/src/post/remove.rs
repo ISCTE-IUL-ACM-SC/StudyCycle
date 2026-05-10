@@ -1,13 +1,13 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_post_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   notify::notify_mod_action,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_community_mod_action,
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     comment::Comment,
     comment_report::CommentReport,
@@ -19,16 +19,16 @@ use lemmy_db_schema::{
   },
   traits::Reportable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::{PostResponse, RemovePost};
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::api::{PostResponse, RemovePost};
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn remove_post(
   Json(data): Json<RemovePost>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> StudyCycleResult<Json<PostResponse>> {
   let post_id = data.post_id;
   let remove_post = data.remove_children.unwrap_or(data.removed);
 

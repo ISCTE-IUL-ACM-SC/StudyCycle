@@ -9,19 +9,19 @@ use diesel::{
   select,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::newtypes::CommunityId;
-use lemmy_db_schema_file::{
+use studycycle_db_schema::newtypes::CommunityId;
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   enums::CommunityFollowerState,
   schema::{community, community_actions, person},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   dburl::DbUrl,
   utils::functions::lower,
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl CommunityFollowerView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -37,7 +37,7 @@ impl CommunityFollowerView {
     pool: &mut DbPool<'_>,
     instance_id: InstanceId,
     published_since: chrono::DateTime<Utc>,
-  ) -> LemmyResult<Vec<(CommunityId, DbUrl)>> {
+  ) -> StudyCycleResult<Vec<(CommunityId, DbUrl)>> {
     let conn = &mut get_conn(pool).await?;
     // In most cases this will fetch the same url many times (the shared inbox url)
     // PG will only send a single copy to rust, but it has to scan through all follower rows (same
@@ -56,13 +56,13 @@ impl CommunityFollowerView {
       .distinct() // only need each community_id, inbox combination once
       .load::<(CommunityId, DbUrl)>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn count_community_followers(
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
-  ) -> LemmyResult<i32> {
+  ) -> StudyCycleResult<i32> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(community_actions::community_id.eq(community_id))
@@ -70,10 +70,10 @@ impl CommunityFollowerView {
       .first::<i64>(conn)
       .await
       .map(i32::try_from)?
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  pub async fn for_person(pool: &mut DbPool<'_>, person_id: PersonId) -> LemmyResult<Vec<Self>> {
+  pub async fn for_person(pool: &mut DbPool<'_>, person_id: PersonId) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(community_actions::person_id.eq(person_id))
@@ -87,14 +87,14 @@ impl CommunityFollowerView {
       .order_by(lower(community::title))
       .load::<CommunityFollowerView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn is_follower(
     community_id: CommunityId,
     instance_id: InstanceId,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(exists(
       Self::joins()
@@ -105,6 +105,6 @@ impl CommunityFollowerView {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::NotFound.into())
+    .ok_or(StudyCycleErrorType::NotFound.into())
   }
 }

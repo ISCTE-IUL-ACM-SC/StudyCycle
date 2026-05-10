@@ -1,26 +1,26 @@
 use crate::federation::fetcher::resolve_person_identifier;
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{check_private_instance, is_admin, read_site_for_actor},
 };
-use lemmy_db_schema::MultiCommunitySortType;
-use lemmy_db_views_community::impls::MultiCommunityQuery;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::{
+use studycycle_db_schema::MultiCommunitySortType;
+use studycycle_db_views_community::impls::MultiCommunityQuery;
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_person::{
   PersonView,
   api::{GetPersonDetails, GetPersonDetailsResponse},
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_site::SiteView;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn read_person(
   Query(data): Query<GetPersonDetails>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<GetPersonDetailsResponse>> {
+) -> StudyCycleResult<Json<GetPersonDetailsResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let local_site = site_view.local_site;
   let local_instance_id = site_view.site.instance_id;

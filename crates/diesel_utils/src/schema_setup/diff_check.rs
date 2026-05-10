@@ -1,7 +1,7 @@
 #![cfg(test)]
 #![expect(clippy::expect_used)]
 use itertools::Itertools;
-use lemmy_utils::settings::SETTINGS;
+use studycycle_utils::settings::SETTINGS;
 use pathfinding::matrix::Matrix;
 use std::{
   borrow::Cow,

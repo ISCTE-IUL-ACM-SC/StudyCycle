@@ -1,6 +1,6 @@
 use crate::protocol::CreateOrUpdateType;
 use activitypub_federation::{fetch::object_id::ObjectId, protocol::helpers::deserialize_one};
-use lemmy_apub_objects::{objects::person::ApubPerson, protocol::private_message::PrivateMessage};
+use studycycle_apub_objects::{objects::person::ApubPerson, protocol::private_message::PrivateMessage};
 use serde::{Deserialize, Serialize};
 use url::Url;
 

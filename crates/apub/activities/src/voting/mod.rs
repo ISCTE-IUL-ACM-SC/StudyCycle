@@ -7,18 +7,18 @@ use crate::{
   },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   plugins::{plugin_hook_after, plugin_hook_before},
 };
-use lemmy_apub_objects::objects::{
+use studycycle_apub_objects::objects::{
   PostOrComment,
   comment::ApubComment,
   community::ApubCommunity,
   person::ApubPerson,
   post::ApubPost,
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     activity::ActivitySendTargets,
     comment::{CommentActions, CommentLikeForm},
@@ -28,8 +28,8 @@ use lemmy_db_schema::{
   },
   traits::Likeable,
 };
-use lemmy_diesel_utils::dburl::DbUrl;
-use lemmy_utils::error::LemmyResult;
+use studycycle_diesel_utils::dburl::DbUrl;
+use studycycle_utils::error::StudyCycleResult;
 
 pub mod undo_vote;
 pub mod vote;
@@ -40,8 +40,8 @@ pub(crate) async fn send_like_activity(
   community: Community,
   previous_is_upvote: Option<bool>,
   new_is_upvote: Option<bool>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let object_id: ObjectId<PostOrComment> = object_id.into();
   let actor: ApubPerson = actor.into();
   let community: ApubCommunity = community.into();
@@ -69,8 +69,8 @@ async fn vote_comment(
   vote_type: &VoteType,
   actor: ApubPerson,
   comment: &ApubComment,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let mut like_form = CommentLikeForm::new(comment.id, actor.id, Some(vote_type.into()));
   comment.set_not_pending(&mut context.pool()).await?;
   like_form = plugin_hook_before("comment_before_vote", like_form).await?;
@@ -83,8 +83,8 @@ async fn vote_post(
   vote_type: &VoteType,
   actor: ApubPerson,
   post: &ApubPost,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let mut like_form = PostLikeForm::new(post.id, actor.id, Some(vote_type.into()));
   post.set_not_pending(&mut context.pool()).await?;
   like_form = plugin_hook_before("post_before_vote", like_form).await?;
@@ -96,8 +96,8 @@ async fn vote_post(
 async fn undo_vote_comment(
   actor: ApubPerson,
   comment: &ApubComment,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let form = CommentLikeForm::new(comment.id, actor.id, None);
   CommentActions::like(&mut context.pool(), &form).await?;
   Ok(())
@@ -106,8 +106,8 @@ async fn undo_vote_comment(
 async fn undo_vote_post(
   actor: ApubPerson,
   post: &ApubPost,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let form = PostLikeForm::new(post.id, actor.id, None);
   PostActions::like(&mut context.pool(), &form).await?;
   Ok(())

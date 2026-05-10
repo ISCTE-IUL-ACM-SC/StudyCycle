@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::{Community, CommunityActions},
   community_tag::CommunityTagsView,
   images::ImageDetails,
@@ -15,8 +15,8 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::selects::post_select_remove_deletes,
-  lemmy_db_schema::utils::queries::selects::{
+  studycycle_db_schema::utils::queries::selects::post_select_remove_deletes,
+  studycycle_db_schema::utils::queries::selects::{
     CreatorLocalHomeBanExpiresType,
     creator_ban_expires_from_community,
     creator_banned_from_community,

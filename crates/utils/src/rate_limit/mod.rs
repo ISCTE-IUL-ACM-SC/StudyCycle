@@ -1,6 +1,6 @@
 use crate::rate_limit::{
-  backend::LemmyBackend,
-  input::{LemmyInput, LemmyInputFuture, raw_ip_key},
+  backend::StudyCycleBackend,
+  input::{StudyCycleInput, StudyCycleInputFuture, raw_ip_key},
 };
 use actix_extensible_rate_limit::{RateLimiter, backend::SimpleOutput};
 use actix_web::dev::ServiceRequest;
@@ -30,13 +30,13 @@ pub struct BucketConfig {
 
 #[derive(Clone)]
 pub struct RateLimit {
-  backend: LemmyBackend,
+  backend: StudyCycleBackend,
 }
 
 impl RateLimit {
   pub fn new(configs: EnumMap<ActionType, BucketConfig>) -> Self {
     Self {
-      backend: LemmyBackend::new(configs, true),
+      backend: StudyCycleBackend::new(configs, true),
     }
   }
 
@@ -81,7 +81,7 @@ impl RateLimit {
   fn build_rate_limiter(
     &self,
     action_type: ActionType,
-  ) -> RateLimiter<LemmyBackend, SimpleOutput, impl Fn(&ServiceRequest) -> LemmyInputFuture + 'static>
+  ) -> RateLimiter<StudyCycleBackend, SimpleOutput, impl Fn(&ServiceRequest) -> StudyCycleInputFuture + 'static>
   {
     let input = new_input(action_type);
 
@@ -94,56 +94,56 @@ impl RateLimit {
 
   pub fn message(
     &self,
-  ) -> RateLimiter<LemmyBackend, SimpleOutput, impl Fn(&ServiceRequest) -> LemmyInputFuture + 'static>
+  ) -> RateLimiter<StudyCycleBackend, SimpleOutput, impl Fn(&ServiceRequest) -> StudyCycleInputFuture + 'static>
   {
     self.build_rate_limiter(ActionType::Message)
   }
 
   pub fn search(
     &self,
-  ) -> RateLimiter<LemmyBackend, SimpleOutput, impl Fn(&ServiceRequest) -> LemmyInputFuture + 'static>
+  ) -> RateLimiter<StudyCycleBackend, SimpleOutput, impl Fn(&ServiceRequest) -> StudyCycleInputFuture + 'static>
   {
     self.build_rate_limiter(ActionType::Search)
   }
   pub fn register(
     &self,
-  ) -> RateLimiter<LemmyBackend, SimpleOutput, impl Fn(&ServiceRequest) -> LemmyInputFuture + 'static>
+  ) -> RateLimiter<StudyCycleBackend, SimpleOutput, impl Fn(&ServiceRequest) -> StudyCycleInputFuture + 'static>
   {
     self.build_rate_limiter(ActionType::Register)
   }
   pub fn post(
     &self,
-  ) -> RateLimiter<LemmyBackend, SimpleOutput, impl Fn(&ServiceRequest) -> LemmyInputFuture + 'static>
+  ) -> RateLimiter<StudyCycleBackend, SimpleOutput, impl Fn(&ServiceRequest) -> StudyCycleInputFuture + 'static>
   {
     self.build_rate_limiter(ActionType::Post)
   }
   pub fn image(
     &self,
-  ) -> RateLimiter<LemmyBackend, SimpleOutput, impl Fn(&ServiceRequest) -> LemmyInputFuture + 'static>
+  ) -> RateLimiter<StudyCycleBackend, SimpleOutput, impl Fn(&ServiceRequest) -> StudyCycleInputFuture + 'static>
   {
     self.build_rate_limiter(ActionType::Image)
   }
   pub fn comment(
     &self,
-  ) -> RateLimiter<LemmyBackend, SimpleOutput, impl Fn(&ServiceRequest) -> LemmyInputFuture + 'static>
+  ) -> RateLimiter<StudyCycleBackend, SimpleOutput, impl Fn(&ServiceRequest) -> StudyCycleInputFuture + 'static>
   {
     self.build_rate_limiter(ActionType::Comment)
   }
   pub fn import_user_settings(
     &self,
-  ) -> RateLimiter<LemmyBackend, SimpleOutput, impl Fn(&ServiceRequest) -> LemmyInputFuture + 'static>
+  ) -> RateLimiter<StudyCycleBackend, SimpleOutput, impl Fn(&ServiceRequest) -> StudyCycleInputFuture + 'static>
   {
     self.build_rate_limiter(ActionType::ImportUserSettings)
   }
 }
 
-fn new_input(action_type: ActionType) -> impl Fn(&ServiceRequest) -> LemmyInputFuture + 'static {
+fn new_input(action_type: ActionType) -> impl Fn(&ServiceRequest) -> StudyCycleInputFuture + 'static {
   move |req| {
     ready({
       let info = req.connection_info();
       let key = raw_ip_key(info.realip_remote_addr());
 
-      Ok(LemmyInput(key, action_type))
+      Ok(StudyCycleInput(key, action_type))
     })
   }
 }

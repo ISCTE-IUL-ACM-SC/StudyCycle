@@ -5,8 +5,8 @@ use crate::source::{
   person::{Person, PersonInsertForm},
   site::{Site, SiteInsertForm},
 };
-use lemmy_diesel_utils::{connection::DbPool, traits::Crud};
-use lemmy_utils::error::LemmyResult;
+use studycycle_diesel_utils::{connection::DbPool, traits::Crud};
+use studycycle_utils::error::StudyCycleResult;
 
 pub struct TestData {
   pub instance: Instance,
@@ -16,7 +16,7 @@ pub struct TestData {
 }
 
 impl TestData {
-  pub async fn create(pool: &mut DbPool<'_>) -> LemmyResult<Self> {
+  pub async fn create(pool: &mut DbPool<'_>) -> StudyCycleResult<Self> {
     let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
 
     let site_form = SiteInsertForm::new("test site".to_string(), instance.id);
@@ -42,7 +42,7 @@ impl TestData {
     })
   }
 
-  pub async fn delete(self, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  pub async fn delete(self, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
     Instance::delete(pool, self.instance.id).await?;
     Site::delete(pool, self.site.id).await?;
     Ok(())

@@ -7,23 +7,23 @@ use crate::federation::{
 };
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_private_instance};
-use lemmy_db_schema::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_private_instance};
+use studycycle_db_schema::{
   newtypes::PostId,
   source::{keyword_block::LocalUserKeywordBlock, post::PostActions},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{PostView, api::GetPosts, impls::PostQuery};
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::pagination::PagedResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::{PostView, api::GetPosts, impls::PostQuery};
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::pagination::PagedResponse;
+use studycycle_utils::error::StudyCycleResult;
 use std::cmp::min;
 
 pub async fn list_posts(
   Query(data): Query<GetPosts>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<PagedResponse<PostView>>> {
+) -> StudyCycleResult<Json<PagedResponse<PostView>>> {
   let SiteView {
     site, local_site, ..
   } = &SiteView::read_local(&mut context.pool()).await?;

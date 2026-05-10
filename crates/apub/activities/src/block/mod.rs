@@ -1,19 +1,19 @@
 use crate::protocol::block::{block_user::BlockUser, undo_block_user::UndoBlockUser};
 use activitypub_federation::{config::Data, kinds::public, traits::Object};
 use either::Either;
-use lemmy_api_utils::{context::LemmyContext, utils::check_expire_time};
-use lemmy_apub_objects::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_expire_time};
+use studycycle_apub_objects::{
   objects::{community::ApubCommunity, instance::ApubSite},
   utils::functions::generate_to,
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::CommunityId,
   source::{comment::Comment, community::Community, person::Person, post::Post, site::Site},
 };
-use lemmy_db_views_community::api::BanFromCommunity;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{connection::DbPool, traits::Crud};
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_community::api::BanFromCommunity;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{connection::DbPool, traits::Crud};
+use studycycle_utils::error::StudyCycleResult;
 use url::Url;
 
 pub mod block_user;
@@ -21,7 +21,7 @@ pub mod undo_block_user;
 
 pub type SiteOrCommunity = Either<ApubSite, ApubCommunity>;
 
-async fn generate_cc(target: &SiteOrCommunity, pool: &mut DbPool<'_>) -> LemmyResult<Vec<Url>> {
+async fn generate_cc(target: &SiteOrCommunity, pool: &mut DbPool<'_>) -> StudyCycleResult<Vec<Url>> {
   Ok(match target {
     SiteOrCommunity::Left(_) => Site::read_remote_sites(pool)
       .await?
@@ -39,8 +39,8 @@ pub(crate) async fn send_ban_from_site(
   remove_or_restore_data: Option<bool>,
   ban: bool,
   expires: Option<i64>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let site = SiteOrCommunity::Left(SiteView::read_local(&mut context.pool()).await?.site.into());
   let expires = check_expire_time(expires)?;
 
@@ -73,8 +73,8 @@ pub(crate) async fn send_ban_from_community(
   community_id: CommunityId,
   banned_person: Person,
   data: BanFromCommunity,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let community: ApubCommunity = Community::read(&mut context.pool(), community_id)
     .await?
     .into();
@@ -104,7 +104,7 @@ pub(crate) async fn send_ban_from_community(
   }
 }
 
-fn to(target: &SiteOrCommunity) -> LemmyResult<Vec<Url>> {
+fn to(target: &SiteOrCommunity) -> StudyCycleResult<Vec<Url>> {
   Ok(if let SiteOrCommunity::Right(c) = target {
     generate_to(c)?
   } else {
@@ -119,7 +119,7 @@ async fn update_removed_for_instance(
   site: &ApubSite,
   removed: bool,
   pool: &mut DbPool<'_>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   Post::update_removed_for_creator_and_instance(pool, blocked_person.id, site.instance_id, removed)
     .await?;
   Comment::update_removed_for_creator_and_instance(

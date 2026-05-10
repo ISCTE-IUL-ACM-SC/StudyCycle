@@ -1,4 +1,4 @@
-use crate::error::{LemmyErrorExt, LemmyErrorType, LemmyResult, MAX_API_PARAM_ELEMENTS};
+use crate::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult, MAX_API_PARAM_ELEMENTS};
 use clearurls::UrlCleaner;
 use invisible_characters::INVISIBLE_CHARS;
 use itertools::Itertools;
@@ -36,7 +36,7 @@ fn has_newline(name: &str) -> bool {
   name.contains('\n')
 }
 
-pub fn is_valid_actor_name(name: &str) -> LemmyResult<()> {
+pub fn is_valid_actor_name(name: &str) -> StudyCycleResult<()> {
   // Only allow characters from a single alphabet per username. This avoids problems with lookalike
   // characters like `o` which looks identical in Latin and Cyrillic, and can be used to imitate
   // other users. Checks for additional alphabets can be added in the same way.
@@ -45,12 +45,12 @@ pub fn is_valid_actor_name(name: &str) -> LemmyResult<()> {
     Regex::new(r"^(?:[a-zA-Z0-9_]+|[0-9_\p{Arabic}]+|[0-9_\p{Cyrillic}]+)$").expect("compile regex")
   });
 
-  min_length_check(name, 3, LemmyErrorType::InvalidName)?;
-  max_length_check(name, ACTOR_NAME_MAX_LENGTH, LemmyErrorType::InvalidName)?;
+  min_length_check(name, 3, StudyCycleErrorType::InvalidName)?;
+  max_length_check(name, ACTOR_NAME_MAX_LENGTH, StudyCycleErrorType::InvalidName)?;
   if VALID_ACTOR_NAME_REGEX.is_match(name) {
     Ok(())
   } else {
-    Err(LemmyErrorType::InvalidName.into())
+    Err(StudyCycleErrorType::InvalidName.into())
   }
 }
 
@@ -71,79 +71,79 @@ fn has_3_permitted_display_chars(name: &str) -> bool {
 }
 
 // Can't do a regex here, reverse lookarounds not supported
-pub fn is_valid_display_name(name: &str) -> LemmyResult<()> {
+pub fn is_valid_display_name(name: &str) -> StudyCycleResult<()> {
   let check = !name.starts_with('@')
     && !name.starts_with(INVISIBLE_CHARS)
     && name.chars().count() <= DISPLAY_NAME_MAX_LENGTH
     && !has_newline(name)
     && has_3_permitted_display_chars(name);
   if !check {
-    Err(LemmyErrorType::InvalidDisplayName.into())
+    Err(StudyCycleErrorType::InvalidDisplayName.into())
   } else {
     Ok(())
   }
 }
 
-pub fn is_valid_matrix_id(matrix_id: &str) -> LemmyResult<()> {
+pub fn is_valid_matrix_id(matrix_id: &str) -> StudyCycleResult<()> {
   let check = VALID_MATRIX_ID_REGEX.is_match(matrix_id) && !has_newline(matrix_id);
   if !check {
-    Err(LemmyErrorType::InvalidMatrixId.into())
+    Err(StudyCycleErrorType::InvalidMatrixId.into())
   } else {
     Ok(())
   }
 }
 
-pub fn is_valid_post_title(title: &str) -> LemmyResult<()> {
+pub fn is_valid_post_title(title: &str) -> StudyCycleResult<()> {
   let length = title.trim().chars().count();
   let check =
     (3..=200).contains(&length) && !has_newline(title) && has_3_permitted_display_chars(title);
   if !check {
-    Err(LemmyErrorType::InvalidPostTitle.into())
+    Err(StudyCycleErrorType::InvalidPostTitle.into())
   } else {
     Ok(())
   }
 }
 
 /// This could be post bodies, comments, notes, or any description field
-pub fn is_valid_body_field(body: &str, post: bool) -> LemmyResult<()> {
+pub fn is_valid_body_field(body: &str, post: bool) -> StudyCycleResult<()> {
   if post {
-    max_length_check(body, POST_BODY_MAX_LENGTH, LemmyErrorType::InvalidBodyField)?;
+    max_length_check(body, POST_BODY_MAX_LENGTH, StudyCycleErrorType::InvalidBodyField)?;
   } else {
-    max_length_check(body, BODY_MAX_LENGTH, LemmyErrorType::InvalidBodyField)?;
+    max_length_check(body, BODY_MAX_LENGTH, StudyCycleErrorType::InvalidBodyField)?;
   };
   Ok(())
 }
 
-pub fn is_valid_bio_field(bio: &str) -> LemmyResult<()> {
-  max_length_check(bio, BIO_MAX_LENGTH, LemmyErrorType::BioLengthOverflow)
+pub fn is_valid_bio_field(bio: &str) -> StudyCycleResult<()> {
+  max_length_check(bio, BIO_MAX_LENGTH, StudyCycleErrorType::BioLengthOverflow)
 }
 
-pub fn is_valid_alt_text_field(alt_text: &str) -> LemmyResult<()> {
+pub fn is_valid_alt_text_field(alt_text: &str) -> StudyCycleResult<()> {
   max_length_check(
     alt_text,
     ALT_TEXT_MAX_LENGTH,
-    LemmyErrorType::AltTextLengthOverflow,
+    StudyCycleErrorType::AltTextLengthOverflow,
   )?;
 
   Ok(())
 }
 
 /// Checks the site name length, the limit as defined in the DB.
-pub fn site_name_length_check(name: &str) -> LemmyResult<()> {
-  min_length_check(name, SITE_NAME_MIN_LENGTH, LemmyErrorType::SiteNameRequired)?;
+pub fn site_name_length_check(name: &str) -> StudyCycleResult<()> {
+  min_length_check(name, SITE_NAME_MIN_LENGTH, StudyCycleErrorType::SiteNameRequired)?;
   max_length_check(
     name,
     SITE_NAME_MAX_LENGTH,
-    LemmyErrorType::SiteNameLengthOverflow,
+    StudyCycleErrorType::SiteNameLengthOverflow,
   )
 }
 
 /// Checks the site / community description length, the limit as defined in the DB.
-pub fn summary_length_check(description: &str) -> LemmyResult<()> {
+pub fn summary_length_check(description: &str) -> StudyCycleResult<()> {
   max_length_check(
     description,
     SITE_SUMMARY_MAX_LENGTH,
-    LemmyErrorType::SiteDescriptionLengthOverflow,
+    StudyCycleErrorType::SiteDescriptionLengthOverflow,
   )
 }
 
@@ -153,7 +153,7 @@ pub fn summary_length_check(description: &str) -> LemmyResult<()> {
 /// HTML frontends specify maximum input length using `maxlength` attribute.
 /// For consistency we use the same counting method (UTF-16 code units).
 /// https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/maxlength
-fn max_length_check(item: &str, max_length: usize, max_msg: LemmyErrorType) -> LemmyResult<()> {
+fn max_length_check(item: &str, max_length: usize, max_msg: StudyCycleErrorType) -> StudyCycleResult<()> {
   let len = item.encode_utf16().count();
   if len > max_length {
     Err(max_msg.into())
@@ -162,7 +162,7 @@ fn max_length_check(item: &str, max_length: usize, max_msg: LemmyErrorType) -> L
   }
 }
 
-fn min_length_check(item: &str, min_length: usize, min_msg: LemmyErrorType) -> LemmyResult<()> {
+fn min_length_check(item: &str, min_length: usize, min_msg: StudyCycleErrorType) -> StudyCycleResult<()> {
   let len = item.encode_utf16().count();
   if len < min_length {
     Err(min_msg.into())
@@ -172,12 +172,12 @@ fn min_length_check(item: &str, min_length: usize, min_msg: LemmyErrorType) -> L
 }
 
 /// Attempts to build a regex and check it for common errors before inserting into the DB.
-pub fn build_and_check_regex(regex_str_opt: Option<&str>) -> LemmyResult<Regex> {
+pub fn build_and_check_regex(regex_str_opt: Option<&str>) -> StudyCycleResult<Regex> {
   // Placeholder regex which doesnt match anything
   // https://stackoverflow.com/a/940840
   let match_nothing = RegexBuilder::new("a^")
     .build()
-    .with_lemmy_type(LemmyErrorType::InvalidRegex);
+    .with_studycycle_type(StudyCycleErrorType::InvalidRegex);
   if let Some(regex) = regex_str_opt {
     if regex.is_empty() {
       match_nothing
@@ -185,9 +185,9 @@ pub fn build_and_check_regex(regex_str_opt: Option<&str>) -> LemmyResult<Regex> 
       let regex = RegexBuilder::new(regex)
         .case_insensitive(true)
         .build()
-        .with_lemmy_type(LemmyErrorType::InvalidRegex)?;
+        .with_studycycle_type(StudyCycleErrorType::InvalidRegex)?;
       if regex.is_match("1") {
-        Err(LemmyErrorType::PermissiveRegex.into())
+        Err(StudyCycleErrorType::PermissiveRegex.into())
       } else {
         Ok(regex)
       }
@@ -215,30 +215,30 @@ pub fn clean_urls_in_text(text: &str) -> String {
   }
 }
 
-pub fn is_valid_url(url: &Url) -> LemmyResult<()> {
+pub fn is_valid_url(url: &Url) -> StudyCycleResult<()> {
   if !ALLOWED_POST_URL_SCHEMES.contains(&url.scheme()) {
-    return Err(LemmyErrorType::InvalidUrlScheme.into());
+    return Err(StudyCycleErrorType::InvalidUrlScheme.into());
   }
 
   max_length_check(
     url.as_str(),
     URL_MAX_LENGTH,
-    LemmyErrorType::UrlLengthOverflow,
+    StudyCycleErrorType::UrlLengthOverflow,
   )?;
 
   Ok(())
 }
 
-pub fn is_url_blocked(url: &Url, blocklist: &RegexSet) -> LemmyResult<()> {
+pub fn is_url_blocked(url: &Url, blocklist: &RegexSet) -> StudyCycleResult<()> {
   if blocklist.is_match(url.as_str()) {
-    return Err(LemmyErrorType::BlockedUrl.into());
+    return Err(StudyCycleErrorType::BlockedUrl.into());
   }
 
   Ok(())
 }
 
 /// Check that urls are valid, and also remove the scheme, and uniques
-pub fn check_urls_are_valid(urls: &Vec<String>) -> LemmyResult<Vec<String>> {
+pub fn check_urls_are_valid(urls: &Vec<String>) -> StudyCycleResult<Vec<String>> {
   let mut parsed_urls = vec![];
   for url in urls {
     parsed_urls.push(build_url_str_without_scheme(url)?);
@@ -248,24 +248,24 @@ pub fn check_urls_are_valid(urls: &Vec<String>) -> LemmyResult<Vec<String>> {
   Ok(unique_urls)
 }
 
-pub fn check_blocking_keywords_are_valid(blocking_keywords: &Vec<String>) -> LemmyResult<()> {
+pub fn check_blocking_keywords_are_valid(blocking_keywords: &Vec<String>) -> StudyCycleResult<()> {
   for keyword in blocking_keywords {
     min_length_check(
       keyword,
       MIN_LENGTH_BLOCKING_KEYWORD,
-      LemmyErrorType::BlockKeywordTooShort,
+      StudyCycleErrorType::BlockKeywordTooShort,
     )?;
     max_length_check(
       keyword,
       MAX_LENGTH_BLOCKING_KEYWORD,
-      LemmyErrorType::BlockKeywordTooLong,
+      StudyCycleErrorType::BlockKeywordTooLong,
     )?;
   }
   check_api_elements_count(blocking_keywords.len())?;
   Ok(())
 }
 
-fn build_url_str_without_scheme(url_str: &str) -> LemmyResult<String> {
+fn build_url_str_without_scheme(url_str: &str) -> StudyCycleResult<String> {
   // Parse and check for errors
   let mut url = Url::parse(url_str).or_else(|e| {
     if e == ParseError::RelativeUrlWithoutBase {
@@ -278,12 +278,12 @@ fn build_url_str_without_scheme(url_str: &str) -> LemmyResult<String> {
   // Set the scheme to http, then remove the http:// part
   url
     .set_scheme("http")
-    .map_err(|_e| LemmyErrorType::InvalidUrl)?;
+    .map_err(|_e| StudyCycleErrorType::InvalidUrl)?;
 
   let mut out = url
     .to_string()
     .get(7..)
-    .ok_or(LemmyErrorType::InvalidUrl)?
+    .ok_or(StudyCycleErrorType::InvalidUrl)?
     .to_string();
 
   // Remove trailing / if necessary
@@ -348,9 +348,9 @@ pub fn truncate_summary(text: &str) -> String {
   truncate_for_db(text, SITE_SUMMARY_MAX_LENGTH)
 }
 
-pub fn check_api_elements_count(len: usize) -> LemmyResult<()> {
+pub fn check_api_elements_count(len: usize) -> StudyCycleResult<()> {
   if len >= MAX_API_PARAM_ELEMENTS {
-    return Err(LemmyErrorType::TooManyItems.into());
+    return Err(StudyCycleErrorType::TooManyItems.into());
   }
   Ok(())
 }
@@ -358,7 +358,7 @@ pub fn check_api_elements_count(len: usize) -> LemmyResult<()> {
 mod tests {
 
   use crate::{
-    error::{LemmyErrorType, LemmyResult},
+    error::{StudyCycleErrorType, StudyCycleResult},
     utils::validation::{
       BIO_MAX_LENGTH,
       SITE_NAME_MAX_LENGTH,
@@ -387,7 +387,7 @@ mod tests {
   const URL_TRACKING_REMOVED: &str = "https://example.com/path/123?user+name=random+user&id=123";
 
   #[test]
-  fn test_clean_url_params() -> LemmyResult<()> {
+  fn test_clean_url_params() -> StudyCycleResult<()> {
     let url = Url::parse(URL_WITH_TRACKING)?;
     let cleaned = clean_url(&url);
     let expected = Url::parse(URL_TRACKING_REMOVED)?;
@@ -401,7 +401,7 @@ mod tests {
   }
 
   #[test]
-  fn test_clean_body() -> LemmyResult<()> {
+  fn test_clean_body() -> StudyCycleResult<()> {
     let text = format!("[a link]({URL_WITH_TRACKING})");
     let cleaned = clean_urls_in_text(&text);
     let expected = format!("[a link]({URL_TRACKING_REMOVED})");
@@ -495,7 +495,7 @@ Line3",
   }
 
   #[test]
-  fn test_valid_site_name() -> LemmyResult<()> {
+  fn test_valid_site_name() -> StudyCycleResult<()> {
     let valid_names = [
       (0..SITE_NAME_MAX_LENGTH).map(|_| 'A').collect::<String>(),
       String::from("A"),
@@ -505,9 +505,9 @@ Line3",
         &(0..SITE_NAME_MAX_LENGTH + 1)
           .map(|_| 'A')
           .collect::<String>(),
-        LemmyErrorType::SiteNameLengthOverflow,
+        StudyCycleErrorType::SiteNameLengthOverflow,
       ),
-      (&String::new(), LemmyErrorType::SiteNameRequired),
+      (&String::new(), StudyCycleErrorType::SiteNameRequired),
     ];
 
     valid_names.iter().for_each(|valid_name| {
@@ -544,7 +544,7 @@ Line3",
 
     assert!(
       invalid_result.is_err()
-        && invalid_result.is_err_and(|e| e.error_type.eq(&LemmyErrorType::BioLengthOverflow))
+        && invalid_result.is_err_and(|e| e.error_type.eq(&StudyCycleErrorType::BioLengthOverflow))
     );
   }
 
@@ -569,12 +569,12 @@ Line3",
       invalid_result.is_err()
         && invalid_result.is_err_and(|e| e
           .error_type
-          .eq(&LemmyErrorType::SiteDescriptionLengthOverflow))
+          .eq(&StudyCycleErrorType::SiteDescriptionLengthOverflow))
     );
   }
 
   #[test]
-  fn test_valid_slur_regex() -> LemmyResult<()> {
+  fn test_valid_slur_regex() -> StudyCycleResult<()> {
     let valid_regex = Some("(foo|bar)");
     build_and_check_regex(valid_regex)?;
 
@@ -594,9 +594,9 @@ Line3",
   #[test]
   fn test_too_permissive_slur_regex() {
     let match_everything_regexes = [
-      (Some("["), LemmyErrorType::InvalidRegex),
-      (Some("(foo|bar|)"), LemmyErrorType::PermissiveRegex),
-      (Some(".*"), LemmyErrorType::PermissiveRegex),
+      (Some("["), StudyCycleErrorType::InvalidRegex),
+      (Some("(foo|bar|)"), StudyCycleErrorType::PermissiveRegex),
+      (Some(".*"), StudyCycleErrorType::PermissiveRegex),
     ];
 
     match_everything_regexes
@@ -615,17 +615,17 @@ Line3",
   }
 
   #[test]
-  fn test_check_url_valid() -> LemmyResult<()> {
+  fn test_check_url_valid() -> StudyCycleResult<()> {
     assert!(is_valid_url(&Url::parse("http://example.com")?).is_ok());
     assert!(is_valid_url(&Url::parse("https://example.com")?).is_ok());
     assert!(is_valid_url(&Url::parse("https://example.com")?).is_ok());
     assert!(
       is_valid_url(&Url::parse("ftp://example.com")?)
-        .is_err_and(|e| e.error_type.eq(&LemmyErrorType::InvalidUrlScheme))
+        .is_err_and(|e| e.error_type.eq(&StudyCycleErrorType::InvalidUrlScheme))
     );
     assert!(
       is_valid_url(&Url::parse("javascript:void")?)
-        .is_err_and(|e| e.error_type.eq(&LemmyErrorType::InvalidUrlScheme))
+        .is_err_and(|e| e.error_type.eq(&StudyCycleErrorType::InvalidUrlScheme))
     );
 
     let magnet_link = "magnet:?xt=urn:btih:4b390af3891e323778959d5abfff4b726510f14c&dn=Ravel%20Complete%20Piano%20Sheet%20Music%20-%20Public%20Domain&tr=udp%3A%2F%2Fopen.tracker.cl%3A1337%2Fannounce";
@@ -638,14 +638,14 @@ Line3",
     }
     let long_url = Url::parse(&long_str)?;
     assert!(
-      is_valid_url(&long_url).is_err_and(|e| e.error_type.eq(&LemmyErrorType::UrlLengthOverflow))
+      is_valid_url(&long_url).is_err_and(|e| e.error_type.eq(&StudyCycleErrorType::UrlLengthOverflow))
     );
 
     Ok(())
   }
 
   #[test]
-  fn test_url_block() -> LemmyResult<()> {
+  fn test_url_block() -> StudyCycleResult<()> {
     let set = regex::RegexSet::new(vec![
       r"(https://)?example\.org/page/to/article",
       r"(https://)?example\.net/?",
@@ -662,7 +662,7 @@ Line3",
   }
 
   #[test]
-  fn test_url_parsed() -> LemmyResult<()> {
+  fn test_url_parsed() -> StudyCycleResult<()> {
     // Make sure the scheme is removed, and uniques also
     assert_eq!(
       &check_urls_are_valid(&vec![
@@ -682,7 +682,7 @@ Line3",
   }
 
   #[test]
-  fn test_truncate() -> LemmyResult<()> {
+  fn test_truncate() -> StudyCycleResult<()> {
     assert_eq!("Hell", truncate_for_db("Hello", 4));
     assert_eq!("word", truncate_for_db("word", 10));
     assert_eq!("Wales: ", truncate_for_db("Wales: 🏴󠁧󠁢󠁷󠁬󠁳󠁿", 10));

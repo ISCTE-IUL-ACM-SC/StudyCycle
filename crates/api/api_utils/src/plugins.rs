@@ -1,4 +1,4 @@
-use crate::context::LemmyContext;
+use crate::context::StudyCycleContext;
 use anyhow::anyhow;
 use extism::{
   FromBytesOwned,
@@ -12,14 +12,14 @@ use extism::{
 };
 use extism_convert::Json;
 use extism_manifest::HttpRequest;
-use lemmy_db_schema::source::{notification::Notification, person::Person};
-use lemmy_db_views_notification::NotificationView;
-use lemmy_db_views_registration_applications::api::CaptchaAnswer;
-use lemmy_db_views_site::api::{CaptchaResponse, PluginMetadata};
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
+use studycycle_db_schema::source::{notification::Notification, person::Person};
+use studycycle_db_views_notification::NotificationView;
+use studycycle_db_views_registration_applications::api::CaptchaAnswer;
+use studycycle_db_views_site::api::{CaptchaResponse, PluginMetadata};
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
   VERSION,
-  error::{LemmyError, LemmyErrorType, LemmyResult},
+  error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult},
   settings::{SETTINGS, structs::PluginSettings},
 };
 use serde::{Deserialize, Serialize};
@@ -41,7 +41,7 @@ pub fn plugin_hook_after<T>(name: &'static str, data: &T)
 where
   T: Clone + Serialize + for<'b> Deserialize<'b> + Sync + Send + 'static,
 {
-  let plugins = LemmyPlugins::get_or_init();
+  let plugins = StudyCyclePlugins::get_or_init();
   if !plugins.function_exists(name) {
     return;
   }
@@ -54,10 +54,10 @@ where
 /// NotificationView, but only if a plugin is active.
 pub async fn plugin_hook_notification(
   notifications: Vec<Notification>,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<()> {
   let name = "notification_after_create";
-  let plugins = LemmyPlugins::get_or_init();
+  let plugins = StudyCyclePlugins::get_or_init();
   if !plugins.function_exists(name) {
     return Ok(());
   }
@@ -70,11 +70,11 @@ pub async fn plugin_hook_notification(
   Ok(())
 }
 
-pub async fn plugin_get_captcha() -> LemmyResult<CaptchaResponse> {
+pub async fn plugin_get_captcha() -> StudyCycleResult<CaptchaResponse> {
   call_captcha_plugin("get_captcha", ()).await
 }
 
-pub async fn plugin_validate_captcha(answer: String, uuid: String) -> LemmyResult<()> {
+pub async fn plugin_validate_captcha(answer: String, uuid: String) -> StudyCycleResult<()> {
   call_captcha_plugin("validate_captcha", CaptchaAnswer { answer, uuid }).await
 }
 
@@ -85,50 +85,50 @@ async fn call_captcha_plugin<
 >(
   name: &'static str,
   params: T,
-) -> LemmyResult<R> {
-  let plugins = LemmyPlugins::get_or_init();
+) -> StudyCycleResult<R> {
+  let plugins = StudyCyclePlugins::get_or_init();
   let Some(captcha_plugin) = plugins.captcha_plugin else {
-    return Err(LemmyErrorType::PluginError("plugin not loaded".to_string()).into());
+    return Err(StudyCycleErrorType::PluginError("plugin not loaded".to_string()).into());
   };
 
   spawn_blocking(move || {
     if let Some(mut p) = captcha_plugin.pool.get(GET_PLUGIN_TIMEOUT)? {
       let res = p
         .call(name, params)
-        .map_err(|e| LemmyErrorType::PluginError(e.to_string()))?;
+        .map_err(|e| StudyCycleErrorType::PluginError(e.to_string()))?;
       return Ok(res);
     }
-    Err(LemmyErrorType::PluginError("plugin not loaded".to_string()).into())
+    Err(StudyCycleErrorType::PluginError("plugin not loaded".to_string()).into())
   })
   .await?
 }
 
 pub fn is_captcha_plugin_loaded() -> bool {
-  LemmyPlugins::get_or_init().captcha_plugin.is_some()
+  StudyCyclePlugins::get_or_init().captcha_plugin.is_some()
 }
 
-fn run_plugin_hook_after<T>(name: &'static str, data: T) -> LemmyResult<()>
+fn run_plugin_hook_after<T>(name: &'static str, data: T) -> StudyCycleResult<()>
 where
   T: Clone + Serialize + for<'b> Deserialize<'b>,
 {
-  let plugins = LemmyPlugins::get_or_init();
+  let plugins = StudyCyclePlugins::get_or_init();
   for p in plugins.plugins {
     if let Some(mut plugin) = p.get(name)? {
       let params: Json<T> = data.clone().into();
       plugin
         .call::<Json<T>, ()>(name, params)
-        .map_err(|e| LemmyErrorType::PluginError(e.to_string()))?;
+        .map_err(|e| StudyCycleErrorType::PluginError(e.to_string()))?;
     }
   }
   Ok(())
 }
 
 /// Call a plugin hook which can rewrite data
-pub async fn plugin_hook_before<T>(name: &'static str, data: T) -> LemmyResult<T>
+pub async fn plugin_hook_before<T>(name: &'static str, data: T) -> StudyCycleResult<T>
 where
   T: Clone + Serialize + for<'a> Deserialize<'a> + Sync + Send + 'static,
 {
-  let plugins = LemmyPlugins::get_or_init();
+  let plugins = StudyCyclePlugins::get_or_init();
   if !plugins.function_exists(name) {
     return Ok(data);
   }
@@ -139,11 +139,11 @@ where
       if let Some(mut plugin) = p.get(name)? {
         let r = plugin
           .call(name, res)
-          .map_err(|e| LemmyErrorType::PluginError(e.to_string()))?;
+          .map_err(|e| StudyCycleErrorType::PluginError(e.to_string()))?;
         res = r;
       }
     }
-    Ok::<_, LemmyError>(res.0)
+    Ok::<_, StudyCycleError>(res.0)
   })
   .await?
 }
@@ -158,7 +158,7 @@ pub fn plugin_metadata() -> Vec<PluginMetadata> {
     std::thread::spawn(|| {
       METADATA.get_or_init(|| {
         let mut metadata = vec![];
-        for plugin in LemmyPlugins::get_or_init().plugins {
+        for plugin in StudyCyclePlugins::get_or_init().plugins {
           let run = match plugin.pool.get(GET_PLUGIN_TIMEOUT) {
             Ok(p) => p,
             Err(e) => {
@@ -187,19 +187,19 @@ pub fn plugin_metadata() -> Vec<PluginMetadata> {
 }
 
 #[derive(Clone)]
-struct LemmyPlugins {
-  plugins: Vec<LemmyPlugin>,
-  captcha_plugin: Option<LemmyPlugin>,
+struct StudyCyclePlugins {
+  plugins: Vec<StudyCyclePlugin>,
+  captcha_plugin: Option<StudyCyclePlugin>,
 }
 
 #[derive(Clone)]
-struct LemmyPlugin {
+struct StudyCyclePlugin {
   pool: Pool,
   filename: String,
 }
 
-impl LemmyPlugin {
-  fn init(settings: PluginSettings) -> LemmyResult<Self> {
+impl StudyCyclePlugin {
+  fn init(settings: PluginSettings) -> StudyCycleResult<Self> {
     let hash = if cfg!(debug_assertions) || var("DANGER_PLUGIN_SKIP_HASH_CHECK").is_ok() {
       None
     } else {
@@ -232,22 +232,22 @@ impl LemmyPlugin {
       timeout_ms: None,
     };
     manifest.config.insert(
-      "lemmy_url".to_string(),
+      "studycycle_url".to_string(),
       format!("http://{}:{}/", SETTINGS.bind, SETTINGS.port),
     );
     manifest
       .config
-      .insert("lemmy_version".to_string(), VERSION.to_string());
+      .insert("studycycle_version".to_string(), VERSION.to_string());
     let builder = move || PluginBuilder::new(manifest.clone()).with_wasi(true).build();
     let pool = Pool::new(builder);
-    Ok(LemmyPlugin {
+    Ok(StudyCyclePlugin {
       pool,
       filename: filename.unwrap_or(settings.file),
     })
   }
 
   #[expect(clippy::if_then_some_else_none)]
-  fn get(&self, name: &'static str) -> LemmyResult<Option<PoolPlugin>> {
+  fn get(&self, name: &'static str) -> StudyCycleResult<Option<PoolPlugin>> {
     let p = self
       .pool
       .get(GET_PLUGIN_TIMEOUT)?
@@ -261,15 +261,15 @@ impl LemmyPlugin {
   }
 }
 
-impl LemmyPlugins {
+impl StudyCyclePlugins {
   /// Load and initialize all plugins
   fn get_or_init() -> Self {
-    static PLUGINS: LazyLock<LemmyPlugins> = LazyLock::new(|| {
+    static PLUGINS: LazyLock<StudyCyclePlugins> = LazyLock::new(|| {
       let mut plugins: Vec<_> = SETTINGS
         .plugins
         .iter()
         .flat_map(|p| {
-          LemmyPlugin::init(p.clone())
+          StudyCyclePlugin::init(p.clone())
             .inspect_err(|e| warn!("Failed to load plugin {}: {e}", p.file))
             .ok()
         })
@@ -295,7 +295,7 @@ impl LemmyPlugins {
       if let Some(captcha_plugin) = &captcha_plugin {
         plugins.push(captcha_plugin.clone());
       }
-      LemmyPlugins {
+      StudyCyclePlugins {
         plugins,
         captcha_plugin,
       }

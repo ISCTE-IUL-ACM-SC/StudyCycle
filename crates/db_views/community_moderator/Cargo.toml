@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_db_views_community_moderator"
+name = "studycycle_db_views_community_moderator"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -18,19 +18,19 @@ workspace = true
 
 [features]
 full = [
-  "lemmy_utils",
+  "studycycle_utils",
   "diesel",
   "diesel-async",
-  "lemmy_db_schema/full",
-  "lemmy_db_schema_file/full",
+  "studycycle_db_schema/full",
+  "studycycle_db_schema_file/full",
 ]
-ts-rs = ["dep:ts-rs", "lemmy_db_schema/ts-rs"]
+ts-rs = ["dep:ts-rs", "studycycle_db_schema/ts-rs"]
 
 [dependencies]
-lemmy_db_schema = { workspace = true }
-lemmy_utils = { workspace = true, optional = true }
-lemmy_db_schema_file = { workspace = true }
-lemmy_diesel_utils = { workspace = true }
+studycycle_db_schema = { workspace = true }
+studycycle_utils = { workspace = true, optional = true }
+studycycle_db_schema_file = { workspace = true }
+studycycle_diesel_utils = { workspace = true }
 diesel = { workspace = true, optional = true }
 diesel-async = { workspace = true, optional = true }
 serde = { workspace = true }

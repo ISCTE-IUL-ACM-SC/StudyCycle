@@ -1,9 +1,9 @@
 use crate::PersonView;
-use lemmy_db_schema::{PersonListingType, PersonSortType, source::site::Site};
-use lemmy_db_schema_file::PersonId;
-use lemmy_db_views_community::MultiCommunityView;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_diesel_utils::pagination::PaginationCursor;
+use studycycle_db_schema::{PersonListingType, PersonSortType, source::site::Site};
+use studycycle_db_schema_file::PersonId;
+use studycycle_db_views_community::MultiCommunityView;
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_diesel_utils::pagination::PaginationCursor;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

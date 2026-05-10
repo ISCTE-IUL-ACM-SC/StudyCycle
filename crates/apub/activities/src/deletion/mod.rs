@@ -3,7 +3,7 @@ use crate::{
   check_community_deleted_or_removed,
   community::send_activity_in_community,
   protocol::deletion::{delete::Delete, undo_delete::UndoDelete},
-  send_lemmy_activity,
+  send_studycycle_activity,
   verify_person,
 };
 use activitypub_federation::{
@@ -13,8 +13,8 @@ use activitypub_federation::{
   protocol::verification::{verify_domains_match, verify_urls_match},
   traits::{Actor, Object},
 };
-use lemmy_api_utils::{context::LemmyContext, utils::purge_user_account};
-use lemmy_apub_objects::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::purge_user_account};
+use studycycle_apub_objects::{
   objects::{
     comment::ApubComment,
     community::ApubCommunity,
@@ -33,7 +33,7 @@ use lemmy_apub_objects::{
     protocol::InCommunity,
   },
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   activity::ActivitySendTargets,
   comment::{Comment, CommentUpdateForm},
   community::{Community, CommunityUpdateForm},
@@ -41,10 +41,10 @@ use lemmy_db_schema::source::{
   post::{Post, PostUpdateForm},
   private_message::{PrivateMessage as DbPrivateMessage, PrivateMessageUpdateForm},
 };
-use lemmy_db_schema_file::enums::CommunityVisibility;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_schema_file::enums::CommunityVisibility;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::StudyCycleResult;
 use std::ops::Deref;
 use url::Url;
 
@@ -60,8 +60,8 @@ pub(crate) async fn send_apub_delete_in_community(
   reason: Option<String>,
   deleted: bool,
   with_replies: Option<bool>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   // Bypass visibility check for sending this activity type
   community.visibility = CommunityVisibility::Public;
 
@@ -107,8 +107,8 @@ pub(crate) async fn send_apub_delete_private_message(
   actor: &ApubPerson,
   pm: DbPrivateMessage,
   deleted: bool,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let recipient_id = pm.recipient_id;
   let recipient: ApubPerson = Person::read(&mut context.pool(), recipient_id)
     .await?
@@ -126,7 +126,7 @@ pub(crate) async fn send_apub_delete_private_message(
       None,
       &context,
     )?;
-    send_lemmy_activity(&context, delete, actor, inbox, true).await?;
+    send_studycycle_activity(&context, delete, actor, inbox, true).await?;
   } else {
     let undo = UndoDelete::new(
       actor,
@@ -137,7 +137,7 @@ pub(crate) async fn send_apub_delete_private_message(
       None,
       &context,
     )?;
-    send_lemmy_activity(&context, undo, actor, inbox, true).await?;
+    send_studycycle_activity(&context, undo, actor, inbox, true).await?;
   };
   Ok(())
 }
@@ -145,8 +145,8 @@ pub(crate) async fn send_apub_delete_private_message(
 pub async fn send_apub_delete_user(
   person: Person,
   remove_data: bool,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let person: ApubPerson = person.into();
 
   let deletable = DeletableObjects::Person(person.clone());
@@ -163,7 +163,7 @@ pub async fn send_apub_delete_user(
 
   let inboxes = ActivitySendTargets::to_all_instances();
 
-  send_lemmy_activity(&context, delete, &person, inboxes, true).await?;
+  send_studycycle_activity(&context, delete, &person, inboxes, true).await?;
   Ok(())
 }
 
@@ -178,8 +178,8 @@ pub enum DeletableObjects {
 impl DeletableObjects {
   pub(crate) async fn read_from_db(
     ap_id: &Url,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<DeletableObjects> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<DeletableObjects> {
     if let Some(c) = ApubCommunity::read_from_id(ap_id.clone(), context).await? {
       return Ok(DeletableObjects::Community(c));
     }
@@ -212,8 +212,8 @@ impl DeletableObjects {
 pub(crate) async fn verify_delete_activity(
   activity: &Delete,
   is_mod_action: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let object = DeletableObjects::read_from_db(activity.object.id(), context).await?;
   match object {
     DeletableObjects::Community(community) => {
@@ -268,8 +268,8 @@ async fn verify_delete_post_or_comment(
   object_id: &Url,
   community: &ApubCommunity,
   is_mod_action: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   check_community_deleted_or_removed(community)?;
   if is_mod_action {
     verify_mod_action(actor, community, context).await?;
@@ -287,8 +287,8 @@ async fn receive_delete_action(
   actor: &ObjectId<ApubPerson>,
   deleted: bool,
   do_purge_user_account: Option<bool>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   match DeletableObjects::read_from_db(object, context).await? {
     DeletableObjects::Community(community) => {
       if community.local {

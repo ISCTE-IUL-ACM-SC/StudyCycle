@@ -1,17 +1,17 @@
 use crate::{CommunityView, MultiCommunityView};
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   CommunitySortType,
   MultiCommunityListingType,
   MultiCommunitySortType,
   newtypes::{CommunityId, CommunityTagId, LanguageId, MultiCommunityId},
   source::site::Site,
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   enums::{CommunityNotificationsMode, CommunityVisibility, ListingType, TagColor},
 };
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_diesel_utils::pagination::PaginationCursor;
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_diesel_utils::pagination::PaginationCursor;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

@@ -13,12 +13,12 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use diesel_ltree::{Ltree, LtreeExtensions};
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   schema::{comment, comment_report},
 };
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl Reportable for CommentReport {
   type Form = CommentReportForm;
@@ -28,13 +28,13 @@ impl Reportable for CommentReport {
   ///
   /// * `conn` - the postgres connection
   /// * `comment_report_form` - the filled CommentReportForm to insert
-  async fn report(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn report(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(comment_report::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
   /// resolve a comment report
@@ -47,7 +47,7 @@ impl Reportable for CommentReport {
     report_id_: Self::IdType,
     by_resolver_id: PersonId,
     is_resolved: bool,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     update(comment_report::table.find(report_id_))
       .set((
@@ -57,7 +57,7 @@ impl Reportable for CommentReport {
       ))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   async fn resolve_apub(
@@ -65,7 +65,7 @@ impl Reportable for CommentReport {
     object_id: Self::ObjectIdType,
     report_creator_id: PersonId,
     resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     update(
       comment_report::table.filter(
@@ -81,14 +81,14 @@ impl Reportable for CommentReport {
     ))
     .execute(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+    .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   async fn resolve_all_for_object(
     pool: &mut DbPool<'_>,
     comment_id_: CommentId,
     by_resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     update(comment_report::table.filter(comment_report::comment_id.eq(comment_id_)))
       .set((
@@ -98,7 +98,7 @@ impl Reportable for CommentReport {
       ))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
@@ -107,7 +107,7 @@ impl CommentReport {
     pool: &mut DbPool<'_>,
     comment_path: &Ltree,
     by_resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     let report_alias = diesel::alias!(comment_report as cr);
     let report_subquery = report_alias
@@ -123,14 +123,14 @@ impl CommentReport {
     ))
     .execute(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+    .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   pub async fn resolve_all_for_post(
     pool: &mut DbPool<'_>,
     post_id: PostId,
     by_resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     let report_alias = diesel::alias!(comment_report as cr);
     let report_subquery = report_alias
@@ -146,6 +146,6 @@ impl CommentReport {
     ))
     .execute(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+    .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }

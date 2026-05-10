@@ -1,15 +1,15 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
-use lemmy_db_views_local_image::{LocalImageView, api::ListMedia};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::pagination::PagedResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::{context::StudyCycleContext, utils::is_admin};
+use studycycle_db_views_local_image::{LocalImageView, api::ListMedia};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::pagination::PagedResponse;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn list_all_media(
   Query(data): Query<ListMedia>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PagedResponse<LocalImageView>>> {
+) -> StudyCycleResult<Json<PagedResponse<LocalImageView>>> {
   // Only let admins view all media
   is_admin(&local_user_view)?;
 

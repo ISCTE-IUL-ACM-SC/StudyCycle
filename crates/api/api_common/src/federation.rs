@@ -1,4 +1,4 @@
-pub use lemmy_db_schema::{
+pub use studycycle_db_schema::{
   newtypes::ActivityId,
   source::{
     federation_allowlist::FederationAllowList,
@@ -7,8 +7,8 @@ pub use lemmy_db_schema::{
     instance::{Instance, InstanceActions},
   },
 };
-pub use lemmy_db_schema_file::{InstanceId, enums::FederationMode};
-pub use lemmy_db_views_site::api::{
+pub use studycycle_db_schema_file::{InstanceId, enums::FederationMode};
+pub use studycycle_db_views_site::api::{
   GetFederatedInstances,
   GetFederatedInstancesKind,
   ResolveObject,
@@ -17,5 +17,5 @@ pub use lemmy_db_views_site::api::{
 };
 
 pub mod administration {
-  pub use lemmy_db_views_site::api::{AdminAllowInstanceParams, AdminBlockInstanceParams};
+  pub use studycycle_db_views_site::api::{AdminAllowInstanceParams, AdminBlockInstanceParams};
 }

@@ -1,5 +1,5 @@
 use actix_web::{guard, web::*};
-use lemmy_api::{
+use studycycle_api::{
   comment::{
     distinguish::distinguish_comment,
     like::like_comment,
@@ -106,7 +106,7 @@ use lemmy_api::{
     },
   },
 };
-use lemmy_api_crud::{
+use studycycle_api_crud::{
   comment::{
     create::create_comment,
     delete::delete_comment,
@@ -164,7 +164,7 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_routes::images::{
+use studycycle_routes::images::{
   delete::{
     delete_community_banner,
     delete_community_icon,
@@ -187,7 +187,7 @@ use lemmy_routes::images::{
     upload_user_banner,
   },
 };
-use lemmy_utils::rate_limit::RateLimit;
+use studycycle_utils::rate_limit::RateLimit;
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg.service(

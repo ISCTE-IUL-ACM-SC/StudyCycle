@@ -1,28 +1,28 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{check_private_instance, is_mod_or_admin_opt, update_read_comments},
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   comment::Comment,
   post::{Post, PostActions},
 };
-use lemmy_db_views_community::CommunityView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{
+use studycycle_db_views_community::CommunityView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::{
   PostView,
   api::{GetPost, GetPostResponse},
   impls::PostQuery,
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn get_post(
   Query(data): Query<GetPost>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<GetPostResponse>> {
+) -> StudyCycleResult<Json<GetPostResponse>> {
   let SiteView {
     site, local_site, ..
   } = SiteView::read_local(&mut context.pool()).await?;
@@ -41,7 +41,7 @@ pub async fn get_post(
       .await?
       .post_id
   } else {
-    return Err(LemmyErrorType::NotFound.into());
+    return Err(StudyCycleErrorType::NotFound.into());
   };
 
   // Check to see if the person is a mod or admin, to show deleted / removed

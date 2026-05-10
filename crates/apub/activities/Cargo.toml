@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_apub_activities"
+name = "studycycle_apub_activities"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -11,7 +11,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "lemmy_apub_activities"
+name = "studycycle_apub_activities"
 path = "src/lib.rs"
 doctest = false
 
@@ -22,18 +22,18 @@ full = []
 workspace = true
 
 [dependencies]
-lemmy_db_views_community = { workspace = true, features = ["full"] }
-lemmy_db_views_community_moderator = { workspace = true, features = ["full"] }
-lemmy_db_views_post = { workspace = true, features = ["full"] }
-lemmy_db_views_local_user = { workspace = true, features = ["full"] }
-lemmy_db_views_private_message = { workspace = true, features = ["full"] }
-lemmy_db_views_site = { workspace = true, features = ["full"] }
-lemmy_utils = { workspace = true, features = ["full"] }
-lemmy_db_schema = { workspace = true, features = ["full"] }
-lemmy_api_utils = { workspace = true, features = ["full"] }
-lemmy_apub_objects = { workspace = true }
+studycycle_db_views_community = { workspace = true, features = ["full"] }
+studycycle_db_views_community_moderator = { workspace = true, features = ["full"] }
+studycycle_db_views_post = { workspace = true, features = ["full"] }
+studycycle_db_views_local_user = { workspace = true, features = ["full"] }
+studycycle_db_views_private_message = { workspace = true, features = ["full"] }
+studycycle_db_views_site = { workspace = true, features = ["full"] }
+studycycle_utils = { workspace = true, features = ["full"] }
+studycycle_db_schema = { workspace = true, features = ["full"] }
+studycycle_api_utils = { workspace = true, features = ["full"] }
+studycycle_apub_objects = { workspace = true }
 activitypub_federation = { workspace = true }
-lemmy_db_schema_file = { workspace = true }
+studycycle_db_schema_file = { workspace = true }
 diesel = { workspace = true }
 chrono = { workspace = true }
 serde_json = { workspace = true }
@@ -49,7 +49,7 @@ anyhow = { workspace = true }
 serde_with.workspace = true
 enum_delegate = "0.2.0"
 either = { workspace = true }
-lemmy_diesel_utils = { workspace = true }
+studycycle_diesel_utils = { workspace = true }
 
 [dev-dependencies]
 

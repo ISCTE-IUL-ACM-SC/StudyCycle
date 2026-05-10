@@ -1,4 +1,4 @@
-use crate::error::{LemmyErrorType, LemmyResult};
+use crate::error::{StudyCycleErrorType, StudyCycleResult};
 use markdown_it::MarkdownIt;
 use regex::RegexSet;
 use std::sync::LazyLock;
@@ -26,9 +26,9 @@ pub fn markdown_to_html(text: &str) -> String {
   MARKDOWN_PARSER.parse(text).xrender()
 }
 
-pub fn markdown_check_for_blocked_urls(text: &str, blocklist: &RegexSet) -> LemmyResult<()> {
+pub fn markdown_check_for_blocked_urls(text: &str, blocklist: &RegexSet) -> StudyCycleResult<()> {
   if blocklist.is_match(text) {
-    return Err(LemmyErrorType::BlockedUrl.into());
+    return Err(StudyCycleErrorType::BlockedUrl.into());
   }
   Ok(())
 }
@@ -46,13 +46,13 @@ mod tests {
     let tests: Vec<_> = vec![
       (
         "rewrite community identifier",
-        "!test@lemmy-alpha",
-        "<p><a href=\"/c/test@lemmy-alpha\" rel=\"nofollow\" class=\"u-url mention\">!test@lemmy-alpha</a></p>\n",
+        "!test@studycycle-alpha",
+        "<p><a href=\"/c/test@studycycle-alpha\" rel=\"nofollow\" class=\"u-url mention\">!test@studycycle-alpha</a></p>\n",
       ),
       (
         "rewrite user identifier",
-        "@garda@lemmy-alpha",
-        "<p><a href=\"/u/garda@lemmy-alpha\" rel=\"nofollow\" class=\"u-url mention\">@garda@lemmy-alpha</a></p>\n",
+        "@garda@studycycle-alpha",
+        "<p><a href=\"/u/garda@studycycle-alpha\" rel=\"nofollow\" class=\"u-url mention\">@garda@studycycle-alpha</a></p>\n",
       ),
       (
         "headings",
@@ -83,8 +83,8 @@ mod tests {
       // Links with added nofollow attribute
       (
         "links",
-        "[Lemmy](https://join-lemmy.org/ \"Join Lemmy!\")",
-        "<p><a href=\"https://join-lemmy.org/\" rel=\"nofollow\" title=\"Join Lemmy!\">Lemmy</a></p>\n",
+        "[StudyCycle](https://join-lemmy.org/ \"Join StudyCycle!\")",
+        "<p><a href=\"https://join-lemmy.org/\" rel=\"nofollow\" title=\"Join StudyCycle!\">StudyCycle</a></p>\n",
       ),
       // Remote images with proxy
       (
@@ -95,8 +95,8 @@ mod tests {
       // Local images without proxy
       (
         "images",
-        "![My linked image](https://lemmy-alpha/image.png \"image alt text\")",
-        "<p><img src=\"https://lemmy-alpha/image.png\" alt=\"My linked image\" title=\"image alt text\" /></p>\n",
+        "![My linked image](https://studycycle-alpha/image.png \"image alt text\")",
+        "<p><img src=\"https://studycycle-alpha/image.png\" alt=\"My linked image\" title=\"image alt text\" /></p>\n",
       ),
       // Ensure spoiler plugin is added
       (
@@ -155,9 +155,9 @@ mod tests {
   }
 
   // This replicates the logic when saving url blocklist patterns and querying them.
-  // Refer to lemmy_api_crud::site::update::update_site and
-  // lemmy_api_common::utils::get_url_blocklist().
-  fn create_url_blocklist_test_regex_set(patterns: Vec<&str>) -> LemmyResult<RegexSet> {
+  // Refer to studycycle_api_crud::site::update::update_site and
+  // studycycle_api_common::utils::get_url_blocklist().
+  fn create_url_blocklist_test_regex_set(patterns: Vec<&str>) -> StudyCycleResult<RegexSet> {
     let url_blocklist = patterns.iter().map(|&s| s.to_string()).collect();
     let valid_urls = check_urls_are_valid(&url_blocklist)?;
     let regexes = valid_urls.iter().map(|p| format!(r"\b{}\b", escape(p)));
@@ -166,7 +166,7 @@ mod tests {
   }
 
   #[test]
-  fn test_url_blocking() -> LemmyResult<()> {
+  fn test_url_blocking() -> StudyCycleResult<()> {
     let set = create_url_blocklist_test_regex_set(vec!["example.com/"])?;
 
     assert!(

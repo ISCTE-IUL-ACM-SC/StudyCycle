@@ -1,16 +1,16 @@
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::source::person::{Person, PersonActions};
+use studycycle_db_schema::source::person::{Person, PersonActions};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
   diesel::{NullableExpressionMethods, Queryable, Selectable, helper_types::Nullable},
-  lemmy_db_schema::utils::queries::selects::{
+  studycycle_db_schema::utils::queries::selects::{
     CreatorLocalHomeBanExpiresType,
     creator_local_home_ban_expires,
     creator_local_home_banned,
   },
-  lemmy_db_schema_file::schema::local_user,
-  lemmy_diesel_utils::utils::functions::coalesce,
+  studycycle_db_schema_file::schema::local_user,
+  studycycle_diesel_utils::utils::functions::coalesce,
 };
 
 pub mod api;

@@ -2,7 +2,7 @@ use crate::SiteView;
 #[cfg(feature = "full")]
 use extism::FromBytes;
 use extism_convert::Json;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::{LanguageId, MultiCommunityId, OAuthProviderId, TaglineId},
   source::{
     comment::Comment,
@@ -19,7 +19,7 @@ use lemmy_db_schema::{
     tagline::Tagline,
   },
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   enums::{
     CommentSortType,
@@ -32,14 +32,14 @@ use lemmy_db_schema_file::{
     VoteShow,
   },
 };
-use lemmy_db_views_comment::CommentView;
-use lemmy_db_views_community::{CommunityView, MultiCommunityView};
-use lemmy_db_views_community_follower::CommunityFollowerView;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::PersonView;
-use lemmy_db_views_post::PostView;
-use lemmy_diesel_utils::{pagination::PaginationCursor, sensitive::SensitiveString};
+use studycycle_db_views_comment::CommentView;
+use studycycle_db_views_community::{CommunityView, MultiCommunityView};
+use studycycle_db_views_community_follower::CommunityFollowerView;
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_person::PersonView;
+use studycycle_db_views_post::PostView;
+use studycycle_diesel_utils::{pagination::PaginationCursor, sensitive::SensitiveString};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
@@ -110,7 +110,7 @@ pub struct CreateOAuthProvider {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Creates a site. Should be done after first running lemmy.
+/// Creates a site. Should be done after first running studycycle.
 pub struct CreateSite {
   pub name: String,
   pub sidebar: Option<String>,
@@ -424,7 +424,7 @@ pub struct ListLoginsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Logging into lemmy.
+/// Logging into studycycle.
 ///
 /// Note: Banned users can still log in, to be able to do certain things like delete
 /// their account.
@@ -519,7 +519,7 @@ pub struct SaveUserSettings {
   pub default_items_per_page: Option<i32>,
   /// The default comment sort, usually "hot"
   pub default_comment_sort_type: Option<CommentSortType>,
-  /// The language of the lemmy interface
+  /// The language of the studycycle interface
   pub interface_language: Option<String>,
   /// Your display name, which can contain strange characters, and does not need to be unique.
   pub display_name: Option<String>,

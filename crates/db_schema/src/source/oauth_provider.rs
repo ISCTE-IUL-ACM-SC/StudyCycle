@@ -1,8 +1,8 @@
 use crate::newtypes::OAuthProviderId;
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::oauth_provider;
-use lemmy_diesel_utils::{dburl::DbUrl, sensitive::SensitiveString};
+use studycycle_db_schema_file::schema::oauth_provider;
+use studycycle_diesel_utils::{dburl::DbUrl, sensitive::SensitiveString};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

@@ -1,14 +1,14 @@
 {
-  hostname: lemmy-epsilon:8581
+  hostname: studycycle-epsilon:8581
   port: 8581
   tls_enabled: false
   setup: {
-    admin_username: lemmy_epsilon
-    admin_password: lemmylemmy
-    site_name: lemmy-epsilon
+    admin_username: studycycle_epsilon
+    admin_password: studycyclestudycycle
+    site_name: studycycle-epsilon
   }
   database: {
-    connection: "postgres://lemmy:password@postgres_epsilon:5432/lemmy"
+    connection: "postgres://studycycle:password@postgres_epsilon:5432/studycycle"
   }
   pictrs: {
     api_key: "my-pictrs-key"

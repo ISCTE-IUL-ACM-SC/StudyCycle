@@ -5,13 +5,13 @@ use activitypub_federation::{
   protocol::helpers::deserialize_one_or_many,
 };
 use either::Either;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson},
   protocol::{group::Group, multi_community::Feed},
   utils::protocol::InCommunity,
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -34,7 +34,7 @@ pub struct Update {
 }
 
 impl InCommunity for Update {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<ApubCommunity> {
     if let Some(audience) = &self.audience {
       return audience.dereference(context).await;
     }
@@ -43,7 +43,7 @@ impl InCommunity for Update {
         let community: ApubCommunity = c.id.clone().dereference(context).await?;
         Ok(community)
       }
-      Either::Right(_) => Err(LemmyErrorType::NotFound.into()),
+      Either::Right(_) => Err(StudyCycleErrorType::NotFound.into()),
     }
   }
 }

@@ -9,7 +9,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::RegistrationApplicationId,
   source::registration_application::{
     RegistrationApplication,
@@ -17,12 +17,12 @@ use lemmy_db_schema::{
   },
   utils::limit_fetch,
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   aliases,
   schema::{local_user, person, registration_application},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -33,7 +33,7 @@ use lemmy_diesel_utils::{
   },
   traits::Crud,
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl PaginationCursorConversion for RegistrationApplicationView {
   type PaginatedType = RegistrationApplication;
@@ -44,7 +44,7 @@ impl PaginationCursorConversion for RegistrationApplicationView {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     RegistrationApplication::read(pool, RegistrationApplicationId(cursor.id()?)).await
   }
 }
@@ -65,31 +65,31 @@ impl RegistrationApplicationView {
       .left_join(admin_join)
   }
 
-  pub async fn read(pool: &mut DbPool<'_>, id: RegistrationApplicationId) -> LemmyResult<Self> {
+  pub async fn read(pool: &mut DbPool<'_>, id: RegistrationApplicationId) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(registration_application::id.eq(id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  pub async fn read_by_person(pool: &mut DbPool<'_>, person_id: PersonId) -> LemmyResult<Self> {
+  pub async fn read_by_person(pool: &mut DbPool<'_>, person_id: PersonId) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(person::id.eq(person_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   /// Returns the current unread registration_application count
   pub async fn get_unread_count(
     pool: &mut DbPool<'_>,
     verified_email_only: bool,
-  ) -> LemmyResult<i64> {
+  ) -> StudyCycleResult<i64> {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = Self::joins()
@@ -104,7 +104,7 @@ impl RegistrationApplicationView {
     query
       .first::<i64>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -120,7 +120,7 @@ impl RegistrationApplicationQuery {
   pub async fn list(
     self,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<PagedResponse<RegistrationApplicationView>> {
+  ) -> StudyCycleResult<PagedResponse<RegistrationApplicationView>> {
     let limit = limit_fetch(self.limit, None)?;
 
     let mut query = RegistrationApplicationView::joins()
@@ -150,7 +150,7 @@ impl RegistrationApplicationQuery {
     let res = paginated_query
       .load::<RegistrationApplicationView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
     paginate_response(res, limit, self.page_cursor)
   }
 }
@@ -159,7 +159,7 @@ impl RegistrationApplicationQuery {
 mod tests {
 
   use crate::{RegistrationApplicationView, impls::RegistrationApplicationQuery};
-  use lemmy_db_schema::source::{
+  use studycycle_db_schema::source::{
     instance::Instance,
     local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
     person::{Person, PersonInsertForm},
@@ -169,14 +169,14 @@ mod tests {
       RegistrationApplicationUpdateForm,
     },
   };
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

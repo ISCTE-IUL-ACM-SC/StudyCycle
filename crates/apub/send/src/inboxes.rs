@@ -1,16 +1,16 @@
-use crate::util::LEMMY_TEST_FAST_FEDERATION;
+use crate::util::STUDYCYCLE_TEST_FAST_FEDERATION;
 use chrono::{DateTime, TimeZone, Utc};
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::CommunityId,
   source::{activity::SentActivity, site::Site},
 };
-use lemmy_db_schema_file::InstanceId;
-use lemmy_db_views_community_follower::CommunityFollowerView;
-use lemmy_diesel_utils::{
+use studycycle_db_schema_file::InstanceId;
+use studycycle_db_views_community_follower::CommunityFollowerView;
+use studycycle_diesel_utils::{
   connection::{ActualDbPool, DbPool},
   dburl::DbUrl,
 };
-use lemmy_utils::error::LemmyResult;
+use studycycle_utils::error::StudyCycleResult;
 use reqwest::Url;
 use std::{
   collections::{HashMap, HashSet},
@@ -28,7 +28,7 @@ use std::{
 /// fully separate. (see https://github.com/LemmyNet/lemmy/issues/3958)
 #[expect(clippy::expect_used)]
 static FOLLOW_ADDITIONS_RECHECK_DELAY: LazyLock<chrono::TimeDelta> = LazyLock::new(|| {
-  if *LEMMY_TEST_FAST_FEDERATION {
+  if *STUDYCYCLE_TEST_FAST_FEDERATION {
     chrono::TimeDelta::try_seconds(1).expect("TimeDelta out of bounds")
   } else {
     chrono::TimeDelta::try_minutes(2).expect("TimeDelta out of bounds")
@@ -42,12 +42,12 @@ static FOLLOW_REMOVALS_RECHECK_DELAY: LazyLock<chrono::TimeDelta> =
   LazyLock::new(|| chrono::TimeDelta::try_hours(1).expect("TimeDelta out of bounds"));
 
 pub trait DataSource: Send + Sync {
-  async fn read_site_from_instance_id(&self, instance_id: InstanceId) -> LemmyResult<Site>;
+  async fn read_site_from_instance_id(&self, instance_id: InstanceId) -> StudyCycleResult<Site>;
   async fn get_instance_followed_community_inboxes(
     &self,
     instance_id: InstanceId,
     last_fetch: DateTime<Utc>,
-  ) -> LemmyResult<Vec<(CommunityId, DbUrl)>>;
+  ) -> StudyCycleResult<Vec<(CommunityId, DbUrl)>>;
 }
 pub struct DbDataSource {
   pool: ActualDbPool,
@@ -60,7 +60,7 @@ impl DbDataSource {
 }
 
 impl DataSource for DbDataSource {
-  async fn read_site_from_instance_id(&self, instance_id: InstanceId) -> LemmyResult<Site> {
+  async fn read_site_from_instance_id(&self, instance_id: InstanceId) -> StudyCycleResult<Site> {
     Site::read_from_instance_id(&mut DbPool::Pool(&self.pool), instance_id).await
   }
 
@@ -68,7 +68,7 @@ impl DataSource for DbDataSource {
     &self,
     instance_id: InstanceId,
     last_fetch: DateTime<Utc>,
-  ) -> LemmyResult<Vec<(CommunityId, DbUrl)>> {
+  ) -> StudyCycleResult<Vec<(CommunityId, DbUrl)>> {
     CommunityFollowerView::get_instance_followed_community_inboxes(
       &mut DbPool::Pool(&self.pool),
       instance_id,
@@ -122,8 +122,8 @@ impl<T: DataSource> CommunityInboxCollector<T> {
   /// get inbox urls of sending the given activity to the given instance
   /// most often this will return 0 values (if instance doesn't care about the activity)
   /// or 1 value (the shared inbox)
-  /// > 1 values only happens for non-lemmy software
-  pub async fn get_inbox_urls(&mut self, activity: &SentActivity) -> LemmyResult<Vec<Url>> {
+  /// > 1 values only happens for non-studycycle software
+  pub async fn get_inbox_urls(&mut self, activity: &SentActivity) -> StudyCycleResult<Vec<Url>> {
     let mut inbox_urls: HashSet<Url> = HashSet::new();
 
     if activity.send_all_instances {
@@ -136,7 +136,7 @@ impl<T: DataSource> CommunityInboxCollector<T> {
         self.site_loaded = true;
       }
       if let Some(site) = &self.site {
-        // Nutomic: Most non-lemmy software wont have a site row. That means it cant handle these
+        // Nutomic: Most non-studycycle software wont have a site row. That means it cant handle these
         // activities. So handling it like this is fine.
         inbox_urls.insert(site.inbox_url.inner().clone());
       }
@@ -166,7 +166,7 @@ impl<T: DataSource> CommunityInboxCollector<T> {
     Ok(inbox_urls.into_iter().collect())
   }
 
-  pub async fn update_communities(&mut self) -> LemmyResult<()> {
+  pub async fn update_communities(&mut self) -> StudyCycleResult<()> {
     if (Utc::now() - self.last_full_communities_fetch) > *FOLLOW_REMOVALS_RECHECK_DELAY {
       tracing::debug!("{}: fetching full list of communities", self.domain);
       // process removals every hour
@@ -199,7 +199,7 @@ impl<T: DataSource> CommunityInboxCollector<T> {
     &mut self,
     instance_id: InstanceId,
     last_fetch: DateTime<Utc>,
-  ) -> LemmyResult<(HashMap<CommunityId, HashSet<Url>>, DateTime<Utc>)> {
+  ) -> StudyCycleResult<(HashMap<CommunityId, HashSet<Url>>, DateTime<Utc>)> {
     // update to time before fetch to ensure overlap. subtract some time to ensure overlap even if
     // published date is not exact
     let new_last_fetch = Utc::now() - *FOLLOW_ADDITIONS_RECHECK_DELAY / 2;
@@ -223,24 +223,24 @@ impl<T: DataSource> CommunityInboxCollector<T> {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use super::*;
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     newtypes::{ActivityId, CommunityId, SiteId},
     source::activity::SentActivity,
   };
-  use lemmy_db_schema_file::{InstanceId, enums::ActorType};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_db_schema_file::{InstanceId, enums::ActorType};
+  use studycycle_utils::error::StudyCycleResult;
   use mockall::mock;
   use serde_json::json;
 
   mock! {
       DataSource {}
       impl DataSource for DataSource {
-          async fn read_site_from_instance_id(&self, instance_id: InstanceId) -> LemmyResult<Site>;
+          async fn read_site_from_instance_id(&self, instance_id: InstanceId) -> StudyCycleResult<Site>;
           async fn get_instance_followed_community_inboxes(
               &self,
               instance_id: InstanceId,
               last_fetch: DateTime<Utc>,
-          ) -> LemmyResult<Vec<(CommunityId, DbUrl)>>;
+          ) -> StudyCycleResult<Vec<(CommunityId, DbUrl)>>;
       }
   }
 
@@ -252,7 +252,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_get_inbox_urls_empty() -> LemmyResult<()> {
+  async fn test_get_inbox_urls_empty() -> StudyCycleResult<()> {
     let mut collector = setup_collector();
     let activity = SentActivity {
       id: ActivityId(1),
@@ -274,7 +274,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_get_inbox_urls_send_all_instances() -> LemmyResult<()> {
+  async fn test_get_inbox_urls_send_all_instances() -> StudyCycleResult<()> {
     let mut collector = setup_collector();
     let site_inbox = Url::parse("https://example.com/inbox")?;
     let site = Site {
@@ -321,7 +321,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_get_inbox_urls_community_followers() -> LemmyResult<()> {
+  async fn test_get_inbox_urls_community_followers() -> StudyCycleResult<()> {
     let mut collector = setup_collector();
     let community_id = CommunityId(1);
     let url1 = "https://follower1.example.com/inbox";
@@ -361,7 +361,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_get_inbox_urls_send_inboxes() -> LemmyResult<()> {
+  async fn test_get_inbox_urls_send_inboxes() -> StudyCycleResult<()> {
     let mut collector = setup_collector();
     collector.domain = "example.com".to_string();
     let inbox_user_1 = Url::parse("https://example.com/user1/inbox")?;
@@ -394,7 +394,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_get_inbox_urls_combined() -> LemmyResult<()> {
+  async fn test_get_inbox_urls_combined() -> StudyCycleResult<()> {
     let mut collector = setup_collector();
     collector.domain = "example.com".to_string();
     let community_id = CommunityId(1);
@@ -460,7 +460,7 @@ mod tests {
 
   #[expect(clippy::expect_used)]
   #[tokio::test]
-  async fn test_update_communities() -> LemmyResult<()> {
+  async fn test_update_communities() -> StudyCycleResult<()> {
     let mut collector = setup_collector();
     let community_id1 = CommunityId(1);
     let community_id2 = CommunityId(2);
@@ -511,7 +511,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_get_inbox_urls_no_duplicates() -> LemmyResult<()> {
+  async fn test_get_inbox_urls_no_duplicates() -> StudyCycleResult<()> {
     let mut collector = setup_collector();
     collector.domain = "example.com".to_string();
     let community_id = CommunityId(1);

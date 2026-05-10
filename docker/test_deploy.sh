@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+# TODO: Update references
+
 set -e
 
 export COMPOSE_DOCKER_CLI_BUILD=1

@@ -8,25 +8,25 @@ use actix_web::{
   web::{Data, get, scope},
 };
 use clap::{Parser, Subcommand};
-use lemmy_api::sitemap::get_sitemap;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api::sitemap::get_sitemap;
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   request::client_builder,
   send_activity::ActivityChannel,
   utils::local_site_rate_limit_to_rate_limit_config,
 };
-use lemmy_apub::{
+use studycycle_apub::{
   FEDERATION_HTTP_FETCH_LIMIT,
   VerifyUrlData,
   collections::fetch_community_collections,
 };
-use lemmy_apub_activities::handle_outgoing_activities;
-use lemmy_apub_objects::objects::{community::FETCH_COMMUNITY_COLLECTIONS, instance::ApubSite};
-use lemmy_apub_send::{Opts, SendManager};
-use lemmy_db_schema::source::secret::Secret;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::connection::build_db_pool;
-use lemmy_routes::{
+use studycycle_apub_activities::handle_outgoing_activities;
+use studycycle_apub_objects::objects::{community::FETCH_COMMUNITY_COLLECTIONS, instance::ApubSite};
+use studycycle_apub_send::{Opts, SendManager};
+use studycycle_db_schema::source::secret::Secret;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::connection::build_db_pool;
+use studycycle_routes::{
   feeds,
   middleware::{
     idempotency::{IdempotencyMiddleware, IdempotencySet},
@@ -41,9 +41,9 @@ use lemmy_routes::{
   },
   webfinger,
 };
-use lemmy_utils::{
+use studycycle_utils::{
   VERSION,
-  error::{LemmyErrorType, LemmyResult},
+  error::{StudyCycleErrorType, StudyCycleResult},
   rate_limit::RateLimit,
   response::jsonify_plain_text_errors,
   settings::{SETTINGS, structs::Settings},
@@ -70,28 +70,28 @@ const ACTIVITY_SENDING_TIMEOUT: Duration = Duration::from_secs(125);
 #[command(
   version,
   about = "A link aggregator for the fediverse",
-  long_about = "A link aggregator for the fediverse.\n\nThis is the Lemmy backend API server. This will connect to a PostgreSQL database, run any pending migrations and start accepting API requests."
+  long_about = "A link aggregator for the fediverse.\n\nThis is the StudyCycle backend API server. This will connect to a PostgreSQL database, run any pending migrations and start accepting API requests."
 )]
 // TODO: Instead of defining individual env vars, only specify prefix once supported by clap.
 //       https://github.com/clap-rs/clap/issues/3221
 pub struct CmdArgs {
   /// Don't run scheduled tasks.
   ///
-  /// If you are running multiple Lemmy server processes, you probably want to disable scheduled
+  /// If you are running multiple StudyCycle server processes, you probably want to disable scheduled
   /// tasks on all but one of the processes, to avoid running the tasks more often than intended.
-  #[arg(long, default_value_t = false, env = "LEMMY_DISABLE_SCHEDULED_TASKS")]
+  #[arg(long, default_value_t = false, env = "STUDYCYCLE_DISABLE_SCHEDULED_TASKS")]
   disable_scheduled_tasks: bool,
   /// Disables the HTTP server.
   ///
-  /// This can be used to run a Lemmy server process that only performs scheduled tasks or activity
+  /// This can be used to run a StudyCycle server process that only performs scheduled tasks or activity
   /// sending.
-  #[arg(long, default_value_t = false, env = "LEMMY_DISABLE_HTTP_SERVER")]
+  #[arg(long, default_value_t = false, env = "STUDYCYCLE_DISABLE_HTTP_SERVER")]
   disable_http_server: bool,
   /// Disable sending outgoing ActivityPub messages.
   ///
   /// Only pass this for horizontally scaled setups.
   /// See https://join-lemmy.org/docs/administration/horizontal_scaling.html for details.
-  #[arg(long, default_value_t = false, env = "LEMMY_DISABLE_ACTIVITY_SENDING")]
+  #[arg(long, default_value_t = false, env = "STUDYCYCLE_DISABLE_ACTIVITY_SENDING")]
   disable_activity_sending: bool,
   /// The index of this outgoing federation process.
   ///
@@ -102,12 +102,12 @@ pub struct CmdArgs {
   /// send duplicates or nothing.
   ///
   /// See https://join-lemmy.org/docs/administration/horizontal_scaling.html for more detail.
-  #[arg(long, default_value_t = 1, env = "LEMMY_FEDERATE_PROCESS_INDEX")]
+  #[arg(long, default_value_t = 1, env = "STUDYCYCLE_FEDERATE_PROCESS_INDEX")]
   federate_process_index: i32,
   /// How many outgoing federation processes you are starting in total.
   ///
   /// If set, make sure to set --federate-process-index differently for each.
-  #[arg(long, default_value_t = 1, env = "LEMMY_FEDERATE_PROCESS_COUNT")]
+  #[arg(long, default_value_t = 1, env = "STUDYCYCLE_FEDERATE_PROCESS_COUNT")]
   federate_process_count: i32,
   #[command(subcommand)]
   subcommand: Option<CmdSubcommand>,
@@ -136,8 +136,8 @@ enum MigrationSubcommand {
   Revert,
 }
 
-/// Placing the main function in lib.rs allows other crates to import it and embed Lemmy
-pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
+/// Placing the main function in lib.rs allows other crates to import it and embed StudyCycle
+pub async fn start_studycycle_server(args: CmdArgs) -> StudyCycleResult<()> {
   if let Some(CmdSubcommand::Migration {
     subcommand,
     all,
@@ -145,8 +145,8 @@ pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
   }) = args.subcommand
   {
     let mut options = match subcommand {
-      MigrationSubcommand::Run => lemmy_diesel_utils::schema_setup::Options::default().run(),
-      MigrationSubcommand::Revert => lemmy_diesel_utils::schema_setup::Options::default().revert(),
+      MigrationSubcommand::Run => studycycle_diesel_utils::schema_setup::Options::default().run(),
+      MigrationSubcommand::Revert => studycycle_diesel_utils::schema_setup::Options::default().revert(),
     }
     .print_output();
 
@@ -154,12 +154,12 @@ pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
       options = options.limit(number);
     }
 
-    lemmy_diesel_utils::schema_setup::run(options, &SETTINGS.get_database_url_with_options()?)?;
+    studycycle_diesel_utils::schema_setup::run(options, &SETTINGS.get_database_url_with_options()?)?;
 
     #[cfg(debug_assertions)]
     if all && subcommand == MigrationSubcommand::Run {
       println!(
-        "Warning: you probably want this command instead, which requires less crates to be compiled: cargo run --package lemmy_diesel_utils"
+        "Warning: you probably want this command instead, which requires less crates to be compiled: cargo run --package studycycle_diesel_utils"
       );
     }
 
@@ -167,7 +167,7 @@ pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
   }
 
   // Print version number to log
-  println!("Starting Lemmy v{}", *VERSION);
+  println!("Starting StudyCycle v{}", *VERSION);
 
   // return error 503 while running db migrations and startup tasks
   let mut startup_server_handle = None;
@@ -205,7 +205,7 @@ pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
   let pictrs_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
-  let context = LemmyContext::create(
+  let context = StudyCycleContext::create(
     pool.clone(),
     client.clone(),
     pictrs_client,
@@ -234,7 +234,7 @@ pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
 
   FETCH_COMMUNITY_COLLECTIONS
     .set(fetch_community_collections)
-    .map_err(|_e| LemmyErrorType::Unknown("couldnt set function pointer".into()))?;
+    .map_err(|_e| StudyCycleErrorType::Unknown("couldnt set function pointer".into()))?;
 
   let request_data = federation_config.to_request_data();
   let outgoing_activities_task =
@@ -306,12 +306,12 @@ pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
 }
 
 /// Creates temporary HTTP server which returns status 503 for all requests.
-fn create_startup_server() -> LemmyResult<ServerHandle> {
+fn create_startup_server() -> StudyCycleResult<ServerHandle> {
   let startup_server = HttpServer::new(move || {
     App::new().wrap(ErrorHandlers::new().default_handler(move |req| {
       let (req, _) = req.into_parts();
       let response =
-        HttpResponse::ServiceUnavailable().json(json!({"error": "Lemmy is currently starting"}));
+        HttpResponse::ServiceUnavailable().json(json!({"error": "StudyCycle is currently starting"}));
       let service_response = ServiceResponse::new(req, response);
       Ok(ErrorHandlerResponse::Response(
         service_response.map_into_right_body(),
@@ -326,10 +326,10 @@ fn create_startup_server() -> LemmyResult<ServerHandle> {
 }
 
 fn create_http_server(
-  federation_config: FederationConfig<LemmyContext>,
+  federation_config: FederationConfig<StudyCycleContext>,
   settings: Settings,
   site_view: SiteView,
-) -> LemmyResult<ServerHandle> {
+) -> StudyCycleResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
   let prom_api_metrics = new_prometheus_metrics()?;
   let idempotency_set = IdempotencySet::default();
@@ -337,7 +337,7 @@ fn create_http_server(
   // Create Http server
   let bind = (settings.bind, settings.port);
   let server = HttpServer::new(move || {
-    let context: LemmyContext = federation_config.deref().clone();
+    let context: StudyCycleContext = federation_config.deref().clone();
     let rate_limit = federation_config.rate_limit_cell().clone();
 
     let cors_config = cors_config(&settings);
@@ -363,11 +363,11 @@ fn create_http_server(
 
     // The routes
     app
-      .configure(|cfg| lemmy_api_routes::config(cfg, &rate_limit))
-      .configure(|cfg| lemmy_api_routes_v3::config(cfg, &rate_limit))
+      .configure(|cfg| studycycle_api_routes::config(cfg, &rate_limit))
+      // .configure(|cfg| lemmy_api_routes_v3::config(cfg, &rate_limit)) // NOTE: Disable backwards compatibility
       .configure(|cfg| {
         if site_view.local_site.federation_enabled {
-          lemmy_apub::http::routes::config(cfg);
+          studycycle_apub::http::routes::config(cfg);
           webfinger::config(cfg);
         }
       })

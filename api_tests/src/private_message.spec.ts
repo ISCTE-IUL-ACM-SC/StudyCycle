@@ -13,7 +13,7 @@ import {
   listNotifications,
   resolvePerson,
   statusBadRequest,
-  jestLemmyError,
+  jestStudyCycleError,
 } from "./shared";
 
 let recipient_id: number;
@@ -131,7 +131,7 @@ test("Create a private message report", async () => {
   expect(betaPm).toBeDefined();
 
   // Make sure that only the recipient can report it, so this should fail
-  await jestLemmyError(
+  await jestStudyCycleError(
     () =>
       reportPrivateMessage(
         alpha,

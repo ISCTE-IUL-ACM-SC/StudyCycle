@@ -1,4 +1,4 @@
-use lemmy_diesel_utils::dburl::DbUrl;
+use studycycle_diesel_utils::dburl::DbUrl;
 use url::Url;
 
 #[cfg(feature = "full")]
@@ -46,8 +46,8 @@ pub mod tagline;
 /// Default value for columns like [community::Community.inbox_url] which are marked as serde(skip).
 ///
 /// This is necessary so they can be successfully deserialized from API responses, even though the
-/// value is not sent by Lemmy. Necessary for crates which rely on Rust API such as
-/// lemmy-stats-crawler.
+/// value is not sent by StudyCycle. Necessary for crates which rely on Rust API such as
+/// studycycle-stats-crawler.
 #[expect(clippy::expect_used)]
 fn placeholder_apub_url() -> DbUrl {
   DbUrl(Box::new(

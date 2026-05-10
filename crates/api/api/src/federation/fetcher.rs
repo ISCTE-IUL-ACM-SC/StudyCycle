@@ -6,16 +6,16 @@ use activitypub_federation::{
 };
 use diesel::NotFound;
 use itertools::Itertools;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::objects::{community::ApubCommunity, multi_community::ApubMultiCommunity};
-use lemmy_db_schema::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::objects::{community::ApubCommunity, multi_community::ApubMultiCommunity};
+use studycycle_db_schema::{
   newtypes::{CommunityId, MultiCommunityId},
   source::{community::Community, multi_community::MultiCommunity, person::Person},
   traits::ApubActor,
 };
-use lemmy_db_schema_file::PersonId;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult};
+use studycycle_db_schema_file::PersonId;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult};
 
 /// Resolve actor identifier like `!news@example.com` to user or community object.
 ///
@@ -23,12 +23,12 @@ use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult};
 /// to fetch via webfinger from the original instance.
 async fn resolve_ap_identifier<ActorType, DbActor>(
   identifier: &str,
-  context: &Data<LemmyContext>,
+  context: &Data<StudyCycleContext>,
   local_user_view: &Option<LocalUserView>,
   include_deleted: bool,
-) -> LemmyResult<ActorType>
+) -> StudyCycleResult<ActorType>
 where
-  ActorType: Object<DataType = LemmyContext, Error = LemmyError>
+  ActorType: Object<DataType = StudyCycleContext, Error = StudyCycleError>
     + Object
     + Actor
     + From<DbActor>
@@ -43,7 +43,7 @@ where
     let (name, domain) = identifier
       .splitn(2, '@')
       .collect_tuple()
-      .ok_or(LemmyErrorType::InvalidUrl)?;
+      .ok_or(StudyCycleErrorType::InvalidUrl)?;
     let actor = DbActor::read_from_name(&mut context.pool(), name, Some(domain), false)
       .await
       .ok()
@@ -73,9 +73,9 @@ where
 pub(crate) async fn resolve_community_identifier(
   name: &Option<String>,
   id: Option<CommunityId>,
-  context: &Data<LemmyContext>,
+  context: &Data<StudyCycleContext>,
   local_user_view: &Option<LocalUserView>,
-) -> LemmyResult<Option<CommunityId>> {
+) -> StudyCycleResult<Option<CommunityId>> {
   Ok(if let Some(name) = name {
     Some(
       resolve_ap_identifier::<ApubCommunity, Community>(name, context, local_user_view, true)
@@ -90,9 +90,9 @@ pub(crate) async fn resolve_community_identifier(
 pub(crate) async fn resolve_person_identifier(
   id: Option<PersonId>,
   username: &Option<String>,
-  context: &Data<LemmyContext>,
+  context: &Data<StudyCycleContext>,
   local_user_view: &Option<LocalUserView>,
-) -> LemmyResult<PersonId> {
+) -> StudyCycleResult<PersonId> {
   Ok(
     if let Some(name) = username {
       Some(
@@ -103,16 +103,16 @@ pub(crate) async fn resolve_person_identifier(
     } else {
       id
     }
-    .ok_or(LemmyErrorType::NoIdGiven)?,
+    .ok_or(StudyCycleErrorType::NoIdGiven)?,
   )
 }
 
 pub(crate) async fn resolve_multi_community_identifier(
   name: &Option<String>,
   id: Option<MultiCommunityId>,
-  context: &Data<LemmyContext>,
+  context: &Data<StudyCycleContext>,
   local_user_view: &Option<LocalUserView>,
-) -> LemmyResult<Option<MultiCommunityId>> {
+) -> StudyCycleResult<Option<MultiCommunityId>> {
   Ok(if let Some(name) = name {
     Some(
       resolve_ap_identifier::<ApubMultiCommunity, MultiCommunity>(

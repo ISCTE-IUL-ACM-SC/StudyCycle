@@ -1,19 +1,19 @@
 use activitypub_federation::config::Data;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_community_deleted_removed,
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     community::{Community, CommunityActions, CommunityFollowerForm},
     person::Person,
   },
   traits::Followable,
 };
-use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
-use lemmy_db_views_community_moderator::CommunityPersonBanView;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
+use studycycle_db_views_community_moderator::CommunityPersonBanView;
+use studycycle_utils::error::StudyCycleResult;
 
 pub mod add_mod;
 pub mod ban;
@@ -30,8 +30,8 @@ pub(super) async fn do_follow_community(
   community: Community,
   person: &Person,
   follow: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   if follow {
     // Only run these checks for local community, in case of remote community the local
     // state may be outdated. Can't use check_community_user_action() here as it only allows

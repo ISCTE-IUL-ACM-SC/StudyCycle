@@ -7,7 +7,7 @@ use crate::{
   community::send_activity_in_community,
   generate_activity_id,
   protocol::block::block_user::BlockUser,
-  send_lemmy_activity,
+  send_studycycle_activity,
 };
 use activitypub_federation::{
   config::Data,
@@ -15,16 +15,16 @@ use activitypub_federation::{
   traits::{Activity, Actor, Object},
 };
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::notify_mod_action,
   utils::{remove_or_restore_user_data, remove_or_restore_user_data_in_community},
 };
-use lemmy_apub_objects::{
+use studycycle_apub_objects::{
   objects::person::ApubPerson,
   utils::functions::{verify_is_public, verify_mod_action, verify_visibility},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     activity::ActivitySendTargets,
     community::{CommunityActions, CommunityPersonBanForm},
@@ -33,7 +33,7 @@ use lemmy_db_schema::{
   },
   traits::Bannable,
 };
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult};
 use url::Url;
 
 impl BlockUser {
@@ -44,8 +44,8 @@ impl BlockUser {
     remove_data: Option<bool>,
     reason: String,
     expires: Option<DateTime<Utc>>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<BlockUser> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<BlockUser> {
     let to = to(target)?;
     Ok(BlockUser {
       actor: mod_.id().clone().into(),
@@ -69,8 +69,8 @@ impl BlockUser {
     remove_data: bool,
     reason: String,
     expires: Option<DateTime<Utc>>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     let block = BlockUser::new(
       target,
       user,
@@ -85,7 +85,7 @@ impl BlockUser {
     match target {
       SiteOrCommunity::Left(_) => {
         let inboxes = ActivitySendTargets::to_all_instances();
-        send_lemmy_activity(context, block, mod_, inboxes, false).await
+        send_studycycle_activity(context, block, mod_, inboxes, false).await
       }
       SiteOrCommunity::Right(c) => {
         let activity = AnnouncableActivities::BlockUser(block);
@@ -98,8 +98,8 @@ impl BlockUser {
 
 #[async_trait::async_trait]
 impl Activity for BlockUser {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -109,7 +109,7 @@ impl Activity for BlockUser {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     match self.target.dereference(context).await? {
       SiteOrCommunity::Left(_site) => {
         verify_is_public(&self.to, &self.cc)?;
@@ -123,7 +123,7 @@ impl Activity for BlockUser {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     let expires_at = self.end_time;
     let mod_person = self.actor.dereference(context).await?;
     // Dereference local here so that deleted users can be banned as well.
@@ -142,7 +142,7 @@ impl Activity for BlockUser {
         let form =
           ModlogInsertForm::admin_ban(&mod_person, blocked_person.id, true, expires_at, &reason);
         let action = Modlog::create(&mut context.pool(), &[form]).await?;
-        let parent_id = action.first().ok_or(LemmyErrorType::NotFound)?.id;
+        let parent_id = action.first().ok_or(StudyCycleErrorType::NotFound)?.id;
         notify_mod_action(action, context);
 
         if self.remove_data.unwrap_or(false) {
@@ -183,7 +183,7 @@ impl Activity for BlockUser {
           &reason,
         );
         let action = Modlog::create(&mut context.pool(), &[form]).await?;
-        let parent_id = action.first().ok_or(LemmyErrorType::NotFound)?.id;
+        let parent_id = action.first().ok_or(StudyCycleErrorType::NotFound)?.id;
         notify_mod_action(action, context);
 
         if self.remove_data.unwrap_or(false) {

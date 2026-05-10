@@ -1,13 +1,13 @@
 use crate::{
   claims::Claims,
-  context::LemmyContext,
+  context::StudyCycleContext,
   request::{delete_image_alias, fetch_pictrs_proxied_image_details, purge_image_from_pictrs_url},
 };
 use actix_web::{HttpRequest, http::header::Header};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use chrono::{DateTime, Days, Local, TimeZone, Utc};
 use enum_map::{EnumMap, enum_map};
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::{CommunityId, CommunityTagId, ModlogId, PostId, PostOrCommentId},
   source::{
     comment::{Comment, CommentActions, CommentLikeForm},
@@ -28,27 +28,27 @@ use lemmy_db_schema::{
   },
   traits::Likeable,
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   enums::{FederationMode, ImageMode, RegistrationMode},
 };
-use lemmy_db_views_community_follower_approval::PendingFollowerView;
-use lemmy_db_views_community_moderator::{CommunityModeratorView, CommunityPersonBanView};
-use lemmy_db_views_local_image::LocalImageView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{connection::DbPool, dburl::DbUrl, traits::Crud};
-use lemmy_utils::{
+use studycycle_db_views_community_follower_approval::PendingFollowerView;
+use studycycle_db_views_community_moderator::{CommunityModeratorView, CommunityPersonBanView};
+use studycycle_db_views_local_image::LocalImageView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{connection::DbPool, dburl::DbUrl, traits::Crud};
+use studycycle_utils::{
   CACHE_DURATION_FEDERATION,
   CacheLock,
   MAX_COMMENT_DEPTH_LIMIT,
   error::{
-    LemmyError,
-    LemmyErrorExt,
-    LemmyErrorExt2,
-    LemmyErrorType,
-    LemmyResult,
+    StudyCycleError,
+    StudyCycleErrorExt,
+    StudyCycleErrorExt2,
+    StudyCycleErrorType,
+    StudyCycleResult,
     UntranslatedError,
   },
   rate_limit::{ActionType, BucketConfig},
@@ -74,7 +74,7 @@ pub async fn check_is_mod_or_admin(
   pool: &mut DbPool<'_>,
   person_id: PersonId,
   community_id: CommunityId,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let is_mod = CommunityModeratorView::check_is_community_moderator(pool, community_id, person_id)
     .await
     .is_ok();
@@ -85,7 +85,7 @@ pub async fn check_is_mod_or_admin(
   if is_mod || is_admin {
     Ok(())
   } else {
-    Err(LemmyErrorType::NotAModOrAdmin.into())
+    Err(StudyCycleErrorType::NotAModOrAdmin.into())
   }
 }
 
@@ -93,7 +93,7 @@ pub async fn check_is_mod_or_admin(
 pub(crate) async fn check_is_mod_of_any_or_admin(
   pool: &mut DbPool<'_>,
   person_id: PersonId,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let is_mod_of_any = CommunityModeratorView::is_community_moderator_of_any(pool, person_id)
     .await
     .is_ok();
@@ -104,7 +104,7 @@ pub(crate) async fn check_is_mod_of_any_or_admin(
   if is_mod_of_any || is_admin {
     Ok(())
   } else {
-    Err(LemmyErrorType::NotAModOrAdmin.into())
+    Err(StudyCycleErrorType::NotAModOrAdmin.into())
   }
 }
 
@@ -112,7 +112,7 @@ pub async fn is_mod_or_admin(
   pool: &mut DbPool<'_>,
   local_user_view: &LocalUserView,
   community_id: CommunityId,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   check_local_user_valid(local_user_view)?;
   check_is_mod_or_admin(pool, local_user_view.person.id, community_id).await
 }
@@ -121,7 +121,7 @@ pub async fn is_mod_or_admin_opt(
   pool: &mut DbPool<'_>,
   local_user_view: Option<&LocalUserView>,
   community_id: Option<CommunityId>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   if let Some(local_user_view) = local_user_view {
     if let Some(community_id) = community_id {
       is_mod_or_admin(pool, local_user_view, community_id).await
@@ -129,7 +129,7 @@ pub async fn is_mod_or_admin_opt(
       is_admin(local_user_view)
     }
   } else {
-    Err(LemmyErrorType::NotAModOrAdmin.into())
+    Err(StudyCycleErrorType::NotAModOrAdmin.into())
   }
 }
 
@@ -139,17 +139,17 @@ pub async fn is_mod_or_admin_opt(
 pub async fn check_community_mod_of_any_or_admin_action(
   local_user_view: &LocalUserView,
   pool: &mut DbPool<'_>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let person = &local_user_view.person;
 
   check_local_user_valid(local_user_view)?;
   check_is_mod_of_any_or_admin(pool, person.id).await
 }
 
-pub fn is_admin(local_user_view: &LocalUserView) -> LemmyResult<()> {
+pub fn is_admin(local_user_view: &LocalUserView) -> StudyCycleResult<()> {
   check_local_user_valid(local_user_view)?;
   if !local_user_view.local_user.admin {
-    Err(LemmyErrorType::NotAnAdmin.into())
+    Err(StudyCycleErrorType::NotAnAdmin.into())
   } else {
     Ok(())
   }
@@ -158,7 +158,7 @@ pub fn is_admin(local_user_view: &LocalUserView) -> LemmyResult<()> {
 pub fn is_top_mod(
   local_user_view: &LocalUserView,
   community_mods: &[CommunityModeratorView],
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   check_local_user_valid(local_user_view)?;
   if local_user_view.person.id
     != community_mods
@@ -166,7 +166,7 @@ pub fn is_top_mod(
       .map(|cm| cm.moderator.id)
       .unwrap_or(PersonId(0))
   {
-    Err(LemmyErrorType::NotTopMod.into())
+    Err(StudyCycleErrorType::NotTopMod.into())
   } else {
     Ok(())
   }
@@ -178,25 +178,25 @@ pub async fn update_read_comments(
   post_id: PostId,
   read_comments: i32,
   pool: &mut DbPool<'_>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let person_post_agg_form = PostReadCommentsForm::new(post_id, person_id, read_comments);
   PostActions::update_read_comments(pool, &person_post_agg_form).await?;
 
   Ok(())
 }
 
-pub fn check_local_user_valid(local_user_view: &LocalUserView) -> LemmyResult<()> {
+pub fn check_local_user_valid(local_user_view: &LocalUserView) -> StudyCycleResult<()> {
   // Check for a site ban
   if local_user_view.banned {
-    return Err(LemmyErrorType::SiteBan.into());
+    return Err(StudyCycleErrorType::SiteBan.into());
   }
   check_local_user_deleted(local_user_view)
 }
 
 /// Check for account deletion
-pub fn check_local_user_deleted(local_user_view: &LocalUserView) -> LemmyResult<()> {
+pub fn check_local_user_deleted(local_user_view: &LocalUserView) -> StudyCycleResult<()> {
   if local_user_view.person.deleted {
-    Err(LemmyErrorType::Deleted.into())
+    Err(StudyCycleErrorType::Deleted.into())
   } else {
     Ok(())
   }
@@ -207,12 +207,12 @@ pub fn check_local_user_deleted(local_user_view: &LocalUserView) -> LemmyResult<
 pub fn check_email_verified(
   local_user_view: &LocalUserView,
   site_view: &SiteView,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   if !local_user_view.local_user.admin
     && site_view.local_site.email_verification_required
     && !local_user_view.local_user.email_verified
   {
-    return Err(LemmyErrorType::EmailNotVerified.into());
+    return Err(StudyCycleErrorType::EmailNotVerified.into());
   }
   Ok(())
 }
@@ -221,7 +221,7 @@ pub async fn check_registration_application(
   local_user_view: &LocalUserView,
   local_site: &LocalSite,
   pool: &mut DbPool<'_>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   if (local_site.registration_mode == RegistrationMode::RequireApplication
     || local_site.registration_mode == RegistrationMode::Closed)
     && !local_user_view.local_user.accepted_application
@@ -233,10 +233,10 @@ pub async fn check_registration_application(
     let registration = RegistrationApplication::find_by_local_user_id(pool, local_user_id).await?;
     if registration.admin_id.is_some() {
       return Err(
-        LemmyErrorType::RegistrationDenied(registration.deny_reason.unwrap_or_default()).into(),
+        StudyCycleErrorType::RegistrationDenied(registration.deny_reason.unwrap_or_default()).into(),
       );
     } else {
-      return Err(LemmyErrorType::RegistrationApplicationIsPending.into());
+      return Err(StudyCycleErrorType::RegistrationApplicationIsPending.into());
     }
   }
   Ok(())
@@ -250,7 +250,7 @@ pub async fn check_community_user_action(
   local_user_view: &LocalUserView,
   community: &Community,
   pool: &mut DbPool<'_>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   check_local_user_valid(local_user_view)?;
   check_community_deleted_removed(community)?;
   CommunityPersonBanView::check(pool, local_user_view.person.id, community.id).await?;
@@ -260,9 +260,9 @@ pub async fn check_community_user_action(
   Ok(())
 }
 
-pub fn check_community_deleted_removed(community: &Community) -> LemmyResult<()> {
+pub fn check_community_deleted_removed(community: &Community) -> StudyCycleResult<()> {
   if community.deleted || community.removed {
-    return Err(LemmyErrorType::Deleted.into());
+    return Err(StudyCycleErrorType::Deleted.into());
   }
   Ok(())
 }
@@ -276,7 +276,7 @@ pub async fn check_community_mod_action(
   community: &Community,
   allow_deleted: bool,
   pool: &mut DbPool<'_>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   is_mod_or_admin(pool, local_user_view, community.id).await?;
   CommunityPersonBanView::check(pool, local_user_view.person.id, community.id).await?;
 
@@ -288,17 +288,17 @@ pub async fn check_community_mod_action(
 }
 
 /// Don't allow creating reports for removed / deleted posts
-pub fn check_post_deleted_or_removed(post: &Post) -> LemmyResult<()> {
+pub fn check_post_deleted_or_removed(post: &Post) -> StudyCycleResult<()> {
   if post.deleted || post.removed {
-    Err(LemmyErrorType::Deleted.into())
+    Err(StudyCycleErrorType::Deleted.into())
   } else {
     Ok(())
   }
 }
 
-pub fn check_comment_deleted_or_removed(comment: &Comment) -> LemmyResult<()> {
+pub fn check_comment_deleted_or_removed(comment: &Comment) -> StudyCycleResult<()> {
   if comment.deleted || comment.removed {
-    Err(LemmyErrorType::Deleted.into())
+    Err(StudyCycleErrorType::Deleted.into())
   } else {
     Ok(())
   }
@@ -310,7 +310,7 @@ pub async fn check_local_vote_mode(
   local_site: &LocalSite,
   person_id: PersonId,
   pool: &mut DbPool<'_>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let (downvote_setting, upvote_setting) = match post_or_comment_id {
     PostOrCommentId::Post(_) => (local_site.post_downvotes, local_site.post_upvotes),
     PostOrCommentId::Comment(_) => (local_site.comment_downvotes, local_site.comment_upvotes),
@@ -336,9 +336,9 @@ pub async fn check_local_vote_mode(
 }
 
 /// Dont allow bots to do certain actions, like voting
-pub fn check_bot_account(person: &Person) -> LemmyResult<()> {
+pub fn check_bot_account(person: &Person) -> StudyCycleResult<()> {
   if person.bot_account {
-    Err(LemmyErrorType::InvalidBotAction.into())
+    Err(StudyCycleErrorType::InvalidBotAction.into())
   } else {
     Ok(())
   }
@@ -347,36 +347,36 @@ pub fn check_bot_account(person: &Person) -> LemmyResult<()> {
 pub fn check_private_instance(
   local_user_view: &Option<LocalUserView>,
   local_site: &LocalSite,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   if local_user_view.is_none() && local_site.private_instance {
-    Err(LemmyErrorType::InstanceIsPrivate.into())
+    Err(StudyCycleErrorType::InstanceIsPrivate.into())
   } else {
     Ok(())
   }
 }
 
 /// If private messages are disabled, dont allow them to be sent / received
-pub fn check_private_messages_enabled(local_user_view: &LocalUserView) -> Result<(), LemmyError> {
+pub fn check_private_messages_enabled(local_user_view: &LocalUserView) -> Result<(), StudyCycleError> {
   if !local_user_view.local_user.private_messages_enabled {
-    Err(LemmyErrorType::CouldntCreate.into())
+    Err(StudyCycleErrorType::CouldntCreate.into())
   } else {
     Ok(())
   }
 }
 
 /// Checks the password length
-pub fn password_length_check(pass: &str) -> LemmyResult<()> {
+pub fn password_length_check(pass: &str) -> StudyCycleResult<()> {
   if !(10..=60).contains(&pass.chars().count()) {
-    Err(LemmyErrorType::InvalidPassword.into())
+    Err(StudyCycleErrorType::InvalidPassword.into())
   } else {
     Ok(())
   }
 }
 
 /// Checks for a honeypot. If this field is filled, fail the rest of the function
-pub fn honeypot_check(honeypot: &Option<String>) -> LemmyResult<()> {
+pub fn honeypot_check(honeypot: &Option<String>) -> StudyCycleResult<()> {
   if honeypot.is_some() && honeypot != &Some(String::new()) {
-    Err(LemmyErrorType::HoneypotFailed.into())
+    Err(StudyCycleErrorType::HoneypotFailed.into())
   } else {
     Ok(())
   }
@@ -400,7 +400,7 @@ pub fn local_site_rate_limit_to_rate_limit_config(
   })
 }
 
-pub async fn slur_regex(context: &LemmyContext) -> LemmyResult<Regex> {
+pub async fn slur_regex(context: &StudyCycleContext) -> StudyCycleResult<Regex> {
   static CACHE: CacheLock<Regex> = LazyLock::new(|| {
     Cache::builder()
       .max_capacity(1)
@@ -420,7 +420,7 @@ pub async fn slur_regex(context: &LemmyContext) -> LemmyResult<Regex> {
   )
 }
 
-pub async fn get_url_blocklist(context: &LemmyContext) -> LemmyResult<RegexSet> {
+pub async fn get_url_blocklist(context: &StudyCycleContext) -> StudyCycleResult<RegexSet> {
   static URL_BLOCKLIST: CacheLock<RegexSet> = LazyLock::new(|| {
     Cache::builder()
       .max_capacity(1)
@@ -430,12 +430,12 @@ pub async fn get_url_blocklist(context: &LemmyContext) -> LemmyResult<RegexSet> 
 
   Ok(
     URL_BLOCKLIST
-      .try_get_with::<_, LemmyError>((), async {
+      .try_get_with::<_, StudyCycleError>((), async {
         let urls = LocalSiteUrlBlocklist::get_all(&mut context.pool()).await?;
 
         // The urls are already validated on saving, so just escape them.
         // If this regex creation changes it must be synced with
-        // lemmy_utils::utils::markdown::create_url_blocklist_test_regex_set.
+        // studycycle_utils::utils::markdown::create_url_blocklist_test_regex_set.
         let regexes = urls.iter().map(|url| format!(r"\b{}\b", escape(&url.url)));
 
         let set = RegexSet::new(regexes)?;
@@ -447,12 +447,12 @@ pub async fn get_url_blocklist(context: &LemmyContext) -> LemmyResult<RegexSet> 
 }
 
 // `local_site` is optional so that tests work easily
-pub fn check_nsfw_allowed(nsfw: Option<bool>, local_site: Option<&LocalSite>) -> LemmyResult<()> {
+pub fn check_nsfw_allowed(nsfw: Option<bool>, local_site: Option<&LocalSite>) -> StudyCycleResult<()> {
   let is_nsfw = nsfw.unwrap_or_default();
   let nsfw_disallowed = local_site.is_some_and(|s| s.nsfw_content_disallowed);
 
   if nsfw_disallowed && is_nsfw {
-    return Err(LemmyErrorType::NsfwNotAllowed.into());
+    return Err(StudyCycleErrorType::NsfwNotAllowed.into());
   }
 
   Ok(())
@@ -463,8 +463,8 @@ pub fn check_nsfw_allowed(nsfw: Option<bool>, local_site: Option<&LocalSite>) ->
 /// Used for GetCommunityResponse and GetPersonDetails
 pub async fn read_site_for_actor(
   ap_id: DbUrl,
-  context: &LemmyContext,
-) -> LemmyResult<Option<Site>> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<Option<Site>> {
   let site_id = Site::instance_ap_id_from_url(ap_id.clone().into());
   let site = Site::read_from_apub_id(&mut context.pool(), &site_id.into()).await?;
   Ok(site)
@@ -473,7 +473,7 @@ pub async fn read_site_for_actor(
 pub async fn purge_post_images(
   url: Option<DbUrl>,
   thumbnail_url: Option<DbUrl>,
-  context: &LemmyContext,
+  context: &StudyCycleContext,
 ) {
   if let Some(url) = url {
     purge_image_from_pictrs_url(&url, context).await.ok();
@@ -486,7 +486,7 @@ pub async fn purge_post_images(
 }
 
 /// Delete local images attributed to a person
-fn delete_local_user_images(person_id: PersonId, context: &LemmyContext) {
+fn delete_local_user_images(person_id: PersonId, context: &StudyCycleContext) {
   let context_ = context.clone();
   spawn_try_task(async move {
     let pictrs_uploads =
@@ -509,8 +509,8 @@ pub async fn remove_or_restore_user_data(
   removed: bool,
   reason: &str,
   bulk_action_parent_id: ModlogId,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<()> {
   let pool = &mut context.pool();
 
   // These actions are only possible when removing, not restoring
@@ -610,7 +610,7 @@ async fn create_modlog_entries_for_removed_or_restored_posts(
   removed: bool,
   reason: &str,
   bulk_action_parent_id: ModlogId,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   // Build the forms
   let forms: Vec<_> = posts
     .iter()
@@ -637,7 +637,7 @@ async fn create_modlog_entries_for_removed_or_restored_comments(
   removed: bool,
   reason: &str,
   bulk_action_parent_id: ModlogId,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let mut forms: Vec<ModlogInsertForm> = Vec::new();
 
   for comment in comments {
@@ -668,7 +668,7 @@ async fn create_modlog_entries_for_removed_or_restored_comments_in_community(
   removed: bool,
   reason: &str,
   bulk_action_parent_id: ModlogId,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   // Build the forms
   let forms: Vec<_> = comments
     .iter()
@@ -697,7 +697,7 @@ pub async fn remove_or_restore_user_data_in_community(
   reason: &str,
   bulk_action_parent_id: ModlogId,
   pool: &mut DbPool<'_>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   // These actions are only possible when removing, not restoring
   if remove {
     // Remove post and comment votes
@@ -742,8 +742,8 @@ pub async fn remove_or_restore_user_data_in_community(
 pub async fn purge_user_account(
   person_id: PersonId,
   local_instance_id: InstanceId,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<()> {
   let pool = &mut context.pool();
 
   // Delete their local images, if they're a local user
@@ -753,12 +753,12 @@ pub async fn purge_user_account(
   // Comments
   Comment::permadelete_for_creator(pool, person_id)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntUpdate)?;
+    .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)?;
 
   // Posts
   Post::permadelete_for_creator(pool, person_id)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntUpdate)?;
+    .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)?;
 
   // Leave communities they mod
   CommunityActions::leave_mod_team_for_all_communities(pool, person_id).await?;
@@ -777,7 +777,7 @@ pub fn generate_followers_url(ap_id: &DbUrl) -> Result<DbUrl, ParseError> {
   Ok(Url::parse(&format!("{ap_id}/followers"))?.into())
 }
 
-pub fn generate_inbox_url() -> LemmyResult<DbUrl> {
+pub fn generate_inbox_url() -> StudyCycleResult<DbUrl> {
   let url = format!("{}/inbox", SETTINGS.get_protocol_and_hostname());
   Ok(Url::parse(&url)?.into())
 }
@@ -790,18 +790,18 @@ pub fn generate_featured_url(ap_id: &DbUrl) -> Result<DbUrl, ParseError> {
   Ok(Url::parse(&format!("{ap_id}/featured"))?.into())
 }
 
-pub fn generate_moderators_url(community_id: &DbUrl) -> LemmyResult<DbUrl> {
+pub fn generate_moderators_url(community_id: &DbUrl) -> StudyCycleResult<DbUrl> {
   Ok(Url::parse(&format!("{community_id}/moderators"))?.into())
 }
 
 /// Ensure that ban/block expiry is in valid range. If its in past, throw error. If its more
 /// than 10 years in future, convert to permanent ban. Otherwise return the same value.
-pub fn check_expire_time(expires_unix_opt: Option<i64>) -> LemmyResult<Option<DateTime<Utc>>> {
+pub fn check_expire_time(expires_unix_opt: Option<i64>) -> StudyCycleResult<Option<DateTime<Utc>>> {
   if let Some(expires_unix) = expires_unix_opt {
     let expires = Utc
       .timestamp_opt(expires_unix, 0)
       .single()
-      .ok_or(LemmyErrorType::InvalidUnixTime)?;
+      .ok_or(StudyCycleErrorType::InvalidUnixTime)?;
 
     limit_expire_time(expires)
   } else {
@@ -809,11 +809,11 @@ pub fn check_expire_time(expires_unix_opt: Option<i64>) -> LemmyResult<Option<Da
   }
 }
 
-fn limit_expire_time(expires: DateTime<Utc>) -> LemmyResult<Option<DateTime<Utc>>> {
+fn limit_expire_time(expires: DateTime<Utc>) -> StudyCycleResult<Option<DateTime<Utc>>> {
   const MAX_BAN_TERM: Days = Days::new(10 * 365);
 
   if expires < Local::now() {
-    Err(LemmyErrorType::BanExpirationInPast.into())
+    Err(StudyCycleErrorType::BanExpirationInPast.into())
   } else if expires > Local::now() + MAX_BAN_TERM {
     Ok(None)
   } else {
@@ -824,9 +824,9 @@ fn limit_expire_time(expires: DateTime<Utc>) -> LemmyResult<Option<DateTime<Utc>
 pub fn check_conflicting_like_filters(
   liked_only: Option<bool>,
   disliked_only: Option<bool>,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   if liked_only.unwrap_or_default() && disliked_only.unwrap_or_default() {
-    Err(LemmyErrorType::ContradictingFilters.into())
+    Err(StudyCycleErrorType::ContradictingFilters.into())
   } else {
     Ok(())
   }
@@ -837,8 +837,8 @@ pub async fn process_markdown(
   slur_regex: &Regex,
   url_blocklist: &RegexSet,
   local_site: &LocalSite,
-  context: &LemmyContext,
-) -> LemmyResult<String> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<String> {
   let text = remove_slurs(text, slur_regex);
   let text = clean_urls_in_text(&text);
 
@@ -869,8 +869,8 @@ pub async fn process_markdown_opt(
   slur_regex: &Regex,
   url_blocklist: &RegexSet,
   local_site: &LocalSite,
-  context: &LemmyContext,
-) -> LemmyResult<Option<String>> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<Option<String>> {
   match text {
     Some(t) => process_markdown(t, slur_regex, url_blocklist, local_site, context)
       .await
@@ -887,8 +887,8 @@ async fn proxy_image_link_internal(
   link: Url,
   local_site: &LocalSite,
   is_thumbnail: bool,
-  context: &LemmyContext,
-) -> LemmyResult<DbUrl> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<DbUrl> {
   // Dont rewrite links pointing to local domain.
   if link.domain() == Some(&context.settings().hostname) {
     Ok(link.into())
@@ -916,16 +916,16 @@ pub async fn proxy_image_link(
   link: Url,
   local_site: &LocalSite,
   is_thumbnail: bool,
-  context: &LemmyContext,
-) -> LemmyResult<DbUrl> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<DbUrl> {
   proxy_image_link_internal(link, local_site, is_thumbnail, context).await
 }
 
 pub async fn proxy_image_link_opt_apub(
   link: Option<Url>,
   local_site: &LocalSite,
-  context: &LemmyContext,
-) -> LemmyResult<Option<DbUrl>> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<Option<DbUrl>> {
   if let Some(l) = link {
     proxy_image_link(l, local_site, false, context)
       .await
@@ -939,8 +939,8 @@ fn build_proxied_image_url(
   link: &Url,
   is_thumbnail: bool,
   local_site: &LocalSite,
-  context: &LemmyContext,
-) -> LemmyResult<Url> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<Url> {
   let mut url = format!(
     "{}/api/v4/image/proxy?url={}",
     context.settings().get_protocol_and_hostname(),
@@ -954,18 +954,18 @@ fn build_proxied_image_url(
 
 pub async fn local_user_view_from_jwt(
   jwt: &str,
-  context: &LemmyContext,
-) -> LemmyResult<LocalUserView> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<LocalUserView> {
   let local_user_id = Claims::validate(jwt, context)
     .await
-    .with_lemmy_type(LemmyErrorType::NotLoggedIn)?;
+    .with_studycycle_type(StudyCycleErrorType::NotLoggedIn)?;
   let local_user_view = LocalUserView::read(&mut context.pool(), local_user_id).await?;
   check_local_user_deleted(&local_user_view)?;
 
   Ok(local_user_view)
 }
 
-pub fn read_auth_token(req: &HttpRequest) -> LemmyResult<Option<String>> {
+pub fn read_auth_token(req: &HttpRequest) -> StudyCycleResult<Option<String>> {
   // Try reading jwt from auth header
   if let Ok(header) = Authorization::<Bearer>::parse(req) {
     Ok(Some(header.as_ref().token().to_string()))
@@ -994,7 +994,7 @@ pub fn send_webmention(post: Post, community: &Community) {
       {
         Err(WebmentionError::NoEndpointDiscovered(_)) => Ok(()),
         Ok(_) => Ok(()),
-        Err(e) => Err(e).with_lemmy_type(UntranslatedError::CouldntSendWebmention.into()),
+        Err(e) => Err(e).with_studycycle_type(UntranslatedError::CouldntSendWebmention.into()),
       }
     });
   };
@@ -1004,12 +1004,12 @@ pub fn send_webmention(post: Post, community: &Community) {
 ///
 /// Top-level comments have a path like `0.123` where 123 is the comment id. At the second level
 /// it is `0.123.456`, containing the parent id and current comment id.
-pub fn check_comment_depth(comment: &Comment) -> LemmyResult<()> {
+pub fn check_comment_depth(comment: &Comment) -> StudyCycleResult<()> {
   let path = &comment.path.0;
   let length = path.split('.').count();
   // Need to increment by one because the path always starts with 0
   if length > MAX_COMMENT_DEPTH_LIMIT + 1 {
-    Err(LemmyErrorType::MaxCommentDepthReached.into())
+    Err(StudyCycleErrorType::MaxCommentDepthReached.into())
   } else {
     Ok(())
   }
@@ -1018,8 +1018,8 @@ pub fn check_comment_depth(comment: &Comment) -> LemmyResult<()> {
 pub async fn update_post_tags(
   post: &Post,
   community_tag_ids: &[CommunityTagId],
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &StudyCycleContext,
+) -> StudyCycleResult<()> {
   // validate tags
   let community_tags = CommunityTag::read_for_community(&mut context.pool(), post.community_id)
     .await?
@@ -1027,7 +1027,7 @@ pub async fn update_post_tags(
     .map(|t| t.id)
     .collect::<HashSet<_>>();
   if !community_tags.is_superset(&community_tag_ids.iter().copied().collect()) {
-    return Err(LemmyErrorType::TagNotInCommunity.into());
+    return Err(StudyCycleErrorType::TagNotInCommunity.into());
   }
   PostCommunityTag::update(&mut context.pool(), post, community_tag_ids).await?;
   Ok(())
@@ -1037,7 +1037,7 @@ pub async fn update_post_tags(
 mod tests {
   use super::*;
   use diesel_ltree::Ltree;
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     newtypes::{CommentId, LanguageId},
     test_data::TestData,
   };
@@ -1062,7 +1062,7 @@ mod tests {
   }
 
   #[test]
-  fn test_limit_ban_term() -> LemmyResult<()> {
+  fn test_limit_ban_term() -> StudyCycleResult<()> {
     // Ban expires in past, should throw error
     assert!(limit_expire_time(Utc::now() - Days::new(5)).is_err());
 
@@ -1080,24 +1080,24 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_proxy_image_link() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_proxy_image_link() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
 
     let pool = &mut context.pool();
     let test_data = TestData::create(pool).await?;
     let local_site = &test_data.local_site;
 
     // image from local domain is unchanged
-    let local_url = Url::parse("http://lemmy-alpha/image.png")?;
+    let local_url = Url::parse("http://studycycle-alpha/image.png")?;
     let proxied = proxy_image_link_internal(local_url.clone(), local_site, false, &context).await?;
     assert_eq!(&local_url, proxied.inner());
 
     // image from remote domain is proxied
-    let remote_image = Url::parse("http://lemmy-beta/image.png")?;
+    let remote_image = Url::parse("http://studycycle-beta/image.png")?;
     let proxied =
       proxy_image_link_internal(remote_image.clone(), local_site, false, &context).await?;
     assert_eq!(
-      "https://lemmy-alpha/api/v4/image/proxy?url=http%3A%2F%2Flemmy-beta%2Fimage.png",
+      "https://studycycle-alpha/api/v4/image/proxy?url=http%3A%2F%2Fstudycycle-beta%2Fimage.png",
       proxied.as_str()
     );
 
@@ -1114,7 +1114,7 @@ mod tests {
   }
 
   #[test]
-  fn test_comment_depth() -> LemmyResult<()> {
+  fn test_comment_depth() -> StudyCycleResult<()> {
     let mut comment = Comment {
       id: CommentId(0),
       creator_id: PersonId(0),

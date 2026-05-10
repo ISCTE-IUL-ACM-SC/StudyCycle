@@ -16,12 +16,12 @@ use crate::{
 };
 use diesel::{ExpressionMethods, QueryDsl, delete, dsl::exists, insert_into, select};
 use diesel_async::{AsyncPgConnection, RunQueryDsl, scoped_futures::ScopedFutureExt};
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   schema::{community_language, local_site, local_user_language, site, site_language},
 };
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 pub const UNDETERMINED_ID: LanguageId = LanguageId(0);
 
@@ -29,7 +29,7 @@ impl LocalUserLanguage {
   pub async fn read(
     pool: &mut DbPool<'_>,
     for_local_user_id: LocalUserId,
-  ) -> LemmyResult<Vec<LanguageId>> {
+  ) -> StudyCycleResult<Vec<LanguageId>> {
     let conn = &mut get_conn(pool).await?;
 
     local_user_language::table
@@ -38,7 +38,7 @@ impl LocalUserLanguage {
       .select(local_user_language::language_id)
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   /// A helpful wrapper function for pre-fetching language ids.
@@ -46,7 +46,7 @@ impl LocalUserLanguage {
   pub async fn read_opt(
     pool: &mut DbPool<'_>,
     for_local_user_id: Option<LocalUserId>,
-  ) -> LemmyResult<Option<Vec<LanguageId>>> {
+  ) -> StudyCycleResult<Option<Vec<LanguageId>>> {
     Ok(if let Some(local_user_id) = for_local_user_id {
       Some(Self::read(pool, local_user_id).await?)
     } else {
@@ -61,7 +61,7 @@ impl LocalUserLanguage {
     pool: &mut DbPool<'_>,
     language_ids: Vec<LanguageId>,
     for_local_user_id: LocalUserId,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     let lang_ids = convert_update_languages(conn, language_ids).await?;
 
@@ -80,7 +80,7 @@ impl LocalUserLanguage {
             .filter(local_user_language::language_id.ne_all(&lang_ids))
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdate)?;
+            .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)?;
 
           let forms = lang_ids
             .iter()
@@ -100,7 +100,7 @@ impl LocalUserLanguage {
             .do_nothing()
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+            .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
         }
         .scope_boxed()
       })
@@ -109,7 +109,7 @@ impl LocalUserLanguage {
 }
 
 impl SiteLanguage {
-  pub async fn read_local_raw(pool: &mut DbPool<'_>) -> LemmyResult<Vec<LanguageId>> {
+  pub async fn read_local_raw(pool: &mut DbPool<'_>) -> StudyCycleResult<Vec<LanguageId>> {
     let conn = &mut get_conn(pool).await?;
     site::table
       .inner_join(local_site::table)
@@ -118,10 +118,10 @@ impl SiteLanguage {
       .select(site_language::language_id)
       .load(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  pub async fn read(pool: &mut DbPool<'_>, for_site_id: SiteId) -> LemmyResult<Vec<LanguageId>> {
+  pub async fn read(pool: &mut DbPool<'_>, for_site_id: SiteId) -> StudyCycleResult<Vec<LanguageId>> {
     let conn = &mut get_conn(pool).await?;
     site_language::table
       .filter(site_language::site_id.eq(for_site_id))
@@ -129,14 +129,14 @@ impl SiteLanguage {
       .select(site_language::language_id)
       .load(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn update(
     pool: &mut DbPool<'_>,
     language_ids: Vec<LanguageId>,
     site: &Site,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     let for_site_id = site.id;
     let instance_id = site.instance_id;
@@ -157,7 +157,7 @@ impl SiteLanguage {
             .filter(site_language::language_id.ne_all(&lang_ids))
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdate)?;
+            .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)?;
 
           let forms = lang_ids
             .iter()
@@ -174,7 +174,7 @@ impl SiteLanguage {
             .do_nothing()
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdate)?;
+            .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)?;
 
           CommunityLanguage::limit_languages(conn, instance_id).await?;
 
@@ -192,8 +192,8 @@ impl CommunityLanguage {
     pool: &mut DbPool<'_>,
     for_language_id: LanguageId,
     for_community_id: CommunityId,
-  ) -> LemmyResult<()> {
-    use lemmy_db_schema_file::schema::community_language::dsl::community_language;
+  ) -> StudyCycleResult<()> {
+    use studycycle_db_schema_file::schema::community_language::dsl::community_language;
     let conn = &mut get_conn(pool).await?;
 
     let is_allowed = select(exists(
@@ -205,7 +205,7 @@ impl CommunityLanguage {
     if is_allowed {
       Ok(())
     } else {
-      Err(LemmyErrorType::LanguageNotAllowed.into())
+      Err(StudyCycleErrorType::LanguageNotAllowed.into())
     }
   }
 
@@ -216,8 +216,8 @@ impl CommunityLanguage {
   async fn limit_languages(
     conn: &mut AsyncPgConnection,
     for_instance_id: InstanceId,
-  ) -> LemmyResult<()> {
-    use lemmy_db_schema_file::schema::{
+  ) -> StudyCycleResult<()> {
+    use studycycle_db_schema_file::schema::{
       community::dsl as c,
       community_language::dsl as cl,
       site_language::dsl as sl,
@@ -242,8 +242,8 @@ impl CommunityLanguage {
   pub async fn read(
     pool: &mut DbPool<'_>,
     for_community_id: CommunityId,
-  ) -> LemmyResult<Vec<LanguageId>> {
-    use lemmy_db_schema_file::schema::community_language::dsl::{
+  ) -> StudyCycleResult<Vec<LanguageId>> {
+    use studycycle_db_schema_file::schema::community_language::dsl::{
       community_id,
       community_language,
       language_id,
@@ -255,14 +255,14 @@ impl CommunityLanguage {
       .select(language_id)
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn update(
     pool: &mut DbPool<'_>,
     mut language_ids: Vec<LanguageId>,
     for_community_id: CommunityId,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     if language_ids.is_empty() {
       language_ids = SiteLanguage::read_local_raw(pool).await?;
     }
@@ -292,7 +292,7 @@ impl CommunityLanguage {
             .filter(community_language::language_id.ne_all(&lang_ids))
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdate)?;
+            .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)?;
 
           // Insert new languages
           insert_into(community_language::table)
@@ -304,7 +304,7 @@ impl CommunityLanguage {
             .do_nothing()
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+            .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
         }
         .scope_boxed()
       })
@@ -316,7 +316,7 @@ pub async fn validate_post_language(
   pool: &mut DbPool<'_>,
   language_id: Option<LanguageId>,
   community_id: CommunityId,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   if let Some(language_id) = language_id {
     CommunityLanguage::is_allowed_community_language(pool, language_id, community_id).await?;
   }
@@ -327,7 +327,7 @@ pub async fn validate_post_language(
 async fn convert_update_languages(
   conn: &mut AsyncPgConnection,
   language_ids: Vec<LanguageId>,
-) -> LemmyResult<Vec<LanguageId>> {
+) -> StudyCycleResult<Vec<LanguageId>> {
   if language_ids.is_empty() {
     Ok(
       Language::read_all(&mut conn.into())
@@ -355,18 +355,18 @@ mod tests {
     },
     test_data::TestData,
   };
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
-  async fn test_langs1(pool: &mut DbPool<'_>) -> LemmyResult<Vec<LanguageId>> {
+  async fn test_langs1(pool: &mut DbPool<'_>) -> StudyCycleResult<Vec<LanguageId>> {
     Ok(vec![
       Language::read_id_from_code(pool, "en").await?,
       Language::read_id_from_code(pool, "fr").await?,
       Language::read_id_from_code(pool, "ru").await?,
     ])
   }
-  async fn test_langs2(pool: &mut DbPool<'_>) -> LemmyResult<Vec<LanguageId>> {
+  async fn test_langs2(pool: &mut DbPool<'_>) -> StudyCycleResult<Vec<LanguageId>> {
     Ok(vec![
       Language::read_id_from_code(pool, "fi").await?,
       Language::read_id_from_code(pool, "se").await?,
@@ -375,7 +375,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_convert_update_languages() -> LemmyResult<()> {
+  async fn test_convert_update_languages() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -394,7 +394,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_site_languages() -> LemmyResult<()> {
+  async fn test_site_languages() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -417,7 +417,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_user_languages() -> LemmyResult<()> {
+  async fn test_user_languages() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -449,7 +449,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_community_languages() -> LemmyResult<()> {
+  async fn test_community_languages() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = TestData::create(pool).await?;
@@ -504,7 +504,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_validate_post_language() -> LemmyResult<()> {
+  async fn test_validate_post_language() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = TestData::create(pool).await?;
@@ -528,7 +528,7 @@ mod tests {
 
     let def1 = validate_post_language(pool, Some(LanguageId(2)), community.id).await;
     assert_eq!(
-      Some(LemmyErrorType::LanguageNotAllowed),
+      Some(StudyCycleErrorType::LanguageNotAllowed),
       def1.err().map(|e| e.error_type)
     );
 

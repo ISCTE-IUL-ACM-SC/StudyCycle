@@ -1,9 +1,9 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_community_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{
     check_community_mod_action,
@@ -14,17 +14,17 @@ use lemmy_api_utils::{
     slur_regex,
   },
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   actor_language::{CommunityLanguage, SiteLanguage},
   community::{Community, CommunityUpdateForm},
   modlog::{Modlog, ModlogInsertForm},
 };
-use lemmy_db_views_community::api::{CommunityResponse, EditCommunity};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{traits::Crud, utils::diesel_string_update};
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_db_views_community::api::{CommunityResponse, EditCommunity};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{traits::Crud, utils::diesel_string_update};
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::{
     slurs::{check_slurs, check_slurs_opt},
     validation::{is_valid_body_field, is_valid_display_name},
@@ -33,9 +33,9 @@ use lemmy_utils::{
 
 pub async fn edit_community(
   Json(data): Json<EditCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityResponse>> {
+) -> StudyCycleResult<Json<CommunityResponse>> {
   check_local_user_valid(&local_user_view)?;
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
@@ -81,7 +81,7 @@ pub async fn edit_community(
     // https://stackoverflow.com/a/64227550
     let is_subset = languages.iter().all(|item| site_languages.contains(item));
     if !is_subset {
-      return Err(LemmyErrorType::LanguageNotAllowed.into());
+      return Err(StudyCycleErrorType::LanguageNotAllowed.into());
     }
     CommunityLanguage::update(&mut context.pool(), languages, community_id).await?;
   }

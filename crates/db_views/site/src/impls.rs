@@ -13,7 +13,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     actor_language::LocalUserLanguage,
     instance::{Instance, instance_keys as key},
@@ -24,7 +24,7 @@ use lemmy_db_schema::{
   },
   utils::limit_fetch,
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   schema::{
     federation_allowlist,
@@ -36,17 +36,17 @@ use lemmy_db_schema_file::{
     site,
   },
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{CursorData, PagedResponse, PaginationCursorConversion, paginate_response},
   traits::Crud,
   utils::fuzzy_search,
 };
-use lemmy_utils::{
+use studycycle_utils::{
   CacheLock,
   build_cache,
-  error::{LemmyError, LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{StudyCycleError, StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult},
 };
 use std::{
   collections::HashMap,
@@ -54,7 +54,7 @@ use std::{
 };
 
 impl SiteView {
-  pub async fn read_local(pool: &mut DbPool<'_>) -> LemmyResult<Self> {
+  pub async fn read_local(pool: &mut DbPool<'_>) -> StudyCycleResult<Self> {
     static CACHE: CacheLock<SiteView> = LazyLock::new(build_cache);
     CACHE
       .try_get_with((), async move {
@@ -70,16 +70,16 @@ impl SiteView {
           .first(conn)
           .await
           .optional()?
-          .ok_or(LemmyErrorType::LocalSiteNotSetup)?;
+          .ok_or(StudyCycleErrorType::LocalSiteNotSetup)?;
         Ok(local_site)
       })
       .await
-      .map_err(|e: Arc<LemmyError>| anyhow::anyhow!("err getting local site: {e:?}").into())
+      .map_err(|e: Arc<StudyCycleError>| anyhow::anyhow!("err getting local site: {e:?}").into())
   }
 
   /// A special site bot user, solely made for following non-local communities for
   /// multi-communities.
-  pub async fn read_system_account(pool: &mut DbPool<'_>) -> LemmyResult<Person> {
+  pub async fn read_system_account(pool: &mut DbPool<'_>) -> StudyCycleResult<Person> {
     let site_view = SiteView::read_local(pool).await?;
     Person::read(pool, site_view.local_site.system_account).await
   }
@@ -88,7 +88,7 @@ impl SiteView {
 pub async fn user_backup_list_to_user_settings_backup(
   local_user_view: LocalUserView,
   pool: &mut DbPool<'_>,
-) -> LemmyResult<UserSettingsBackup> {
+) -> StudyCycleResult<UserSettingsBackup> {
   let lists = LocalUser::export_backup(pool, local_user_view.person.id).await?;
   let blocking_keywords = LocalUserKeywordBlock::read(pool, local_user_view.local_user.id).await?;
   let discussion_languages = LocalUserLanguage::read(pool, local_user_view.local_user.id).await?;
@@ -138,7 +138,7 @@ impl FederatedInstanceView {
   pub async fn list(
     pool: &mut DbPool<'_>,
     data: GetFederatedInstances,
-  ) -> LemmyResult<PagedResponse<Self>> {
+  ) -> StudyCycleResult<PagedResponse<Self>> {
     let limit = limit_fetch(data.limit, None)?;
     let mut query = Self::joins()
       .select(Self::as_select())
@@ -174,18 +174,18 @@ impl FederatedInstanceView {
     let res = pq
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
     paginate_response(res, limit, data.page_cursor)
   }
 
-  pub async fn read(pool: &mut DbPool<'_>, instance_id: InstanceId) -> LemmyResult<Self> {
+  pub async fn read(pool: &mut DbPool<'_>, instance_id: InstanceId) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(instance::id.eq(instance_id))
       .select(Self::as_select())
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -198,7 +198,7 @@ impl PaginationCursorConversion for FederatedInstanceView {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     Instance::read(pool, InstanceId(cursor.id()?)).await
   }
 }
@@ -210,7 +210,7 @@ mod tests {
     FederatedInstanceView,
     api::{GetFederatedInstances, GetFederatedInstancesKind},
   };
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     assert_length,
     source::{
       federation_allowlist::{FederationAllowList, FederationAllowListForm},
@@ -219,13 +219,13 @@ mod tests {
       site::{Site, SiteInsertForm},
     },
   };
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_utils::error::StudyCycleResult;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_instance_list() -> LemmyResult<()> {
+  async fn test_instance_list() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

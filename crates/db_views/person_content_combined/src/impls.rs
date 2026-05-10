@@ -9,7 +9,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   self,
   PersonContentType,
   impls::local_user::LocalUserOptionHelper,
@@ -17,7 +17,7 @@ use lemmy_db_schema::{
   traits::InternalToCombinedView,
   utils::limit_fetch,
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   enums::{CommunityFollowerState, CommunityVisibility},
@@ -37,11 +37,11 @@ use lemmy_db_schema_file::{
   },
   schema::{comment, community, community_actions, person, person_content_combined, post},
 };
-use lemmy_db_views_post_comment_combined::{
+use studycycle_db_views_post_comment_combined::{
   PostCommentCombinedView,
   PostCommentCombinedViewInternal,
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -51,7 +51,7 @@ use lemmy_diesel_utils::{
     paginate_response,
   },
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -72,7 +72,7 @@ impl PaginationCursorConversion for PostCommentCombinedViewWrapper {
   async fn from_cursor(
     data: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = person_content_combined::table
@@ -83,7 +83,7 @@ impl PaginationCursorConversion for PostCommentCombinedViewWrapper {
     query = match prefix {
       'C' => query.filter(person_content_combined::comment_id.eq(id)),
       'P' => query.filter(person_content_combined::post_id.eq(id)),
-      _ => return Err(LemmyErrorType::CouldntParsePaginationToken.into()),
+      _ => return Err(StudyCycleErrorType::CouldntParsePaginationToken.into()),
     };
     let token = query.first(conn).await?;
 
@@ -145,7 +145,7 @@ impl PersonContentCombinedQuery {
     pool: &mut DbPool<'_>,
     user: Option<&LocalUserView>,
     local_instance_id: InstanceId,
-  ) -> LemmyResult<PagedResponse<PostCommentCombinedView>> {
+  ) -> StudyCycleResult<PagedResponse<PostCommentCombinedView>> {
     let my_local_user = user.as_ref().map(|u| &u.local_user);
     let my_person_id = my_local_user.person_id();
 
@@ -218,7 +218,7 @@ impl PersonContentCombinedQuery {
 mod tests {
 
   use crate::impls::PersonContentCombinedQuery;
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     source::{
       comment::{Comment, CommentInsertForm},
       community::{Community, CommunityActions, CommunityFollowerForm, CommunityInsertForm},
@@ -229,14 +229,14 @@ mod tests {
     },
     traits::Followable,
   };
-  use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
-  use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_db_views_post_comment_combined::PostCommentCombinedView;
-  use lemmy_diesel_utils::{
+  use studycycle_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
+  use studycycle_db_views_local_user::LocalUserView;
+  use studycycle_db_views_post_comment_combined::PostCommentCombinedView;
+  use studycycle_diesel_utils::{
     connection::{DbPool, build_db_pool_for_tests},
     traits::Crud,
   };
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -254,7 +254,7 @@ mod tests {
     sara_comment_2: Comment,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> StudyCycleResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
 
     let timmy_form = PersonInsertForm::test_form(instance.id, "timmy_pcv");
@@ -341,7 +341,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
     Instance::delete(pool, data.instance.id).await?;
 
     Ok(())
@@ -349,7 +349,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn combined() -> LemmyResult<()> {
+  async fn combined() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -424,7 +424,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn private_community() -> LemmyResult<()> {
+  async fn private_community() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

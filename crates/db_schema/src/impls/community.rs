@@ -31,19 +31,19 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use diesel_uplete::{UpleteCount, uplete};
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   enums::{CommunityFollowerState, CommunityNotificationsMode, CommunityVisibility, ListingType},
   schema::{comment, community, community_actions, instance, local_user, post},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   dburl::DbUrl,
   traits::Crud,
   utils::functions::{coalesce, coalesce_2_nullable, lower, random_smallint},
 };
-use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult, UntranslatedError},
+use studycycle_utils::{
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult, UntranslatedError},
   settings::structs::Settings,
 };
 use url::Url;
@@ -53,14 +53,14 @@ impl Crud for Community {
   type UpdateForm = CommunityUpdateForm;
   type IdType = CommunityId;
 
-  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     let community_ = insert_into(community::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)?;
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)?;
 
     // Initialize languages for new community
     CommunityLanguage::update(pool, vec![], community_.id).await?;
@@ -72,18 +72,18 @@ impl Crud for Community {
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
     form: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(community::table.find(community_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
 impl CommunityActions {
-  pub async fn join(pool: &mut DbPool<'_>, form: &CommunityModeratorForm) -> LemmyResult<Self> {
+  pub async fn join(pool: &mut DbPool<'_>, form: &CommunityModeratorForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(community_actions::table)
       .values(form)
@@ -96,19 +96,19 @@ impl CommunityActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::AlreadyExists)
+      .with_studycycle_type(StudyCycleErrorType::AlreadyExists)
   }
 
   pub async fn leave(
     pool: &mut DbPool<'_>,
     form: &CommunityModeratorForm,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(community_actions::table.find((form.person_id, form.community_id)))
       .set_null(community_actions::became_moderator_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::AlreadyExists)
+      .with_studycycle_type(StudyCycleErrorType::AlreadyExists)
   }
 }
 
@@ -123,7 +123,7 @@ impl Community {
     pool: &mut DbPool<'_>,
     timestamp: DateTime<Utc>,
     form: &CommunityInsertForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let is_new_community = match &form.ap_id {
       Some(id) => Community::read_from_apub_id(pool, id).await?.is_none(),
       None => true,
@@ -153,7 +153,7 @@ impl Community {
   pub async fn get_by_collection_url(
     pool: &mut DbPool<'_>,
     url: &DbUrl,
-  ) -> LemmyResult<(Community, CollectionType)> {
+  ) -> StudyCycleResult<(Community, CollectionType)> {
     let conn = &mut get_conn(pool).await?;
     let res = community::table
       .filter(community::moderators_url.eq(url))
@@ -170,7 +170,7 @@ impl Community {
       if let Ok(c) = res {
         Ok((c, CollectionType::Featured))
       } else {
-        Err(LemmyErrorType::NotFound.into())
+        Err(StudyCycleErrorType::NotFound.into())
       }
     }
   }
@@ -179,7 +179,7 @@ impl Community {
     community_id: CommunityId,
     posts: Vec<Post>,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     for p in &posts {
       debug_assert!(p.community_id == community_id);
@@ -200,7 +200,7 @@ impl Community {
     pool: &mut DbPool<'_>,
     type_: &Option<ListingType>,
     show_nsfw: Option<bool>,
-  ) -> LemmyResult<CommunityId> {
+  ) -> StudyCycleResult<CommunityId> {
     let conn = &mut get_conn(pool).await?;
 
     // This is based on the random page selection algorithm in MediaWiki. It assigns a random number
@@ -256,7 +256,7 @@ impl Community {
       .returning(community::id)
       .get_result::<CommunityId>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -270,13 +270,13 @@ impl Community {
     pool: &mut DbPool<'_>,
     for_community_id: CommunityId,
     new_subscribers: i32,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(community::table.find(for_community_id))
       .set(community::dsl::subscribers.eq(new_subscribers))
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
@@ -285,45 +285,45 @@ impl CommunityActions {
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
     person_id: PersonId,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     community_actions::table
       .find((person_id, community_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn delete_mods_for_community(
     pool: &mut DbPool<'_>,
     for_community_id: CommunityId,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
 
     uplete(community_actions::table.filter(community_actions::community_id.eq(for_community_id)))
       .set_null(community_actions::became_moderator_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn leave_mod_team_for_all_communities(
     pool: &mut DbPool<'_>,
     for_person_id: PersonId,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(community_actions::table.filter(community_actions::person_id.eq(for_person_id)))
       .set_null(community_actions::became_moderator_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn get_person_moderated_communities(
     pool: &mut DbPool<'_>,
     for_person_id: PersonId,
-  ) -> LemmyResult<Vec<CommunityId>> {
+  ) -> StudyCycleResult<Vec<CommunityId>> {
     let conn = &mut get_conn(pool).await?;
     community_actions::table
       .filter(community_actions::became_moderator_at.is_not_null())
@@ -331,7 +331,7 @@ impl CommunityActions {
       .select(community_actions::community_id)
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   /// Check if we should accept activity in remote community. This requires either:
@@ -342,7 +342,7 @@ impl CommunityActions {
   pub async fn check_accept_activity_in_community(
     pool: &mut DbPool<'_>,
     remote_community: &Community,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     let remote_community_id = remote_community.id;
     let follow_action = community_actions::table
@@ -368,7 +368,7 @@ impl CommunityActions {
     follower_id: PersonId,
     approver_id: PersonId,
     state: CommunityFollowerState,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     let find_action = community_actions::table
       .find((follower_id, community_id))
@@ -386,7 +386,7 @@ impl CommunityActions {
   pub async fn list_subscribed_community_ids(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-  ) -> LemmyResult<Vec<CommunityId>> {
+  ) -> StudyCycleResult<Vec<CommunityId>> {
     let conn = &mut get_conn(pool).await?;
 
     community_actions::table
@@ -395,7 +395,7 @@ impl CommunityActions {
       .select(community_actions::community_id)
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn update_notification_state(
@@ -403,7 +403,7 @@ impl CommunityActions {
     person_id: PersonId,
     new_state: CommunityNotificationsMode,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     let form = (
       community_actions::person_id.eq(person_id),
@@ -428,7 +428,7 @@ impl CommunityActions {
     community_id: CommunityId,
     is_post: bool,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<PersonId>> {
+  ) -> StudyCycleResult<Vec<PersonId>> {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = community_actions::table
@@ -450,13 +450,13 @@ impl CommunityActions {
     query
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
 impl Bannable for CommunityActions {
   type Form = CommunityPersonBanForm;
-  async fn ban(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn ban(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(community_actions::table)
       .values(form)
@@ -469,17 +469,17 @@ impl Bannable for CommunityActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
-  async fn unban(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<UpleteCount> {
+  async fn unban(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(community_actions::table.find((form.person_id, form.community_id)))
       .set_null(community_actions::received_ban_at)
       .set_null(community_actions::ban_expires_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
@@ -487,7 +487,7 @@ impl Followable for CommunityActions {
   type Form = CommunityFollowerForm;
   type IdType = CommunityId;
 
-  async fn follow(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn follow(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(community_actions::table)
       .values(form)
@@ -500,13 +500,13 @@ impl Followable for CommunityActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
   async fn follow_accepted(
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
     person_id: PersonId,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let find_action = community_actions::table
       .find((person_id, community_id))
@@ -516,14 +516,14 @@ impl Followable for CommunityActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   async fn unfollow(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     community_id: Self::IdType,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(community_actions::table.find((person_id, community_id)))
       .set_null(community_actions::followed_at)
@@ -531,7 +531,7 @@ impl Followable for CommunityActions {
       .set_null(community_actions::follow_approver_id)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
@@ -540,7 +540,7 @@ impl Blockable for CommunityActions {
   type ObjectIdType = CommunityId;
   type ObjectType = Community;
 
-  async fn block(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn block(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(community_actions::table)
       .values(form)
@@ -553,12 +553,12 @@ impl Blockable for CommunityActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
   async fn unblock(
     pool: &mut DbPool<'_>,
     community_block_form: &Self::Form,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(community_actions::table.find((
       community_block_form.person_id,
@@ -567,14 +567,14 @@ impl Blockable for CommunityActions {
     .set_null(community_actions::blocked_at)
     .get_result(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+    .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   async fn read_block(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     community_id: Self::ObjectIdType,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     let find_action = community_actions::table
       .find((person_id, community_id))
@@ -584,13 +584,13 @@ impl Blockable for CommunityActions {
       .get_result::<bool>(conn)
       .await?
       .then_some(())
-      .ok_or(LemmyErrorType::CommunityIsBlocked.into())
+      .ok_or(StudyCycleErrorType::CommunityIsBlocked.into())
   }
 
   async fn read_blocks_for_person(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-  ) -> LemmyResult<Vec<Self::ObjectType>> {
+  ) -> StudyCycleResult<Vec<Self::ObjectType>> {
     let conn = &mut get_conn(pool).await?;
     community_actions::table
       .filter(community_actions::blocked_at.is_not_null())
@@ -602,7 +602,7 @@ impl Blockable for CommunityActions {
       .order_by(community_actions::blocked_at)
       .load::<Community>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -610,14 +610,14 @@ impl ApubActor for Community {
   async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: &DbUrl,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     community::table
       .filter(lower(community::ap_id).eq(object_id.to_lowercase()))
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   async fn read_from_name(
@@ -625,7 +625,7 @@ impl ApubActor for Community {
     community_name: &str,
     domain: Option<&str>,
     include_deleted: bool,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     let mut q = community::table
       .inner_join(instance::table)
@@ -643,20 +643,20 @@ impl ApubActor for Community {
     q.first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  fn actor_url(&self, settings: &Settings) -> LemmyResult<Url> {
+  fn actor_url(&self, settings: &Settings) -> StudyCycleResult<Url> {
     let domain = self
       .ap_id
       .inner()
       .domain()
-      .ok_or(LemmyErrorType::NotFound)?;
+      .ok_or(StudyCycleErrorType::NotFound)?;
 
     format_actor_url(&self.name, domain, 'c', settings)
   }
 
-  fn generate_local_actor_url(name: &str, settings: &Settings) -> LemmyResult<DbUrl> {
+  fn generate_local_actor_url(name: &str, settings: &Settings) -> StudyCycleResult<DbUrl> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/c/{name}"))?.into())
   }
@@ -685,14 +685,14 @@ mod tests {
     traits::{Bannable, Followable},
     utils::RANK_DEFAULT,
   };
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -843,7 +843,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_aggregates() -> LemmyResult<()> {
+  async fn test_aggregates() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

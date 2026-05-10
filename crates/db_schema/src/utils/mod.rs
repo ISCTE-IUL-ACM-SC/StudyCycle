@@ -1,8 +1,8 @@
 pub mod queries;
 
 use chrono::TimeDelta;
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   settings::structs::Settings,
 };
 use url::Url;
@@ -14,7 +14,7 @@ pub const SITEMAP_DAYS: TimeDelta = TimeDelta::days(31);
 pub const RANK_DEFAULT: f32 = 0.0001;
 pub const DELETED_REPLACEMENT_TEXT: &str = "*Permanently Deleted*";
 
-pub fn limit_fetch(limit: Option<i64>, no_limit: Option<bool>) -> LemmyResult<i64> {
+pub fn limit_fetch(limit: Option<i64>, no_limit: Option<bool>) -> StudyCycleResult<i64> {
   Ok(if no_limit.unwrap_or_default() {
     i64::MAX
   } else {
@@ -25,9 +25,9 @@ pub fn limit_fetch(limit: Option<i64>, no_limit: Option<bool>) -> LemmyResult<i6
   })
 }
 
-pub fn limit_fetch_check(limit: i64) -> LemmyResult<i64> {
+pub fn limit_fetch_check(limit: i64) -> StudyCycleResult<i64> {
   if !(1..=FETCH_LIMIT_MAX.try_into()?).contains(&limit) {
-    Err(LemmyErrorType::InvalidFetchLimit.into())
+    Err(StudyCycleErrorType::InvalidFetchLimit.into())
   } else {
     Ok(limit)
   }
@@ -38,7 +38,7 @@ pub(crate) fn format_actor_url(
   domain: &str,
   prefix: char,
   settings: &Settings,
-) -> LemmyResult<Url> {
+) -> StudyCycleResult<Url> {
   let local_protocol_and_hostname = settings.get_protocol_and_hostname();
   let local_hostname = &settings.hostname;
   let url = if domain != local_hostname {

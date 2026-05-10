@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::notification;
-use lemmy_db_schema_file::{PersonId, enums::NotificationType};
+use studycycle_db_schema_file::schema::notification;
+use studycycle_db_schema_file::{PersonId, enums::NotificationType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

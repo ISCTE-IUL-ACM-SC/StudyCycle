@@ -1,13 +1,13 @@
-use crate::context::LemmyContext;
+use crate::context::StudyCycleContext;
 use actix_web::{HttpRequest, http::header::USER_AGENT};
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::LocalUserId,
   source::login_token::{LoginToken, LoginTokenCreateForm},
 };
-use lemmy_diesel_utils::sensitive::SensitiveString;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_diesel_utils::sensitive::SensitiveString;
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
@@ -23,12 +23,12 @@ pub struct Claims {
 }
 
 impl Claims {
-  pub async fn validate(jwt: &str, context: &LemmyContext) -> LemmyResult<LocalUserId> {
+  pub async fn validate(jwt: &str, context: &StudyCycleContext) -> StudyCycleResult<LocalUserId> {
     let validation = Validation::default();
     let jwt_secret = &context.secret().jwt_secret;
     let key = DecodingKey::from_secret(jwt_secret.as_ref());
     let claims =
-      decode::<Claims>(jwt, &key, &validation).with_lemmy_type(LemmyErrorType::NotLoggedIn)?;
+      decode::<Claims>(jwt, &key, &validation).with_studycycle_type(StudyCycleErrorType::NotLoggedIn)?;
     let user_id = LocalUserId(claims.claims.sub.parse()?);
     LoginToken::validate(&mut context.pool(), user_id, jwt).await?;
     Ok(user_id)
@@ -38,8 +38,8 @@ impl Claims {
     user_id: LocalUserId,
     stay_logged_in: Option<bool>,
     req: HttpRequest,
-    context: &LemmyContext,
-  ) -> LemmyResult<SensitiveString> {
+    context: &StudyCycleContext,
+  ) -> StudyCycleResult<SensitiveString> {
     let hostname = context.settings().hostname.clone();
     let now = Utc::now();
     let exp = if stay_logged_in.unwrap_or_default() {
@@ -82,22 +82,22 @@ impl Claims {
 #[cfg(test)]
 mod tests {
 
-  use crate::{claims::Claims, context::LemmyContext};
+  use crate::{claims::Claims, context::StudyCycleContext};
   use actix_web::test::TestRequest;
-  use lemmy_db_schema::source::{
+  use studycycle_db_schema::source::{
     instance::Instance,
     local_user::{LocalUser, LocalUserInsertForm},
     person::{Person, PersonInsertForm},
   };
-  use lemmy_diesel_utils::traits::Crud;
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::traits::Crud;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_should_not_validate_user_token_after_password_change() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_should_not_validate_user_token_after_password_change() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
 
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld").await?;

@@ -1,9 +1,9 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_post_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{
@@ -13,22 +13,22 @@ use lemmy_api_utils::{
     update_post_tags,
   },
 };
-use lemmy_db_schema::source::post::{Post, PostUpdateForm};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{
+use studycycle_db_schema::source::post::{Post, PostUpdateForm};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::{
   PostView,
   api::{ModEditPost, PostResponse},
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::StudyCycleResult;
 use std::ops::Deref;
 
 pub async fn mod_edit_post(
   Json(data): Json<ModEditPost>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> StudyCycleResult<Json<PostResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   let local_instance_id = local_user_view.person.instance_id;
 

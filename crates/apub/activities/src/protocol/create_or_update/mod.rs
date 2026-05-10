@@ -11,31 +11,31 @@ mod tests {
     page::CreateOrUpdatePage,
     private_message::CreateOrUpdatePrivateMessage,
   };
-  use lemmy_apub_objects::utils::test::test_parse_lemmy_item;
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_apub_objects::utils::test::test_parse_studycycle_item;
+  use studycycle_utils::error::StudyCycleResult;
 
   #[test]
-  fn test_parse_lemmy_create_or_update() -> LemmyResult<()> {
-    test_parse_lemmy_item::<CreateOrUpdatePage>(
-      "../apub/assets/lemmy/activities/create_or_update/create_page.json",
+  fn test_parse_studycycle_create_or_update() -> StudyCycleResult<()> {
+    test_parse_studycycle_item::<CreateOrUpdatePage>(
+      "../apub/assets/studycycle/activities/create_or_update/create_page.json",
     )?;
-    test_parse_lemmy_item::<CreateOrUpdatePage>(
-      "../apub/assets/lemmy/activities/create_or_update/update_page.json",
+    test_parse_studycycle_item::<CreateOrUpdatePage>(
+      "../apub/assets/studycycle/activities/create_or_update/update_page.json",
     )?;
-    test_parse_lemmy_item::<CreateOrUpdateNote>(
-      "../apub/assets/lemmy/activities/create_or_update/create_comment.json",
+    test_parse_studycycle_item::<CreateOrUpdateNote>(
+      "../apub/assets/studycycle/activities/create_or_update/create_comment.json",
     )?;
-    test_parse_lemmy_item::<CreateOrUpdatePrivateMessage>(
-      "../apub/assets/lemmy/activities/create_or_update/create_private_message.json",
+    test_parse_studycycle_item::<CreateOrUpdatePrivateMessage>(
+      "../apub/assets/studycycle/activities/create_or_update/create_private_message.json",
     )?;
-    test_parse_lemmy_item::<CreateOrUpdateNoteWrapper>(
-      "../apub/assets/lemmy/activities/create_or_update/create_comment.json",
+    test_parse_studycycle_item::<CreateOrUpdateNoteWrapper>(
+      "../apub/assets/studycycle/activities/create_or_update/create_comment.json",
     )?;
-    test_parse_lemmy_item::<CreateOrUpdateNoteWrapper>(
-      "../apub/assets/lemmy/activities/create_or_update/create_private_message.json",
+    test_parse_studycycle_item::<CreateOrUpdateNoteWrapper>(
+      "../apub/assets/studycycle/activities/create_or_update/create_private_message.json",
     )?;
-    test_parse_lemmy_item::<NoteWrapper>("../apub/assets/lemmy/objects/comment.json")?;
-    test_parse_lemmy_item::<NoteWrapper>("../apub/assets/lemmy/objects/private_message.json")?;
+    test_parse_studycycle_item::<NoteWrapper>("../apub/assets/studycycle/objects/comment.json")?;
+    test_parse_studycycle_item::<NoteWrapper>("../apub/assets/studycycle/objects/private_message.json")?;
     Ok(())
   }
 }

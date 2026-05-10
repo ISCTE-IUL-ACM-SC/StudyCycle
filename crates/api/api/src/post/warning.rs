@@ -1,25 +1,25 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_post_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   notify::notify_mod_action,
   utils::check_community_mod_action,
 };
-use lemmy_db_schema::source::modlog::{Modlog, ModlogInsertForm};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{
+use studycycle_db_schema::source::modlog::{Modlog, ModlogInsertForm};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::{
   PostView,
   api::{CreatePostWarning, PostResponse},
 };
-use lemmy_utils::error::LemmyResult;
+use studycycle_utils::error::StudyCycleResult;
 
 /// Creates a warning against a post and notifies the user
 pub async fn create_post_warning(
   Json(data): Json<CreatePostWarning>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> StudyCycleResult<Json<PostResponse>> {
   let post_id = data.post_id;
   let local_instance_id = local_user_view.person.instance_id;
 

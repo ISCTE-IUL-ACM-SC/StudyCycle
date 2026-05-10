@@ -1,25 +1,25 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
-use lemmy_db_schema::source::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::is_admin};
+use studycycle_db_schema::source::{
   federation_allowlist::{FederationAllowList, FederationAllowListForm},
   instance::Instance,
   modlog::{Modlog, ModlogInsertForm},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{FederatedInstanceView, api::AdminAllowInstanceParams};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{FederatedInstanceView, api::AdminAllowInstanceParams};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn admin_allow_instance(
   Json(data): Json<AdminAllowInstanceParams>,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<FederatedInstanceView>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<FederatedInstanceView>> {
   is_admin(&local_user_view)?;
 
   let blocklist = Instance::blocklist(&mut context.pool()).await?;
   if !blocklist.is_empty() {
-    return Err(LemmyErrorType::CannotCombineFederationBlocklistAndAllowlist.into());
+    return Err(StudyCycleErrorType::CannotCombineFederationBlocklistAndAllowlist.into());
   }
 
   let instance_id = Instance::read_or_create(&mut context.pool(), &data.instance)

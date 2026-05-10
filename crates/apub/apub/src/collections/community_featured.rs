@@ -6,13 +6,13 @@ use activitypub_federation::{
   traits::{Collection, Object},
 };
 use futures::future::{join_all, try_join_all};
-use lemmy_api_utils::{context::LemmyContext, utils::generate_featured_url};
-use lemmy_apub_objects::objects::{community::ApubCommunity, post::ApubPost};
-use lemmy_db_schema::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::generate_featured_url};
+use studycycle_apub_objects::objects::{community::ApubCommunity, post::ApubPost};
+use studycycle_db_schema::{
   source::{community::Community, post::Post},
   utils::FETCH_LIMIT_MAX,
 };
-use lemmy_utils::error::LemmyError;
+use studycycle_utils::error::StudyCycleError;
 use url::Url;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -21,9 +21,9 @@ pub(crate) struct ApubCommunityFeatured(());
 #[async_trait::async_trait]
 impl Collection for ApubCommunityFeatured {
   type Owner = ApubCommunity;
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = GroupFeatured;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   async fn read_local(
     owner: &Self::Owner,

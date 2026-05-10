@@ -2,25 +2,25 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
-use lemmy_db_schema::source::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::is_admin};
+use studycycle_db_schema::source::{
   local_user::{LocalUser, LocalUserUpdateForm},
   registration_application::{RegistrationApplication, RegistrationApplicationUpdateForm},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_registration_applications::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_registration_applications::{
   RegistrationApplicationView,
   api::{ApproveRegistrationApplication, RegistrationApplicationResponse},
 };
-use lemmy_diesel_utils::{connection::get_conn, traits::Crud, utils::diesel_string_update};
-use lemmy_email::account::{send_application_approved_email, send_application_denied_email};
-use lemmy_utils::error::LemmyResult;
+use studycycle_diesel_utils::{connection::get_conn, traits::Crud, utils::diesel_string_update};
+use studycycle_email::account::{send_application_approved_email, send_application_denied_email};
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn approve_registration_application(
   Json(data): Json<ApproveRegistrationApplication>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<RegistrationApplicationResponse>> {
+) -> StudyCycleResult<Json<RegistrationApplicationResponse>> {
   let app_id = data.id;
 
   // Only let admins do this

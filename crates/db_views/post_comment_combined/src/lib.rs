@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   comment::{Comment, CommentActions},
   community::{Community, CommunityActions},
   community_tag::CommunityTagsView,
@@ -7,14 +7,14 @@ use lemmy_db_schema::source::{
   person::{Person, PersonActions},
   post::{Post, PostActions},
 };
-use lemmy_db_views_comment::CommentView;
-use lemmy_db_views_post::PostView;
+use studycycle_db_views_comment::CommentView;
+use studycycle_db_views_post::PostView;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::traits::InternalToCombinedView,
-  lemmy_db_schema::utils::queries::selects::{
+  studycycle_db_schema::traits::InternalToCombinedView,
+  studycycle_db_schema::utils::queries::selects::{
     CreatorLocalHomeCommunityBanExpiresType,
     creator_ban_expires_from_community,
     creator_banned_from_community,

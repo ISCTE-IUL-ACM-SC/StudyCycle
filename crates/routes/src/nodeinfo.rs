@@ -1,11 +1,11 @@
 use actix_web::{Error, HttpResponse, Result, web};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema_file::enums::RegistrationMode;
+use studycycle_db_views_site::SiteView;
+use studycycle_utils::{
   VERSION,
   cache_header::{cache_1hour, cache_3days},
-  error::LemmyResult,
+  error::StudyCycleResult,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -20,7 +20,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
       web::get().to(node_info).wrap(cache_1hour()),
     )
     .service(web::redirect("/version", "/nodeinfo/2.1"))
-    // For backwards compatibility, can be removed after Lemmy 0.20
+    // For backwards compatibility, can be removed after StudyCycle 0.20
     .service(web::redirect("/nodeinfo/2.0.json", "/nodeinfo/2.1"))
     .service(web::redirect("/nodeinfo/2.1.json", "/nodeinfo/2.1"))
     .route(
@@ -29,7 +29,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     );
 }
 
-async fn node_info_well_known(context: web::Data<LemmyContext>) -> LemmyResult<HttpResponse> {
+async fn node_info_well_known(context: web::Data<StudyCycleContext>) -> StudyCycleResult<HttpResponse> {
   let node_info = NodeInfoWellKnown {
     links: vec![NodeInfoWellKnownLinks {
       rel: Url::parse("http://nodeinfo.diaspora.software/ns/schema/2.1")?,
@@ -42,7 +42,7 @@ async fn node_info_well_known(context: web::Data<LemmyContext>) -> LemmyResult<H
   Ok(HttpResponse::Ok().json(node_info))
 }
 
-async fn node_info(context: web::Data<LemmyContext>) -> Result<HttpResponse, Error> {
+async fn node_info(context: web::Data<StudyCycleContext>) -> Result<HttpResponse, Error> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
 
   // Since there are 3 registration options,
@@ -51,7 +51,7 @@ async fn node_info(context: web::Data<LemmyContext>) -> Result<HttpResponse, Err
   let json = NodeInfo {
     version: Some("2.1".to_string()),
     software: Some(NodeInfoSoftware {
-      name: Some("lemmy".to_string()),
+      name: Some("studycycle".to_string()),
       version: Some(VERSION.to_string()),
       repository: Some("https://github.com/LemmyNet/lemmy".to_string()),
       homepage: Some("https://join-lemmy.org/".to_string()),

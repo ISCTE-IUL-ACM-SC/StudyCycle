@@ -1,8 +1,8 @@
-use lemmy_db_schema::source::local_user::LocalUser;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::sensitive::SensitiveString;
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_db_schema::source::local_user::LocalUser;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::sensitive::SensitiveString;
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   settings::structs::Settings,
 };
 use rosetta_i18n::{Language, LanguageId};
@@ -32,10 +32,10 @@ pub fn user_language(local_user: &LocalUser) -> Lang {
   })
 }
 
-fn user_email(local_user_view: &LocalUserView) -> LemmyResult<SensitiveString> {
+fn user_email(local_user_view: &LocalUserView) -> StudyCycleResult<SensitiveString> {
   local_user_view
     .local_user
     .email
     .clone()
-    .ok_or(LemmyErrorType::EmailRequired.into())
+    .ok_or(StudyCycleErrorType::EmailRequired.into())
 }

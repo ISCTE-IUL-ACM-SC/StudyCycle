@@ -2,7 +2,7 @@ use activitypub_federation::{
   fetch::object_id::ObjectId,
   kinds::collection::OrderedCollectionType,
 };
-use lemmy_apub_objects::objects::person::ApubPerson;
+use studycycle_apub_objects::objects::person::ApubPerson;
 use serde::{Deserialize, Serialize};
 use url::Url;
 

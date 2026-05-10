@@ -1,5 +1,5 @@
 use activitypub_federation::kinds::collection::OrderedCollectionType;
-use lemmy_apub_objects::protocol::page::Page;
+use studycycle_apub_objects::protocol::page::Page;
 use serde::{Deserialize, Serialize};
 use url::Url;
 

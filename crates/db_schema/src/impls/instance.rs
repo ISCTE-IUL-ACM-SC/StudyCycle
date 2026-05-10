@@ -21,7 +21,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use diesel_uplete::{UpleteCount, uplete};
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   schema::{
@@ -32,20 +32,20 @@ use lemmy_db_schema_file::{
     instance_actions,
   },
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   utils::{
     functions::{coalesce, lower},
     now,
   },
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl Instance {
   /// Attempt to read Instance column for the given domain. If it doesn't exist, insert a new one.
   /// There is no need for update as the domain of an existing instance cant change.
-  pub async fn read_or_create(pool: &mut DbPool<'_>, domain_: &str) -> LemmyResult<Self> {
-    use lemmy_db_schema_file::schema::instance::domain;
+  pub async fn read_or_create(pool: &mut DbPool<'_>, domain_: &str) -> StudyCycleResult<Self> {
+    use studycycle_db_schema_file::schema::instance::domain;
     let conn = &mut get_conn(pool).await?;
 
     // First try to read the instance row and return directly if found
@@ -73,51 +73,51 @@ impl Instance {
           .set(&form)
           .get_result::<Self>(conn)
           .await
-          .with_lemmy_type(LemmyErrorType::CouldntCreate)
+          .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
       }
     }
   }
-  pub async fn read(pool: &mut DbPool<'_>, instance_id: InstanceId) -> LemmyResult<Self> {
+  pub async fn read(pool: &mut DbPool<'_>, instance_id: InstanceId) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     instance::table
       .find(instance_id)
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn update(
     pool: &mut DbPool<'_>,
     instance_id: InstanceId,
     form: InstanceForm,
-  ) -> LemmyResult<usize> {
+  ) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(instance::table.find(instance_id))
       .set(form)
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
-  pub async fn delete(pool: &mut DbPool<'_>, instance_id: InstanceId) -> LemmyResult<usize> {
+  pub async fn delete(pool: &mut DbPool<'_>, instance_id: InstanceId) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     diesel::delete(instance::table.find(instance_id))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_studycycle_type(StudyCycleErrorType::Deleted)
   }
 
-  pub async fn read_all(pool: &mut DbPool<'_>) -> LemmyResult<Vec<Instance>> {
+  pub async fn read_all(pool: &mut DbPool<'_>) -> StudyCycleResult<Vec<Instance>> {
     let conn = &mut get_conn(pool).await?;
     instance::table
       .select(Self::as_select())
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   /// Only for use in tests
-  pub async fn delete_all(pool: &mut DbPool<'_>) -> LemmyResult<usize> {
+  pub async fn delete_all(pool: &mut DbPool<'_>) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
     diesel::delete(federation_queue_state::table)
       .execute(conn)
@@ -125,34 +125,34 @@ impl Instance {
     diesel::delete(instance::table)
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_studycycle_type(StudyCycleErrorType::Deleted)
   }
 
-  pub async fn allowlist(pool: &mut DbPool<'_>) -> LemmyResult<Vec<Self>> {
+  pub async fn allowlist(pool: &mut DbPool<'_>) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     instance::table
       .inner_join(federation_allowlist::table)
       .select(Self::as_select())
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  pub async fn blocklist(pool: &mut DbPool<'_>) -> LemmyResult<Vec<Self>> {
+  pub async fn blocklist(pool: &mut DbPool<'_>) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     instance::table
       .inner_join(federation_blocklist::table)
       .select(Self::as_select())
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   /// returns a list of all instances, each with a flag of whether the instance is allowed or not
   /// and dead or not ordered by id
   pub async fn read_federated_with_blocked_and_dead(
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<(Self, bool, bool)>> {
+  ) -> StudyCycleResult<Vec<(Self, bool, bool)>> {
     let conn = &mut get_conn(pool).await?;
     let is_dead_expr = coalesce(instance::updated_at, instance::published_at).lt(now() - 3.days());
     // this needs to be done in two steps because the meaning of the "blocked" column depends on the
@@ -172,7 +172,7 @@ impl Instance {
         .order_by(instance::id)
         .get_results::<(Self, bool, bool)>(conn)
         .await
-        .with_lemmy_type(LemmyErrorType::NotFound)
+        .with_studycycle_type(StudyCycleErrorType::NotFound)
     } else {
       instance::table
         .left_join(federation_blocklist::table)
@@ -184,7 +184,7 @@ impl Instance {
         .order_by(instance::id)
         .get_results::<(Self, bool, bool)>(conn)
         .await
-        .with_lemmy_type(LemmyErrorType::NotFound)
+        .with_studycycle_type(StudyCycleErrorType::NotFound)
     }
   }
 }
@@ -193,7 +193,7 @@ impl InstanceActions {
   pub async fn block_communities(
     pool: &mut DbPool<'_>,
     form: &InstanceCommunitiesBlockForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(instance_actions::table)
       .values(form)
@@ -203,19 +203,19 @@ impl InstanceActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::AlreadyExists)
+      .with_studycycle_type(StudyCycleErrorType::AlreadyExists)
   }
 
   pub async fn unblock_communities(
     pool: &mut DbPool<'_>,
     form: &InstanceCommunitiesBlockForm,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(instance_actions::table.find((form.person_id, form.instance_id)))
       .set_null(instance_actions::blocked_communities_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::AlreadyExists)
+      .with_studycycle_type(StudyCycleErrorType::AlreadyExists)
   }
 
   /// Checks to see if there's a block for the instances communities
@@ -223,7 +223,7 @@ impl InstanceActions {
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     instance_id: InstanceId,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     let find_action = instance_actions::table
       .find((person_id, instance_id))
@@ -232,13 +232,13 @@ impl InstanceActions {
       .get_result::<bool>(conn)
       .await?
       .then_some(())
-      .ok_or(LemmyErrorType::InstanceIsBlocked.into())
+      .ok_or(StudyCycleErrorType::InstanceIsBlocked.into())
   }
 
   pub async fn read_communities_block_for_person(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-  ) -> LemmyResult<Vec<Instance>> {
+  ) -> StudyCycleResult<Vec<Instance>> {
     let conn = &mut get_conn(pool).await?;
     instance_actions::table
       .filter(instance_actions::blocked_communities_at.is_not_null())
@@ -248,13 +248,13 @@ impl InstanceActions {
       .order_by(instance_actions::blocked_communities_at)
       .load::<Instance>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn block_persons(
     pool: &mut DbPool<'_>,
     form: &InstancePersonsBlockForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(instance_actions::table)
       .values(form)
@@ -264,19 +264,19 @@ impl InstanceActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::AlreadyExists)
+      .with_studycycle_type(StudyCycleErrorType::AlreadyExists)
   }
 
   pub async fn unblock_persons(
     pool: &mut DbPool<'_>,
     form: &InstancePersonsBlockForm,
-  ) -> LemmyResult<UpleteCount> {
+  ) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     uplete(instance_actions::table.find((form.person_id, form.instance_id)))
       .set_null(instance_actions::blocked_persons_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::AlreadyExists)
+      .with_studycycle_type(StudyCycleErrorType::AlreadyExists)
   }
 
   /// Checks to see if there's a block either from the instance person.
@@ -284,7 +284,7 @@ impl InstanceActions {
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     instance_id: InstanceId,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     let find_action = instance_actions::table
       .find((person_id, instance_id))
@@ -293,13 +293,13 @@ impl InstanceActions {
       .get_result::<bool>(conn)
       .await?
       .then_some(())
-      .ok_or(LemmyErrorType::InstanceIsBlocked.into())
+      .ok_or(StudyCycleErrorType::InstanceIsBlocked.into())
   }
 
   pub async fn read_persons_block_for_person(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-  ) -> LemmyResult<Vec<Instance>> {
+  ) -> StudyCycleResult<Vec<Instance>> {
     let conn = &mut get_conn(pool).await?;
     instance_actions::table
       .filter(instance_actions::blocked_persons_at.is_not_null())
@@ -309,14 +309,14 @@ impl InstanceActions {
       .order_by(instance_actions::blocked_persons_at)
       .load::<Instance>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn check_ban(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     instance_id: InstanceId,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     let ban_exists = select(exists(
       instance_actions::table
@@ -328,7 +328,7 @@ impl InstanceActions {
     .await?;
 
     if ban_exists {
-      return Err(LemmyErrorType::SiteBan.into());
+      return Err(StudyCycleErrorType::SiteBan.into());
     }
     Ok(())
   }
@@ -336,7 +336,7 @@ impl InstanceActions {
 
 impl Bannable for InstanceActions {
   type Form = InstanceBanForm;
-  async fn ban(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn ban(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Ok(
       insert_into(instance_actions::table)
@@ -349,7 +349,7 @@ impl Bannable for InstanceActions {
         .await?,
     )
   }
-  async fn unban(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<UpleteCount> {
+  async fn unban(pool: &mut DbPool<'_>, form: &Self::Form) -> StudyCycleResult<UpleteCount> {
     let conn = &mut get_conn(pool).await?;
     Ok(
       uplete(instance_actions::table.find((form.person_id, form.instance_id)))

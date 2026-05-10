@@ -1,9 +1,9 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   plugins::{is_captcha_plugin_loaded, plugin_metadata},
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   actor_language::SiteLanguage,
   language::Language,
   local_site_url_blocklist::LocalSiteUrlBlocklist,
@@ -11,16 +11,16 @@ use lemmy_db_schema::source::{
   registration_application::RegistrationApplication,
   tagline::Tagline,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::PersonView;
-use lemmy_db_views_site::{SiteView, api::GetSiteResponse};
-use lemmy_utils::{CacheLock, VERSION, build_cache, error::LemmyResult};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_person::PersonView;
+use studycycle_db_views_site::{SiteView, api::GetSiteResponse};
+use studycycle_utils::{CacheLock, VERSION, build_cache, error::StudyCycleResult};
 use std::sync::LazyLock;
 
 pub async fn get_site(
   local_user_view: Option<LocalUserView>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<GetSiteResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<GetSiteResponse>> {
   // This data is independent from the user account so we can cache it across requests
   static CACHE: CacheLock<GetSiteResponse> = LazyLock::new(build_cache);
   let mut site_response = Box::pin(CACHE.try_get_with((), read_site(&context)))
@@ -38,7 +38,7 @@ pub async fn get_site(
   Ok(Json(site_response))
 }
 
-async fn read_site(context: &LemmyContext) -> LemmyResult<GetSiteResponse> {
+async fn read_site(context: &StudyCycleContext) -> StudyCycleResult<GetSiteResponse> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let admins = PersonView::list_admins(None, site_view.instance.id, &mut context.pool()).await?;
   let all_languages = Language::read_all(&mut context.pool()).await?;

@@ -3,9 +3,9 @@ version = "1.0.0-test-arm-qemu.0"
 edition = "2024"
 description = "A link aggregator for the fediverse"
 license = "AGPL-3.0"
-homepage = "https://join-lemmy.org/"
-documentation = "https://join-lemmy.org/docs/en/index.html"
-repository = "https://github.com/LemmyNet/lemmy"
+homepage = "" # TODO: Update URL
+documentation = "" # TODO: Update URL
+repository = "https://github.com/ISCTE-IUL-ACM-SC/StudyCycle"
 rust-version = "1.92"
 
 # See https://github.com/johnthagen/min-sized-rust for additional optimizations
@@ -58,7 +58,7 @@ members = [
   "crates/api/api_common",
   "crates/api/api_utils",
   "crates/api/routes",
-  "crates/api/routes_v3",
+  # "crates/api/routes_v3", # NOTE: Disable backwards compatibility
   "crates/apub/apub",
   "crates/apub/activities",
   "crates/apub/objects",
@@ -107,44 +107,44 @@ if_then_some_else_none = "deny"
 allow_attributes = "deny"
 
 [workspace.dependencies]
-lemmy_api = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/api/api" }
-lemmy_api_crud = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/api/api_crud" }
-lemmy_api_routes = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/api/routes" }
-lemmy_api_routes_v3 = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/api/routes_v3" }
-lemmy_apub = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/apub/apub" }
-lemmy_apub_activities = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/apub/activities" }
-lemmy_apub_objects = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/apub/objects" }
-lemmy_utils = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/utils", default-features = false }
-lemmy_db_schema = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_schema" }
-lemmy_db_schema_file = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_schema_file" }
-lemmy_diesel_utils = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/diesel_utils" }
-lemmy_api_utils = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/api/api_utils" }
-lemmy_routes = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/routes" }
-lemmy_apub_send = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/apub/send" }
-lemmy_email = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/email" }
-lemmy_db_views_comment = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/comment" }
-lemmy_db_views_community = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/community" }
-lemmy_db_views_community_follower = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/community_follower" }
-lemmy_db_views_community_follower_approval = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/community_follower_approval" }
-lemmy_db_views_community_moderator = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/community_moderator" }
-lemmy_db_views_custom_emoji = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/custom_emoji" }
-lemmy_db_views_notification = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/notification" }
-lemmy_db_views_notification_sql = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/notification_sql" }
-lemmy_db_views_local_image = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/local_image" }
-lemmy_db_views_local_user = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/local_user" }
-lemmy_db_views_modlog = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/modlog" }
-lemmy_db_views_person = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/person" }
-lemmy_db_views_person_content_combined = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/person_content_combined" }
-lemmy_db_views_person_liked_combined = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/person_liked_combined" }
-lemmy_db_views_person_saved_combined = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/person_saved_combined" }
-lemmy_db_views_post_comment_combined = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/post_comment_combined" }
-lemmy_db_views_post = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/post" }
-lemmy_db_views_private_message = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/private_message" }
-lemmy_db_views_registration_applications = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/registration_applications" }
-lemmy_db_views_report_combined = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/report_combined" }
-lemmy_db_views_report_combined_sql = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/report_combined_sql" }
-lemmy_db_views_site = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/site" }
-lemmy_db_views_vote = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/vote" }
+studycycle_api = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/api/api" }
+studycycle_api_crud = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/api/api_crud" }
+studycycle_api_routes = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/api/routes" }
+# lemmy_api_routes_v3 = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/api/routes_v3" } # NOTE: Disable backwards compatibility
+studycycle_apub = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/apub/apub" }
+studycycle_apub_activities = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/apub/activities" }
+studycycle_apub_objects = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/apub/objects" }
+studycycle_utils = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/utils", default-features = false }
+studycycle_db_schema = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_schema" }
+studycycle_db_schema_file = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_schema_file" }
+studycycle_diesel_utils = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/diesel_utils" }
+studycycle_api_utils = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/api/api_utils" }
+studycycle_routes = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/routes" }
+studycycle_apub_send = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/apub/send" }
+studycycle_email = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/email" }
+studycycle_db_views_comment = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/comment" }
+studycycle_db_views_community = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/community" }
+studycycle_db_views_community_follower = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/community_follower" }
+studycycle_db_views_community_follower_approval = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/community_follower_approval" }
+studycycle_db_views_community_moderator = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/community_moderator" }
+studycycle_db_views_custom_emoji = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/custom_emoji" }
+studycycle_db_views_notification = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/notification" }
+studycycle_db_views_notification_sql = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/notification_sql" }
+studycycle_db_views_local_image = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/local_image" }
+studycycle_db_views_local_user = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/local_user" }
+studycycle_db_views_modlog = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/modlog" }
+studycycle_db_views_person = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/person" }
+studycycle_db_views_person_content_combined = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/person_content_combined" }
+studycycle_db_views_person_liked_combined = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/person_liked_combined" }
+studycycle_db_views_person_saved_combined = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/person_saved_combined" }
+studycycle_db_views_post_comment_combined = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/post_comment_combined" }
+studycycle_db_views_post = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/post" }
+studycycle_db_views_private_message = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/private_message" }
+studycycle_db_views_registration_applications = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/registration_applications" }
+studycycle_db_views_report_combined = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/report_combined" }
+studycycle_db_views_report_combined_sql = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/report_combined_sql" }
+studycycle_db_views_site = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/site" }
+studycycle_db_views_vote = { version = "=1.0.0-test-arm-qemu.0", path = "./crates/db_views/vote" }
 activitypub_federation = { version = "0.7.0-beta.9", default-features = false, features = [
   "actix-web",
 ] }

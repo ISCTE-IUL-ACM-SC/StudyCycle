@@ -111,35 +111,35 @@ export const gamma = new LemmyHttp(gammaUrl, { fetchFunction });
 export const delta = new LemmyHttp(deltaUrl, { fetchFunction });
 export const epsilon = new LemmyHttp(epsilonUrl, { fetchFunction });
 
-export const password = "lemmylemmy";
+export const password = "studycyclestudycycle";
 
 export async function setupLogins() {
   let formAlpha: Login = {
-    username_or_email: "lemmy_alpha",
+    username_or_email: "studycycle_alpha",
     password,
   };
   let resAlpha = alpha.login(formAlpha);
 
   let formBeta: Login = {
-    username_or_email: "lemmy_beta",
+    username_or_email: "studycycle_beta",
     password,
   };
   let resBeta = beta.login(formBeta);
 
   let formGamma: Login = {
-    username_or_email: "lemmy_gamma",
+    username_or_email: "studycycle_gamma",
     password,
   };
   let resGamma = gamma.login(formGamma);
 
   let formDelta: Login = {
-    username_or_email: "lemmy_delta",
+    username_or_email: "studycycle_delta",
     password,
   };
   let resDelta = delta.login(formDelta);
 
   let formEpsilon: Login = {
-    username_or_email: "lemmy_epsilon",
+    username_or_email: "studycycle_epsilon",
     password,
   };
   let resEpsilon = epsilon.login(formEpsilon);
@@ -180,22 +180,22 @@ export async function setupLogins() {
   await beta.editSite(imageModeForm);
 
   // Set the blocks for each
-  await allowInstance(alpha, "lemmy-beta");
-  await allowInstance(alpha, "lemmy-gamma");
-  await allowInstance(alpha, "lemmy-delta");
-  await allowInstance(alpha, "lemmy-epsilon");
+  await allowInstance(alpha, "studycycle-beta");
+  await allowInstance(alpha, "studycycle-gamma");
+  await allowInstance(alpha, "studycycle-delta");
+  await allowInstance(alpha, "studycycle-epsilon");
 
-  await allowInstance(beta, "lemmy-alpha");
-  await allowInstance(beta, "lemmy-gamma");
-  await allowInstance(beta, "lemmy-delta");
-  await allowInstance(beta, "lemmy-epsilon");
+  await allowInstance(beta, "studycycle-alpha");
+  await allowInstance(beta, "studycycle-gamma");
+  await allowInstance(beta, "studycycle-delta");
+  await allowInstance(beta, "studycycle-epsilon");
 
-  await allowInstance(gamma, "lemmy-alpha");
-  await allowInstance(gamma, "lemmy-beta");
-  await allowInstance(gamma, "lemmy-delta");
-  await allowInstance(gamma, "lemmy-epsilon");
+  await allowInstance(gamma, "studycycle-alpha");
+  await allowInstance(gamma, "studycycle-beta");
+  await allowInstance(gamma, "studycycle-delta");
+  await allowInstance(gamma, "studycycle-epsilon");
 
-  await allowInstance(delta, "lemmy-beta");
+  await allowInstance(delta, "studycycle-beta");
 
   // Create the main alpha/beta communities
   // Ignore thrown errors of duplicates
@@ -441,7 +441,7 @@ export async function resolveBetaCommunity(
 ): Promise<CommunityView | undefined> {
   // Use short-hand search url
   let form: ResolveObject = {
-    q: "!main@lemmy-beta:8551",
+    q: "!main@studycycle-beta:8551",
   };
   return api
     .resolveObject(form)
@@ -490,7 +490,7 @@ export async function banPersonFromSite(
   ban: boolean,
   remove_or_restore_data: boolean,
 ): Promise<PersonResponse> {
-  // Make sure lemmy-beta/c/main is cached on lemmy_alpha
+  // Make sure studycycle-beta/c/main is cached on studycycle_alpha
   let form: BanPerson = {
     person_id,
     ban,
@@ -734,10 +734,10 @@ export async function registerUser(
   let login_response = await api.register(form);
 
   expect(login_response.jwt).toBeDefined();
-  let lemmyHttp = new LemmyHttp(url, {
+  let studycycleHttp = new LemmyHttp(url, {
     headers: { Authorization: `Bearer ${login_response.jwt ?? ""}` },
   });
-  return lemmyHttp;
+  return studycycleHttp;
 }
 
 export async function loginUser(
@@ -1102,7 +1102,7 @@ export function assertCommunityFederation(
  *
  * https://github.com/jestjs/jest/issues/15378
  **/
-export async function jestLemmyError<T>(
+export async function jestStudyCycleError<T>(
   fetcher: () => Promise<T>,
   err: LemmyError,
   checkMessage = true,

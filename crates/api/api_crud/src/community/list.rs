@@ -1,16 +1,16 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_private_instance};
-use lemmy_db_views_community::{CommunityView, api::ListCommunities, impls::CommunityQuery};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::pagination::PagedResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_private_instance};
+use studycycle_db_views_community::{CommunityView, api::ListCommunities, impls::CommunityQuery};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::pagination::PagedResponse;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn list_communities(
   Query(data): Query<ListCommunities>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<PagedResponse<CommunityView>>> {
+) -> StudyCycleResult<Json<PagedResponse<CommunityView>>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?;
 
   check_private_instance(&local_user_view, &local_site.local_site)?;

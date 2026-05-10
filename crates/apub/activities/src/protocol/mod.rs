@@ -1,7 +1,7 @@
 use activitypub_federation::{config::Data, fetch::fetch_object_http};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_apub_objects::utils::protocol::Id;
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_apub_objects::utils::protocol::Id;
+use studycycle_utils::error::StudyCycleResult;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use strum::Display;
 use url::Url;
@@ -33,7 +33,7 @@ impl<Kind: Id + DeserializeOwned + Send> IdOrNestedObject<Kind> {
       IdOrNestedObject::NestedObject(n) => n.id(),
     }
   }
-  pub async fn object(self, context: &Data<LemmyContext>) -> LemmyResult<Kind> {
+  pub async fn object(self, context: &Data<StudyCycleContext>) -> StudyCycleResult<Kind> {
     match self {
       // TODO: move IdOrNestedObject struct to library and make fetch_object_http private
       IdOrNestedObject::Id(i) => Ok(fetch_object_http(&i, context).await?.object),
@@ -51,17 +51,17 @@ mod tests {
     following::{accept::AcceptFollow, follow::Follow, undo_follow::UndoFollow},
     voting::{undo_vote::UndoVote, vote::Vote},
   };
-  use lemmy_apub_objects::utils::test::test_json;
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_apub_objects::utils::test::test_json;
+  use studycycle_utils::error::StudyCycleResult;
 
   #[test]
-  fn test_parse_smithereen_activities() -> LemmyResult<()> {
+  fn test_parse_smithereen_activities() -> StudyCycleResult<()> {
     test_json::<CreateOrUpdateNote>("../apub/assets/smithereen/activities/create_note.json")?;
     Ok(())
   }
 
   #[test]
-  fn test_parse_pleroma_activities() -> LemmyResult<()> {
+  fn test_parse_pleroma_activities() -> StudyCycleResult<()> {
     test_json::<CreateOrUpdateNote>("../apub/assets/pleroma/activities/create_note.json")?;
     test_json::<Delete>("../apub/assets/pleroma/activities/delete.json")?;
     test_json::<Follow>("../apub/assets/pleroma/activities/follow.json")?;
@@ -69,7 +69,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_mastodon_activities() -> LemmyResult<()> {
+  fn test_parse_mastodon_activities() -> StudyCycleResult<()> {
     test_json::<CreateOrUpdateNote>("../apub/assets/mastodon/activities/create_note.json")?;
     test_json::<Delete>("../apub/assets/mastodon/activities/delete.json")?;
     test_json::<Follow>("../apub/assets/mastodon/activities/follow.json")?;
@@ -81,7 +81,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_lotide_activities() -> LemmyResult<()> {
+  fn test_parse_lotide_activities() -> StudyCycleResult<()> {
     test_json::<Follow>("../apub/assets/lotide/activities/follow.json")?;
     test_json::<CreateOrUpdatePage>("../apub/assets/lotide/activities/create_page.json")?;
     test_json::<CreateOrUpdatePage>("../apub/assets/lotide/activities/create_page_image.json")?;
@@ -90,7 +90,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_friendica_activities() -> LemmyResult<()> {
+  fn test_parse_friendica_activities() -> StudyCycleResult<()> {
     test_json::<CreateOrUpdatePage>("../apub/assets/friendica/activities/create_page_1.json")?;
     test_json::<CreateOrUpdatePage>("../apub/assets/friendica/activities/create_page_2.json")?;
     test_json::<CreateOrUpdateNote>("../apub/assets/friendica/activities/create_note.json")?;
@@ -103,7 +103,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_gnusocial_activities() -> LemmyResult<()> {
+  fn test_parse_gnusocial_activities() -> StudyCycleResult<()> {
     test_json::<CreateOrUpdatePage>("../apub/assets/gnusocial/activities/create_page.json")?;
     test_json::<CreateOrUpdateNote>("../apub/assets/gnusocial/activities/create_note.json")?;
     test_json::<Vote>("../apub/assets/gnusocial/activities/like_note.json")?;
@@ -111,20 +111,20 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_peertube_activities() -> LemmyResult<()> {
+  fn test_parse_peertube_activities() -> StudyCycleResult<()> {
     test_json::<AnnounceActivity>("../apub/assets/peertube/activities/announce_video.json")?;
     Ok(())
   }
 
   #[test]
-  fn test_parse_mbin_activities() -> LemmyResult<()> {
+  fn test_parse_mbin_activities() -> StudyCycleResult<()> {
     test_json::<AcceptFollow>("../apub/assets/mbin/activities/accept.json")?;
     test_json::<Report>("../apub/assets/mbin/activities/flag.json")?;
     Ok(())
   }
 
   #[test]
-  fn test_parse_wordpress_activities() -> LemmyResult<()> {
+  fn test_parse_wordpress_activities() -> StudyCycleResult<()> {
     test_json::<AnnounceActivity>("../apub/assets/wordpress/activities/announce.json")?;
     Ok(())
   }

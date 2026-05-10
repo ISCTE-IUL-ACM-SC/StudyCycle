@@ -25,8 +25,8 @@ use activitypub_federation::{
   traits::Object,
 };
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   utils::{
     check_comment_depth,
@@ -36,16 +36,16 @@ use lemmy_api_utils::{
     slur_regex,
   },
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   comment::{Comment, CommentInsertForm, CommentUpdateForm},
   community::Community,
   person::Person,
   post::Post,
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
-  error::{LemmyError, LemmyResult, UntranslatedError},
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
+  error::{StudyCycleError, StudyCycleResult, UntranslatedError},
   utils::markdown::markdown_to_html,
 };
 use std::ops::Deref;
@@ -70,9 +70,9 @@ impl From<Comment> for ApubComment {
 
 #[async_trait::async_trait]
 impl Object for ApubComment {
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = Note;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     self.ap_id.inner()
@@ -81,7 +81,7 @@ impl Object for ApubComment {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     Ok(
       Comment::read_from_apub_id(&mut context.pool(), object_id.into())
         .await?
@@ -89,7 +89,7 @@ impl Object for ApubComment {
     )
   }
 
-  async fn delete(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(&self, context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     if !self.deleted {
       let form = CommentUpdateForm {
         deleted: Some(true),
@@ -104,7 +104,7 @@ impl Object for ApubComment {
     self.removed || self.deleted
   }
 
-  async fn into_json(self, context: &Data<Self::DataType>) -> LemmyResult<Note> {
+  async fn into_json(self, context: &Data<Self::DataType>) -> StudyCycleResult<Note> {
     let creator_id = self.creator_id;
     let creator = Person::read(&mut context.pool(), creator_id).await?;
 
@@ -155,8 +155,8 @@ impl Object for ApubComment {
   async fn verify(
     note: &Note,
     expected_domain: &Url,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     verify_domains_match(note.id.inner(), expected_domain)?;
     verify_domains_match(note.attributed_to.inner(), note.id.inner())?;
     let community = Box::pin(note.community(context)).await?;
@@ -208,7 +208,7 @@ impl Object for ApubComment {
   /// Converts a `Note` to `Comment`.
   ///
   /// If the parent community, post and comment(s) are not known locally, these are also fetched.
-  async fn from_json(note: Note, context: &Data<LemmyContext>) -> LemmyResult<ApubComment> {
+  async fn from_json(note: Note, context: &Data<StudyCycleContext>) -> StudyCycleResult<ApubComment> {
     let creator = note.attributed_to.dereference(context).await?;
     // Parent comment is already fetched in verify method, no risk of stack overflow here.
     let (post, parent_comment) = note.get_parents(context).await?;
@@ -263,23 +263,23 @@ pub(crate) mod tests {
   use super::*;
   use crate::{
     objects::{community::ApubCommunity, instance::ApubSite, person::ApubPerson, post::ApubPost},
-    utils::test::{file_to_json_object, parse_lemmy_community, parse_lemmy_person},
+    utils::test::{file_to_json_object, parse_studycycle_community, parse_studycycle_person},
   };
   use assert_json_diff::assert_json_include;
   use html2md::parse_html;
-  use lemmy_db_schema::{source::instance::Instance, test_data::TestData};
+  use studycycle_db_schema::{source::instance::Instance, test_data::TestData};
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   async fn prepare_comment_test(
     url: &Url,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<(ApubPerson, ApubCommunity, ApubPost, ApubSite)> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<(ApubPerson, ApubCommunity, ApubPost, ApubSite)> {
     // use separate counter so this doesn't affect tests
     let context2 = context.clone();
-    let (person, site) = parse_lemmy_person(&context2).await?;
-    let community = parse_lemmy_community(&context2).await?;
-    let post_json = file_to_json_object("../apub/assets/lemmy/objects/page.json")?;
+    let (person, site) = parse_studycycle_person(&context2).await?;
+    let community = parse_studycycle_community(&context2).await?;
+    let post_json = file_to_json_object("../apub/assets/studycycle/objects/page.json")?;
     ApubPost::verify(&post_json, url, &context2).await?;
     let post = ApubPost::from_json(post_json, &context2).await?;
     Ok((person, community, post, site))
@@ -287,13 +287,13 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  pub(crate) async fn test_parse_lemmy_comment() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  pub(crate) async fn test_parse_studycycle_comment() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
     let url = Url::parse("https://enterprise.lemmy.ml/comment/38741")?;
     prepare_comment_test(&url, &context).await?;
 
-    let json: Note = file_to_json_object("../apub/assets/lemmy/objects/comment.json")?;
+    let json: Note = file_to_json_object("../apub/assets/studycycle/objects/comment.json")?;
     ApubComment::verify(&json, &url, &context).await?;
     let comment = ApubComment::from_json(json.clone(), &context).await?;
 
@@ -312,8 +312,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_pleroma_comment() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_pleroma_comment() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
     let url = Url::parse("https://enterprise.lemmy.ml/comment/38741")?;
     prepare_comment_test(&url, &context).await?;

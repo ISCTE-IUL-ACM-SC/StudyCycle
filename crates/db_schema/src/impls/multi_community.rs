@@ -24,7 +24,7 @@ use diesel::{
   update,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   PersonId,
   schema::{
     community,
@@ -35,14 +35,14 @@ use lemmy_db_schema_file::{
     person,
   },
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   dburl::DbUrl,
   traits::Crud,
   utils::functions::lower,
 };
-use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult},
   settings::structs::Settings,
 };
 use url::Url;
@@ -54,33 +54,33 @@ impl Crud for MultiCommunity {
   type UpdateForm = MultiCommunityUpdateForm;
   type IdType = MultiCommunityId;
 
-  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(multi_community::table)
       .values(form)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
   async fn update(
     pool: &mut DbPool<'_>,
     id: MultiCommunityId,
     form: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     update(multi_community::table.find(id))
       .set(form)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
 impl MultiCommunity {
-  pub async fn upsert(pool: &mut DbPool<'_>, form: &MultiCommunityInsertForm) -> LemmyResult<Self> {
+  pub async fn upsert(pool: &mut DbPool<'_>, form: &MultiCommunityInsertForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(multi_community::table)
@@ -90,13 +90,13 @@ impl MultiCommunity {
       .set(form)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   pub async fn follow(
     pool: &mut DbPool<'_>,
     form: &MultiCommunityFollowForm,
-  ) -> LemmyResult<MultiCommunityFollow> {
+  ) -> StudyCycleResult<MultiCommunityFollow> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(multi_community_follow::table)
@@ -109,14 +109,14 @@ impl MultiCommunity {
       .set(form)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   pub async fn unfollow(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     multi_community_id: MultiCommunityId,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
 
     delete(
@@ -133,7 +133,7 @@ impl MultiCommunity {
   pub async fn follower_inboxes(
     pool: &mut DbPool<'_>,
     multi_community_id: MultiCommunityId,
-  ) -> LemmyResult<Vec<DbUrl>> {
+  ) -> StudyCycleResult<Vec<DbUrl>> {
     let conn = &mut get_conn(pool).await?;
 
     multi_community_follow::table
@@ -144,7 +144,7 @@ impl MultiCommunity {
       .get_results(conn)
       .await
       .optional()?
-      .ok_or(LemmyErrorType::NotFound.into())
+      .ok_or(StudyCycleErrorType::NotFound.into())
   }
 
   /// Should be called in a transaction together with update() or upsert()
@@ -152,10 +152,10 @@ impl MultiCommunity {
     pool: &mut DbPool<'_>,
     id: MultiCommunityId,
     new_communities: &Vec<CommunityId>,
-  ) -> LemmyResult<(Vec<Community>, Vec<Community>, bool)> {
+  ) -> StudyCycleResult<(Vec<Community>, Vec<Community>, bool)> {
     let conn = &mut get_conn(pool).await?;
     if new_communities.len() >= usize::try_from(MULTI_COMMUNITY_ENTRY_LIMIT)? {
-      return Err(LemmyErrorType::MultiCommunityEntryLimitReached.into());
+      return Err(StudyCycleErrorType::MultiCommunityEntryLimitReached.into());
     }
 
     let removed: Vec<CommunityId> = delete(
@@ -210,7 +210,7 @@ impl MultiCommunity {
   pub async fn read_community_ap_ids(
     pool: &mut DbPool<'_>,
     multi_name: &str,
-  ) -> LemmyResult<Vec<DbUrl>> {
+  ) -> StudyCycleResult<Vec<DbUrl>> {
     let conn = &mut get_conn(pool).await?;
 
     multi_community::table
@@ -224,7 +224,7 @@ impl MultiCommunity {
       .select(community::ap_id)
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -232,14 +232,14 @@ impl ApubActor for MultiCommunity {
   async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: &DbUrl,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     multi_community::table
       .filter(lower(multi_community::ap_id).eq(object_id.to_lowercase()))
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   async fn read_from_name(
@@ -247,7 +247,7 @@ impl ApubActor for MultiCommunity {
     name: &str,
     domain: Option<&str>,
     include_deleted: bool,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     let mut q = multi_community::table
       .inner_join(instance::table)
@@ -265,37 +265,37 @@ impl ApubActor for MultiCommunity {
     q.first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  fn actor_url(&self, settings: &Settings) -> LemmyResult<Url> {
+  fn actor_url(&self, settings: &Settings) -> StudyCycleResult<Url> {
     let domain = self
       .ap_id
       .inner()
       .domain()
-      .ok_or(LemmyErrorType::NotFound)?;
+      .ok_or(StudyCycleErrorType::NotFound)?;
 
     format_actor_url(&self.name, domain, 'm', settings)
   }
 
-  fn generate_local_actor_url(name: &str, settings: &Settings) -> LemmyResult<DbUrl> {
+  fn generate_local_actor_url(name: &str, settings: &Settings) -> StudyCycleResult<DbUrl> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/m/{name}"))?.into())
   }
 }
 
 impl MultiCommunityEntry {
-  pub async fn create(pool: &mut DbPool<'_>, form: &MultiCommunityEntryForm) -> LemmyResult<Self> {
+  pub async fn create(pool: &mut DbPool<'_>, form: &MultiCommunityEntryForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(multi_community_entry::table)
       .values(form)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
-  pub async fn delete(pool: &mut DbPool<'_>, form: &MultiCommunityEntryForm) -> LemmyResult<usize> {
+  pub async fn delete(pool: &mut DbPool<'_>, form: &MultiCommunityEntryForm) -> StudyCycleResult<usize> {
     let conn = &mut get_conn(pool).await?;
 
     delete(
@@ -305,14 +305,14 @@ impl MultiCommunityEntry {
     )
     .execute(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::Deleted)
+    .with_studycycle_type(StudyCycleErrorType::Deleted)
   }
 
   /// Make sure you aren't trying to insert more communities than the entry limit allows.
   pub async fn check_entry_limit(
     pool: &mut DbPool<'_>,
     multi_community_id: MultiCommunityId,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
 
     let count: i64 = multi_community_entry::table
@@ -322,7 +322,7 @@ impl MultiCommunityEntry {
       .await?;
 
     if count >= MULTI_COMMUNITY_ENTRY_LIMIT.into() {
-      Err(LemmyErrorType::MultiCommunityEntryLimitReached.into())
+      Err(StudyCycleErrorType::MultiCommunityEntryLimitReached.into())
     } else {
       Ok(())
     }
@@ -331,7 +331,7 @@ impl MultiCommunityEntry {
   pub async fn community_used_in_multiple(
     pool: &mut DbPool<'_>,
     form: &MultiCommunityEntryForm,
-  ) -> LemmyResult<bool> {
+  ) -> StudyCycleResult<bool> {
     let conn = &mut get_conn(pool).await?;
 
     select(exists(
@@ -341,13 +341,13 @@ impl MultiCommunityEntry {
     ))
     .get_result(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::NotFound)
+    .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn list_community_ids(
     pool: &mut DbPool<'_>,
     id: MultiCommunityId,
-  ) -> LemmyResult<Vec<CommunityId>> {
+  ) -> StudyCycleResult<Vec<CommunityId>> {
     let conn = &mut get_conn(pool).await?;
 
     multi_community_entry::table
@@ -355,7 +355,7 @@ impl MultiCommunityEntry {
       .select(multi_community_entry::community_id)
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -368,9 +368,9 @@ mod tests {
     multi_community::{MultiCommunity, MultiCommunityInsertForm},
     person::{Person, PersonInsertForm},
   };
-  use lemmy_db_schema_file::enums::CommunityFollowerState;
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_db_schema_file::enums::CommunityFollowerState;
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -381,7 +381,7 @@ mod tests {
     person: Person,
   }
 
-  async fn setup(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn setup(pool: &mut DbPool<'_>) -> StudyCycleResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
 
     let form = PersonInsertForm::test_form(instance.id, "bobby");
@@ -411,7 +411,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_counts() -> LemmyResult<()> {
+  async fn test_counts() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = setup(pool).await?;
@@ -469,7 +469,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_multi_community_apub() -> LemmyResult<()> {
+  async fn test_multi_community_apub() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = setup(pool).await?;

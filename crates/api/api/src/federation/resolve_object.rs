@@ -4,26 +4,26 @@ use activitypub_federation::{
 };
 use actix_web::web::{Json, Query};
 use either::Either::*;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{check_is_mod_or_admin, check_private_instance},
 };
-use lemmy_apub_objects::objects::{SearchableObjects, UserOrCommunity};
-use lemmy_db_schema_file::PersonId;
-use lemmy_db_views_comment::CommentView;
-use lemmy_db_views_community::{CommunityView, MultiCommunityView};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::PersonView;
-use lemmy_db_views_post::PostView;
-use lemmy_db_views_site::{ResolveObjectView, SiteView, api::ResolveObject};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_apub_objects::objects::{SearchableObjects, UserOrCommunity};
+use studycycle_db_schema_file::PersonId;
+use studycycle_db_views_comment::CommentView;
+use studycycle_db_views_community::{CommunityView, MultiCommunityView};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_person::PersonView;
+use studycycle_db_views_post::PostView;
+use studycycle_db_views_site::{ResolveObjectView, SiteView, api::ResolveObject};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 use url::Url;
 
 pub async fn resolve_object(
   Query(data): Query<ResolveObject>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<ResolveObjectView>> {
+) -> StudyCycleResult<Json<ResolveObjectView>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   check_private_instance(&local_user_view, &local_site)?;
 
@@ -34,8 +34,8 @@ pub async fn resolve_object(
 pub(super) async fn resolve_object_internal(
   query: &str,
   local_user_view: &Option<LocalUserView>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<ResolveObjectView> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<ResolveObjectView> {
   use ResolveObjectView::*;
   let is_authenticated = local_user_view.as_ref().is_some_and(|l| !l.banned);
 
@@ -46,7 +46,7 @@ pub(super) async fn resolve_object_internal(
     // user isn't authenticated only allow a local search.
     search_query_to_object_id_local(query, context).await
   }
-  .map_err(|e| LemmyErrorType::ResolveObjectFailed(e.cause.to_string()))?;
+  .map_err(|e| StudyCycleErrorType::ResolveObjectFailed(e.cause.to_string()))?;
 
   let my_person_id_opt = local_user_view.as_ref().map(|l| l.person.id);
   let my_person_id = my_person_id_opt.unwrap_or(PersonId(-1));
@@ -82,8 +82,8 @@ pub(super) async fn resolve_object_internal(
 /// which gets resolved to an URL.
 async fn search_query_to_object_id(
   mut query: String,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<SearchableObjects> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<SearchableObjects> {
   Ok(match Url::parse(&query) {
     Ok(url) => {
       // its already an url, just go with it
@@ -95,7 +95,7 @@ async fn search_query_to_object_id(
         query.remove(0);
       }
       Left(Right(
-        webfinger_resolve_actor::<LemmyContext, UserOrCommunity>(&query, context).await?,
+        webfinger_resolve_actor::<StudyCycleContext, UserOrCommunity>(&query, context).await?,
       ))
     }
   })
@@ -106,8 +106,8 @@ async fn search_query_to_object_id(
 /// !community@example.com) this method will return an error.
 async fn search_query_to_object_id_local(
   query: &str,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<SearchableObjects> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<SearchableObjects> {
   let url = Url::parse(query)?;
   ObjectId::from(url).dereference_local(context).await
 }
@@ -115,7 +115,7 @@ async fn search_query_to_object_id_local(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     source::{
       community::{Community, CommunityInsertForm},
       local_site::LocalSite,
@@ -123,14 +123,14 @@ mod tests {
     },
     test_data::TestData,
   };
-  use lemmy_diesel_utils::traits::Crud;
-  use lemmy_utils::error::LemmyErrorType;
+  use studycycle_diesel_utils::traits::Crud;
+  use studycycle_utils::error::StudyCycleErrorType;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_object_visibility() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_object_visibility() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = TestData::create(pool).await?;
 
@@ -181,10 +181,10 @@ mod tests {
 
     // Deleted objects should not be resolvable without authentication
     let res = resolve_object_internal(&query, &None, &context).await;
-    assert!(res.is_err_and(|e| e.error_type == LemmyErrorType::NotFound));
+    assert!(res.is_err_and(|e| e.error_type == StudyCycleErrorType::NotFound));
     // Deleted objects should not be resolvable by regular users
     let res = resolve_object_internal(&query, &Some(regular_user.clone()), &context).await;
-    assert!(res.is_err_and(|e| e.error_type == LemmyErrorType::NotFound));
+    assert!(res.is_err_and(|e| e.error_type == StudyCycleErrorType::NotFound));
     // Deleted objects should be resolvable by admins
     let res = resolve_object_internal(&query, &Some(admin_user.clone()), &context).await?;
     assert_response(res, &post);

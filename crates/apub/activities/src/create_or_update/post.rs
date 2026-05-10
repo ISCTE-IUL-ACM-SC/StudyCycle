@@ -12,8 +12,8 @@ use activitypub_federation::{
   traits::{Activity, Object},
 };
 use chrono::Utc;
-use lemmy_api_utils::{context::LemmyContext, notify::NotifyData};
-use lemmy_apub_objects::{
+use studycycle_api_utils::{context::StudyCycleContext, notify::NotifyData};
+use studycycle_apub_objects::{
   objects::{
     community::ApubCommunity,
     person::ApubPerson,
@@ -24,7 +24,7 @@ use lemmy_apub_objects::{
     protocol::InCommunity,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     community::Community,
     person::Person,
@@ -32,10 +32,10 @@ use lemmy_db_schema::{
   },
   traits::Likeable,
 };
-use lemmy_db_schema_file::PersonId;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult};
+use studycycle_db_schema_file::PersonId;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult};
 use url::Url;
 
 impl CreateOrUpdatePage {
@@ -44,8 +44,8 @@ impl CreateOrUpdatePage {
     actor: &ApubPerson,
     community: &ApubCommunity,
     kind: CreateOrUpdateType,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<CreateOrUpdatePage> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<CreateOrUpdatePage> {
     let id = generate_activity_id(kind.clone(), context)?;
     Ok(CreateOrUpdatePage {
       actor: actor.id().clone().into(),
@@ -62,8 +62,8 @@ impl CreateOrUpdatePage {
     post: Post,
     person_id: PersonId,
     kind: CreateOrUpdateType,
-    context: Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     let community_id = post.community_id;
     let person: ApubPerson = Person::read(&mut context.pool(), person_id).await?.into();
     let community: ApubCommunity = Community::read(&mut context.pool(), community_id)
@@ -81,8 +81,8 @@ impl CreateOrUpdatePage {
 
 #[async_trait::async_trait]
 impl Activity for CreateOrUpdatePage {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -92,7 +92,7 @@ impl Activity for CreateOrUpdatePage {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     let community = self.community(context).await?;
     verify_visibility(&self.to, &self.cc, &community)?;
     check_community_deleted_or_removed(&community)?;
@@ -101,7 +101,7 @@ impl Activity for CreateOrUpdatePage {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     let community = self.community(context).await?;
     let is_same_actor =
       verify_urls_match(self.actor.inner(), self.object.creator()?.inner()).is_ok();
@@ -123,7 +123,7 @@ impl Activity for CreateOrUpdatePage {
         update_apub_post_tags(&self.object, &post, context).await?;
         return Ok(());
       } else {
-        return Err(LemmyErrorType::NotAModerator.into());
+        return Err(StudyCycleErrorType::NotAModerator.into());
       }
     }
 

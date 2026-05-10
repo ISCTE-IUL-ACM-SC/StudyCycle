@@ -1,15 +1,15 @@
-pub use lemmy_db_schema::{
+pub use studycycle_db_schema::{
   newtypes::CommentId,
   source::comment::{Comment, CommentActions, CommentInsertForm},
 };
-pub use lemmy_db_views_comment::{
+pub use studycycle_db_views_comment::{
   CommentSlimView,
   CommentView,
   api::{CommentResponse, GetComment, GetComments},
 };
 
 pub mod actions {
-  pub use lemmy_db_views_comment::api::{
+  pub use studycycle_db_views_comment::api::{
     CreateComment,
     CreateCommentLike,
     DeleteComment,
@@ -18,7 +18,7 @@ pub mod actions {
   };
 
   pub mod moderation {
-    pub use lemmy_db_views_comment::api::{
+    pub use studycycle_db_views_comment::api::{
       DistinguishComment,
       ListCommentLikes,
       PurgeComment,

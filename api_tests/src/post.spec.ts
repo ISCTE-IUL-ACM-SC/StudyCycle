@@ -42,7 +42,7 @@ import {
   statusNotFound,
   statusBadRequest,
   getSite,
-  jestLemmyError,
+  jestStudyCycleError,
 } from "./shared";
 import { PostView } from "lemmy-js-client/dist/types/PostView";
 import { AdminBlockInstanceParams } from "lemmy-js-client/dist/types/AdminBlockInstanceParams";
@@ -67,7 +67,7 @@ beforeAll(async () => {
 
   // Hack: Force outgoing federation queue for beta to be created on epsilon,
   // otherwise report test fails
-  let person = await resolvePerson(epsilon, "@lemmy_beta@lemmy-beta:8551");
+  let person = await resolvePerson(epsilon, "@studycycle_beta@studycycle-beta:8551");
   expect(person?.person).toBeDefined();
 });
 
@@ -114,7 +114,7 @@ async function assertPostFederation(
 test("Create a post", async () => {
   // Block alpha
   let block_instance_params: AdminBlockInstanceParams = {
-    instance: "lemmy-alpha",
+    instance: "studycycle-alpha",
     block: true,
     reason: "block",
   };
@@ -149,22 +149,22 @@ test("Create a post", async () => {
   await assertPostFederation(betaPost!, postRes.post_view);
 
   // Delta only follows beta, so it should not see an alpha ap_id
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => resolvePost(delta, postRes.post_view.post),
     new LemmyError(
       "resolve_object_failed",
       statusBadRequest,
-      'Domain "lemmy-alpha" is not in allowlist',
+      'Domain "studycycle-alpha" is not in allowlist',
     ),
   );
 
   // Epsilon has alpha blocked, it should not see the alpha post
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => resolvePost(epsilon, postRes.post_view.post),
     new LemmyError(
       "resolve_object_failed",
       statusBadRequest,
-      'Domain "lemmy-alpha" is blocked',
+      'Domain "studycycle-alpha" is blocked',
     ),
   );
 
@@ -174,7 +174,7 @@ test("Create a post", async () => {
 });
 
 test("Create a post in a non-existent community", async () => {
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => createPost(alpha, -2),
     new LemmyError("not_found", statusNotFound),
   );
@@ -224,8 +224,8 @@ test("Update a post", async () => {
   expect(betaPost?.post.name).toBe(updatedName);
   await assertPostFederation(betaPost!, updatedPost.post_view);
 
-  // Make sure lemmy beta cannot update the post
-  await jestLemmyError(
+  // Make sure studycycle beta cannot update the post
+  await jestStudyCycleError(
     () => editPost(beta, betaPost!.post),
     new LemmyError("no_post_edit_allowed", statusBadRequest),
   );
@@ -320,7 +320,7 @@ test("Lock a post", async () => {
   // Try to make a new comment there, on alpha. For this we need to create a normal
   // user account because admins/mods can comment in locked posts.
   let user = await registerUser(alpha, alphaUrl);
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => createComment(user, alphaPost1!.post.id),
     new LemmyError("locked", statusBadRequest),
   );
@@ -355,14 +355,14 @@ test("Delete a post", async () => {
   await waitForPost(beta, postRes.post_view.post, p => p?.post.id != undefined);
 
   let deletedPost = await deletePost(alpha, true, postRes.post_view.post);
-  // Make sure lemmy alpha sees post is deleted
+  // Make sure studycycle alpha sees post is deleted
   await waitUntil(
     () => getPost(alpha, postRes.post_view.post.id),
     p => p.post_view.post.deleted,
   );
   expect(deletedPost.post_view.post.name).toBe(postRes.post_view.post.name);
 
-  // Make sure lemmy beta sees post is deleted
+  // Make sure studycycle beta sees post is deleted
   // This will be undefined because of the tombstone
   await waitForPost(beta, postRes.post_view.post, p => p?.post == undefined);
 
@@ -373,7 +373,7 @@ test("Delete a post", async () => {
     p => !p.post_view.post.deleted,
   );
 
-  // Make sure lemmy beta sees post is undeleted
+  // Make sure studycycle beta sees post is undeleted
   let betaPost2 = await waitForPost(
     beta,
     postRes.post_view.post,
@@ -386,8 +386,8 @@ test("Delete a post", async () => {
   expect(betaPost2.post.deleted).toBe(false);
   await assertPostFederation(betaPost2, undeletedPost.post_view);
 
-  // Make sure lemmy beta cannot delete the post
-  await jestLemmyError(
+  // Make sure studycycle beta cannot delete the post
+  await jestStudyCycleError(
     () => deletePost(beta, true, betaPost2.post),
     new LemmyError("no_post_edit_allowed", statusBadRequest),
   );
@@ -414,7 +414,7 @@ test("Remove a post from admin and community on different instance", async () =>
   expect(removedPost.post_view.post.removed).toBe(true);
   expect(removedPost.post_view.post.name).toBe(postRes.post_view.post.name);
 
-  // Make sure lemmy beta sees post is NOT removed
+  // Make sure studycycle beta sees post is NOT removed
   let betaPost = await resolvePost(beta, postRes.post_view.post);
   if (!betaPost) {
     throw "Missing beta post";
@@ -425,7 +425,7 @@ test("Remove a post from admin and community on different instance", async () =>
   let undeletedPost = await removePost(alpha, false, alphaPost.post);
   expect(undeletedPost.post_view.post.removed).toBe(false);
 
-  // Make sure lemmy beta sees post is undeleted
+  // Make sure studycycle beta sees post is undeleted
   let betaPost2 = await resolvePost(beta, postRes.post_view.post);
   expect(betaPost2?.post.removed).toBe(false);
   await assertPostFederation(betaPost2!, undeletedPost.post_view);
@@ -453,7 +453,7 @@ test("Remove a post from admin and community on same instance", async () => {
   let removePostRes = await removePost(beta, true, betaPost!.post);
   expect(removePostRes.post_view.post.removed).toBe(true);
 
-  // Make sure lemmy alpha sees post is removed
+  // Make sure studycycle alpha sees post is removed
   let alphaPost = await waitUntil(
     () => getPost(alpha, alphaPost0!.post.id),
     p => p?.post_view.post.removed,
@@ -469,7 +469,7 @@ test("Remove a post from admin and community on same instance", async () => {
   let undeletedPost = await removePost(beta, false, betaPost!.post);
   expect(undeletedPost.post_view.post.removed).toBe(false);
 
-  // Make sure lemmy alpha sees post is undeleted
+  // Make sure studycycle alpha sees post is undeleted
   let alphaPost2 = await waitForPost(
     alpha,
     postRes.post_view.post,
@@ -623,7 +623,7 @@ test("Enforce site ban federation for federated user", async () => {
   expect(alphaPerson2.banned).toBe(false);
 
   // post to beta community is rejected
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => createPost(alphaUserHttp, betaCommunity!.community.id),
     new LemmyError("site_ban", statusBadRequest),
   );
@@ -636,7 +636,7 @@ test("Enforce community ban for federated user", async () => {
     throw "Missing beta community";
   }
   await followBeta(alpha);
-  let alphaShortname = `@lemmy_alpha@lemmy-alpha:8541`;
+  let alphaShortname = `@studycycle_alpha@studycycle-alpha:8541`;
   let alphaPerson = await resolvePerson(beta, alphaShortname);
   if (!alphaPerson) {
     throw "Missing alpha person";
@@ -670,7 +670,7 @@ test("Enforce community ban for federated user", async () => {
   ).toBeDefined();
 
   // Alpha tries to make post on beta, but it fails because of ban
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => createPost(alpha, betaCommunity!.community.id),
     new LemmyError("person_is_banned_from_community", statusBadRequest),
   );
@@ -734,7 +734,7 @@ test("Report a post", async () => {
   let betaCommunity = await resolveBetaCommunity(beta);
   let epsilonUser = await resolvePerson(
     beta,
-    "@lemmy_epsilon@lemmy-epsilon:8581",
+    "@studycycle_epsilon@studycycle-epsilon:8581",
   );
   let mod_params: AddModToCommunity = {
     community_id: betaCommunity!.community.id,
@@ -846,7 +846,7 @@ test("Fetch post via redirect", async () => {
   expect(betaPost?.post?.ap_id).toBe(alphaPost.post_view.post.ap_id);
 
   // Fetch post from url on beta instance instead of ap_id
-  let q = `http://lemmy-beta:8551/post/${betaPost!.post.id}`;
+  let q = `http://studycycle-beta:8551/post/${betaPost!.post.id}`;
   let form: ResolveObject = {
     q,
   };
@@ -875,7 +875,7 @@ test("Block post that contains banned URL", async () => {
     throw "Missing beta community";
   }
 
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => createPost(epsilon, betaCommunity!.community.id, "https://evil.com"),
     new LemmyError("blocked_url", statusBadRequest),
   );
@@ -899,7 +899,7 @@ test("Fetch post with redirect", async () => {
 
   // fetch remote object from local url, which redirects to the original url
   let form: ResolveObject = {
-    q: `http://lemmy-gamma:8561/post/${gammaPost?.post.id}`,
+    q: `http://studycycle-gamma:8561/post/${gammaPost?.post.id}`,
   };
   let gammaPost2 = await gamma
     .resolveObject(form)
@@ -910,7 +910,7 @@ test("Fetch post with redirect", async () => {
 
 test("Mention beta from alpha post body", async () => {
   if (!betaCommunity) throw Error("no community");
-  let mentionContent = "A test mention of @lemmy_beta@lemmy-beta:8551";
+  let mentionContent = "A test mention of @studycycle_beta@studycycle-beta:8551";
 
   const postOnAlphaRes = await createPost(
     alpha,
@@ -966,7 +966,7 @@ test("Rewrite markdown links", async () => {
 
   // remote markdown link is replaced with local link
   expect(alphaPost2?.post.body).toBe(
-    `[link](http://lemmy-alpha:8541/post/${alphaPost1?.post.id})`,
+    `[link](http://studycycle-alpha:8541/post/${alphaPost1?.post.id})`,
   );
 });
 
@@ -996,7 +996,7 @@ test("Don't allow NSFW posts on instances that disable it", async () => {
   let updatePost = await beta.editPost(form);
 
   // Gamma reject resolving the post
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => resolvePost(gamma, updatePost.post_view.post),
     new LemmyError("resolve_object_failed", statusBadRequest, "NsfwNotAllowed"),
   );
@@ -1014,7 +1014,7 @@ test("Don't allow NSFW posts on instances that disable it", async () => {
     nsfw: true,
     post_id: gammaPost.post_view.post.id,
   };
-  await jestLemmyError(
+  await jestStudyCycleError(
     () => gamma.editPost(form2),
     new LemmyError("nsfw_not_allowed", statusBadRequest),
   );
@@ -1031,7 +1031,7 @@ test("Plugin test", async () => {
   );
   expect(postRes1.post_view.post.name).toBe("Go");
 
-  await jestLemmyError(
+  await jestStudyCycleError(
     () =>
       createPost(
         epsilon,

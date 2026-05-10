@@ -1,14 +1,14 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
-use lemmy_db_views_local_user::{LocalUserView, api::AdminListUsers, impls::LocalUserQuery};
-use lemmy_diesel_utils::pagination::PagedResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::{context::StudyCycleContext, utils::is_admin};
+use studycycle_db_views_local_user::{LocalUserView, api::AdminListUsers, impls::LocalUserQuery};
+use studycycle_diesel_utils::pagination::PagedResponse;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn admin_list_users(
   Query(data): Query<AdminListUsers>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PagedResponse<LocalUserView>>> {
+) -> StudyCycleResult<Json<PagedResponse<LocalUserView>>> {
   // Make sure user is an admin
   is_admin(&local_user_view)?;
 

@@ -2,9 +2,9 @@ use super::convert_published_time;
 use crate::community_use_pending;
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_post_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   notify::NotifyData,
   plugins::{plugin_hook_after, plugin_hook_before},
   request::generate_post_link_metadata,
@@ -20,19 +20,19 @@ use lemmy_api_utils::{
     update_post_tags,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   impls::actor_language::validate_post_language,
   source::post::{Post, PostActions, PostInsertForm, PostLikeForm},
   traits::Likeable,
 };
-use lemmy_db_views_community::CommunityView;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::{CreatePost, PostResponse};
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{traits::Crud, utils::diesel_url_create};
-use lemmy_utils::{
-  error::LemmyResult,
+use studycycle_db_views_community::CommunityView;
+use studycycle_db_views_community_moderator::CommunityModeratorView;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::api::{CreatePost, PostResponse};
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{traits::Crud, utils::diesel_url_create};
+use studycycle_utils::{
+  error::StudyCycleResult,
   utils::{
     slurs::check_slurs,
     validation::{
@@ -47,9 +47,9 @@ use lemmy_utils::{
 
 pub async fn create_post(
   Json(data): Json<CreatePost>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> StudyCycleResult<Json<PostResponse>> {
   honeypot_check(&data.honeypot)?;
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 

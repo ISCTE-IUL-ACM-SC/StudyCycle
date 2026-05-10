@@ -1,14 +1,14 @@
 use crate::newtypes::PostId;
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::PersonId;
-use lemmy_diesel_utils::dburl::DbUrl;
+use studycycle_db_schema_file::PersonId;
+use studycycle_diesel_utils::dburl::DbUrl;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::fmt::Debug;
 #[cfg(feature = "full")]
 use {
   i_love_jesus::CursorKeysModule,
-  lemmy_db_schema_file::schema::{image_details, local_image, remote_image},
+  studycycle_db_schema_file::schema::{image_details, local_image, remote_image},
 };
 
 #[skip_serializing_none]
@@ -42,7 +42,7 @@ pub struct LocalImageForm {
 }
 
 /// Stores all images which are hosted on remote domains. When attempting to proxy an image, it
-/// is checked against this table to avoid Lemmy being used as a general purpose proxy.
+/// is checked against this table to avoid StudyCycle being used as a general purpose proxy.
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]

@@ -1,24 +1,24 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::notify_mod_action,
   utils::{check_comment_deleted_or_removed, check_community_mod_action},
 };
-use lemmy_db_schema::source::modlog::{Modlog, ModlogInsertForm};
-use lemmy_db_views_comment::{
+use studycycle_db_schema::source::modlog::{Modlog, ModlogInsertForm};
+use studycycle_db_views_comment::{
   CommentView,
   api::{CommentResponse, CreateCommentWarning},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_utils::error::StudyCycleResult;
 
 /// Creates a warning against a comment and notifies the user
 pub async fn create_comment_warning(
   Json(data): Json<CreateCommentWarning>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommentResponse>> {
+) -> StudyCycleResult<Json<CommentResponse>> {
   let local_instance_id = local_user_view.person.instance_id;
   let comment_id = data.comment_id;
 

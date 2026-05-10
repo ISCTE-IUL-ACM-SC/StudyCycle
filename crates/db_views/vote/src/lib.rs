@@ -1,4 +1,4 @@
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::{CommentId, PostId},
   source::person::Person,
 };
@@ -7,8 +7,8 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{ExpressionMethods, NullableExpressionMethods, Queryable, Selectable},
-  lemmy_db_schema::utils::queries::selects::creator_local_home_banned,
-  lemmy_db_schema_file::{
+  studycycle_db_schema::utils::queries::selects::creator_local_home_banned,
+  studycycle_db_schema_file::{
     aliases::creator_community_actions,
     schema::{comment, comment_actions, community_actions, post, post_actions},
   },

@@ -1,4 +1,4 @@
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   local_user::LocalUser,
   person::Person,
   registration_application::RegistrationApplication,
@@ -8,7 +8,7 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{NullableExpressionMethods, Queryable, Selectable, helper_types::Nullable},
-  lemmy_db_schema::{Person1AliasAllColumnsTuple, utils::queries::selects::person1_select},
+  studycycle_db_schema::{Person1AliasAllColumnsTuple, utils::queries::selects::person1_select},
 };
 
 pub mod api;

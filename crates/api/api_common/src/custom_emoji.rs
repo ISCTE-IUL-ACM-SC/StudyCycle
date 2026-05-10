@@ -1,8 +1,8 @@
-pub use lemmy_db_schema::{
+pub use studycycle_db_schema::{
   newtypes::CustomEmojiId,
   source::{custom_emoji::CustomEmoji, custom_emoji_keyword::CustomEmojiKeyword},
 };
-pub use lemmy_db_views_custom_emoji::{
+pub use studycycle_db_views_custom_emoji::{
   CustomEmojiView,
   api::{
     CreateCustomEmoji,

@@ -4,23 +4,23 @@ use actix_web::{
   web::{Data, Json},
 };
 use bcrypt::verify;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   claims::Claims,
-  context::LemmyContext,
+  context::StudyCycleContext,
   utils::{check_email_verified, check_local_user_deleted, check_registration_application},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{
   SiteView,
   api::{Login, LoginResponse},
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn login(
   Json(data): Json<Login>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<LoginResponse>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<LoginResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
 
   // Fetch that username / email
@@ -36,7 +36,7 @@ pub async fn login(
     .and_then(|password_encrypted| verify(&data.password, password_encrypted).ok())
     .unwrap_or(false);
   if !valid {
-    return Err(LemmyErrorType::IncorrectLogin.into());
+    return Err(StudyCycleErrorType::IncorrectLogin.into());
   }
   check_local_user_deleted(&local_user_view)?;
   check_email_verified(&local_user_view, &site_view)?;

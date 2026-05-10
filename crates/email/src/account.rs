@@ -1,14 +1,14 @@
 use crate::{send::send_email, user_email, user_language};
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   email_verification::{EmailVerification, EmailVerificationForm},
   local_site::LocalSite,
   password_reset_request::PasswordResetRequest,
 };
-use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::{connection::DbPool, sensitive::SensitiveString};
-use lemmy_utils::{
-  error::LemmyResult,
+use studycycle_db_schema_file::enums::RegistrationMode;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::{connection::DbPool, sensitive::SensitiveString};
+use studycycle_utils::{
+  error::StudyCycleResult,
   settings::structs::Settings,
   utils::markdown::markdown_to_html,
 };
@@ -17,7 +17,7 @@ pub async fn send_password_reset_email(
   user: &LocalUserView,
   pool: &mut DbPool<'_>,
   settings: &'static Settings,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   // Generate a random token
   let token = uuid::Uuid::new_v4().to_string();
 
@@ -43,7 +43,7 @@ pub async fn send_verification_email(
   new_email: SensitiveString,
   pool: &mut DbPool<'_>,
   settings: &'static Settings,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let form = EmailVerificationForm {
     local_user_id: user.local_user.id,
     email: new_email.to_string(),
@@ -76,7 +76,7 @@ pub async fn send_verification_email_if_required(
   user: &LocalUserView,
   pool: &mut DbPool<'_>,
   settings: &'static Settings,
-) -> LemmyResult<bool> {
+) -> StudyCycleResult<bool> {
   if !user.local_user.admin
     && local_site.email_verification_required
     && !user.local_user.email_verified
@@ -92,7 +92,7 @@ pub async fn send_verification_email_if_required(
 pub fn send_application_approved_email(
   user: &LocalUserView,
   settings: &'static Settings,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let lang = user_language(&user.local_user);
   let subject = lang.registration_approved_subject(&user.person.name);
   let email = user_email(user)?;
@@ -105,7 +105,7 @@ pub fn send_application_denied_email(
   user: &LocalUserView,
   deny_reason: Option<String>,
   settings: &'static Settings,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let lang = user_language(&user.local_user);
   let subject = lang.registration_denied_subject(&user.person.name);
   let email = user_email(user)?;
@@ -123,7 +123,7 @@ pub fn send_application_denied_email(
 pub fn send_email_verified_email(
   user: &LocalUserView,
   settings: &'static Settings,
-) -> LemmyResult<()> {
+) -> StudyCycleResult<()> {
   let lang = user_language(&user.local_user);
   let subject = lang.email_verified_subject(&user.person.name);
   let email = user_email(user)?;

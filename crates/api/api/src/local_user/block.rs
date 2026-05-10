@@ -1,21 +1,21 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::check_local_user_valid};
-use lemmy_db_schema::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::check_local_user_valid};
+use studycycle_db_schema::{
   source::person::{PersonActions, PersonBlockForm},
   traits::Blockable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_person::{
   PersonView,
   api::{BlockPerson, PersonResponse},
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn user_block_person(
   Json(data): Json<BlockPerson>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PersonResponse>> {
+) -> StudyCycleResult<Json<PersonResponse>> {
   check_local_user_valid(&local_user_view)?;
   let target_id = data.person_id;
   let my_person_id = local_user_view.person.id;
@@ -23,7 +23,7 @@ pub async fn user_block_person(
 
   // Don't let a person block themselves
   if target_id == my_person_id {
-    return Err(LemmyErrorType::CantBlockYourself.into());
+    return Err(StudyCycleErrorType::CantBlockYourself.into());
   }
 
   let person_block_form = PersonBlockForm::new(my_person_id, target_id);
@@ -33,7 +33,7 @@ pub async fn user_block_person(
     .ok();
 
   if target_user.is_some_and(|t| t.local_user.admin) {
-    return Err(LemmyErrorType::CantBlockAdmin.into());
+    return Err(StudyCycleErrorType::CantBlockAdmin.into());
   }
 
   if data.block {

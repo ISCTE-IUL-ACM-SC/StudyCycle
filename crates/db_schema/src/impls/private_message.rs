@@ -9,15 +9,15 @@ use crate::{
 use chrono::{DateTime, Utc};
 use diesel::{ExpressionMethods, QueryDsl, dsl::insert_into};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::{PersonId, schema::private_message};
-use lemmy_diesel_utils::{
+use studycycle_db_schema_file::{PersonId, schema::private_message};
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   dburl::DbUrl,
   traits::Crud,
   utils::functions::coalesce,
 };
-use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult},
   settings::structs::Settings,
 };
 use url::Url;
@@ -27,26 +27,26 @@ impl Crud for PrivateMessage {
   type UpdateForm = PrivateMessageUpdateForm;
   type IdType = PrivateMessageId;
 
-  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(private_message::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
   async fn update(
     pool: &mut DbPool<'_>,
     private_message_id: PrivateMessageId,
     form: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(private_message::table.find(private_message_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
@@ -55,7 +55,7 @@ impl PrivateMessage {
     pool: &mut DbPool<'_>,
     timestamp: DateTime<Utc>,
     form: &PrivateMessageInsertForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(private_message::table)
       .values(form)
@@ -67,22 +67,22 @@ impl PrivateMessage {
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
   pub async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: DbUrl,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     private_message::table
       .filter(private_message::ap_id.eq(object_id))
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
-  pub fn local_url(&self, settings: &Settings) -> LemmyResult<DbUrl> {
+  pub fn local_url(&self, settings: &Settings) -> StudyCycleResult<DbUrl> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/private_message/{}", self.id))?.into())
   }
@@ -91,7 +91,7 @@ impl PrivateMessage {
     pool: &mut DbPool<'_>,
     for_creator_id: PersonId,
     removed: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(private_message::table.filter(private_message::creator_id.eq(for_creator_id)))
       .set((
@@ -100,7 +100,7 @@ impl PrivateMessage {
       ))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 
   /// Dont let creator know that recipient deleted the message
@@ -119,15 +119,15 @@ mod tests {
     person::{Person, PersonInsertForm},
     private_message::{PrivateMessage, PrivateMessageInsertForm, PrivateMessageUpdateForm},
   };
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -158,7 +158,7 @@ mod tests {
       updated_at: None,
       published_at: inserted_private_message.published_at,
       ap_id: Url::parse(&format!(
-        "https://lemmy-alpha/private_message/{}",
+        "https://studycycle-alpha/private_message/{}",
         inserted_private_message.id
       ))?
       .into(),

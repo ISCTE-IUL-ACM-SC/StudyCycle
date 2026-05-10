@@ -1,6 +1,6 @@
 use super::vote::Vote;
 use activitypub_federation::{fetch::object_id::ObjectId, kinds::activity::UndoType};
-use lemmy_apub_objects::objects::{community::ApubCommunity, person::ApubPerson};
+use studycycle_apub_objects::objects::{community::ApubCommunity, person::ApubPerson};
 use serde::{Deserialize, Serialize};
 use url::Url;
 

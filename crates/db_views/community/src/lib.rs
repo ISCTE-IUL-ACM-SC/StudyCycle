@@ -1,20 +1,20 @@
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   community::{Community, CommunityActions},
   community_tag::CommunityTagsView,
   multi_community::MultiCommunity,
   person::Person,
 };
-use lemmy_db_schema_file::enums::CommunityFollowerState;
+use studycycle_db_schema_file::enums::CommunityFollowerState;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{NullableExpressionMethods, Queryable, Selectable},
-  lemmy_db_schema::utils::queries::selects::{
+  studycycle_db_schema::utils::queries::selects::{
     community_tags_fragment,
     local_user_community_can_mod,
   },
-  lemmy_db_schema_file::schema::multi_community_follow,
+  studycycle_db_schema_file::schema::multi_community_follow,
 };
 
 pub mod api;

@@ -7,11 +7,11 @@ use activitypub_federation::{
 };
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::{newtypes::ActivityId, source::activity::SentActivity};
-use lemmy_utils::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::{newtypes::ActivityId, source::activity::SentActivity};
+use studycycle_utils::{
   FEDERATION_CONTEXT,
-  error::{LemmyError, LemmyResult},
+  error::{StudyCycleError, StudyCycleResult},
   federate_retry_sleep_duration,
 };
 use reqwest::Url;
@@ -89,7 +89,7 @@ pub(crate) struct SendRetryTask<'a> {
   pub initial_fail_count: i32,
   /// For logging purposes
   pub domain: String,
-  pub context: Data<LemmyContext>,
+  pub context: Data<StudyCycleContext>,
   pub stop: CancellationToken,
 }
 
@@ -111,7 +111,7 @@ impl SendRetryTask<'_> {
 
     let pool = &mut context.pool();
     let Some(actor_apub_id) = &activity.actor_apub_id else {
-      return Err(anyhow::anyhow!("activity is from before lemmy 0.19"));
+      return Err(anyhow::anyhow!("activity is from before studycycle 0.19"));
     };
     let actor = get_actor_cached(pool, activity.actor_type, actor_apub_id)
       .await
@@ -167,9 +167,9 @@ struct DummyActivity {
 
 #[async_trait::async_trait]
 impl Activity for DummyActivity {
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
 
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -179,11 +179,11 @@ impl Activity for DummyActivity {
     &self.actor
   }
 
-  async fn verify(&self, _context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, _context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     Ok(())
   }
 
-  async fn receive(self, _context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, _context: &Data<StudyCycleContext>) -> StudyCycleResult<()> {
     Ok(())
   }
 }

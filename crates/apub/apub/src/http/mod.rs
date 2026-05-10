@@ -13,18 +13,18 @@ use actix_web::{
   web::{self, Bytes},
 };
 use either::Either;
-use lemmy_api_utils::{context::LemmyContext, plugins::plugin_hook_after};
-use lemmy_apub_activities::activity_lists::SharedInboxActivities;
-use lemmy_apub_objects::objects::{SiteOrMultiOrCommunityOrUser, UserOrCommunity};
-use lemmy_db_schema::source::{
+use studycycle_api_utils::{context::StudyCycleContext, plugins::plugin_hook_after};
+use studycycle_apub_activities::activity_lists::SharedInboxActivities;
+use studycycle_apub_objects::objects::{SiteOrMultiOrCommunityOrUser, UserOrCommunity};
+use studycycle_db_schema::source::{
   activity::{ReceivedActivity, SentActivity},
   community::Community,
 };
-use lemmy_db_schema_file::{InstanceId, enums::CommunityVisibility};
-use lemmy_db_views_community_follower_approval::PendingFollowerView;
-use lemmy_utils::{
+use studycycle_db_schema_file::{InstanceId, enums::CommunityVisibility};
+use studycycle_db_views_community_follower_approval::PendingFollowerView;
+use studycycle_utils::{
   FEDERATION_CONTEXT,
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult, UntranslatedError},
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult, UntranslatedError},
 };
 use serde::Deserialize;
 use std::time::Duration;
@@ -44,10 +44,10 @@ const INCOMING_ACTIVITY_TIMEOUT: Duration = Duration::from_secs(9);
 pub async fn shared_inbox(
   request: HttpRequest,
   body: Bytes,
-  data: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  data: Data<StudyCycleContext>,
+) -> StudyCycleResult<HttpResponse> {
   let receive_fut =
-    receive_activity_with_hook::<SharedInboxActivities, UserOrCommunity, LemmyContext>(
+    receive_activity_with_hook::<SharedInboxActivities, UserOrCommunity, StudyCycleContext>(
       request, body, Dummy, &data,
     );
   // Set a timeout shorter than `REQWEST_TIMEOUT` for processing incoming activities. This is to
@@ -56,18 +56,18 @@ pub async fn shared_inbox(
   // consider the activity broken and move on.
   timeout(INCOMING_ACTIVITY_TIMEOUT, receive_fut)
     .await
-    .with_lemmy_type(UntranslatedError::InboxTimeout.into())?
+    .with_studycycle_type(UntranslatedError::InboxTimeout.into())?
 }
 
 struct Dummy;
 
-impl ReceiveActivityHook<SharedInboxActivities, UserOrCommunity, LemmyContext> for Dummy {
+impl ReceiveActivityHook<SharedInboxActivities, UserOrCommunity, StudyCycleContext> for Dummy {
   async fn hook(
     self,
     activity: &SharedInboxActivities,
     _actor: &UserOrCommunity,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<()> {
     // Store received activities in the database. This ensures that the same activity doesn't get
     // received and processed more than once, which would be a waste of resources.
     debug!("Received activity {}", activity.id().to_string());
@@ -93,8 +93,8 @@ struct ActivityQuery {
 /// Return the ActivityPub json representation of a local activity over HTTP.
 async fn get_activity(
   info: web::Path<ActivityQuery>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<HttpResponse> {
   let settings = context.settings();
   let activity_id = Url::parse(&format!(
     "{}/activities/{}/{}",
@@ -114,9 +114,9 @@ async fn get_activity(
 }
 
 /// Ensure that the community is public and not removed/deleted.
-fn check_community_fetchable(community: &Community) -> LemmyResult<()> {
+fn check_community_fetchable(community: &Community) -> StudyCycleResult<()> {
   if !community.visibility.can_federate() {
-    return Err(LemmyErrorType::NotFound.into());
+    return Err(StudyCycleErrorType::NotFound.into());
   }
   Ok(())
 }
@@ -125,8 +125,8 @@ fn check_community_fetchable(community: &Community) -> LemmyResult<()> {
 async fn check_community_content_fetchable(
   community: &Community,
   request: &HttpRequest,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   use CommunityVisibility::*;
   match community.visibility {
     Public | Unlisted => Ok(()),
@@ -152,10 +152,10 @@ async fn check_community_content_fetchable(
         context.client().execute(req).await?.error_for_status()?;
         Ok(())
       } else {
-        Err(LemmyErrorType::NotFound.into())
+        Err(StudyCycleErrorType::NotFound.into())
       }
     }
-    LocalOnlyPublic | LocalOnlyPrivate => Err(LemmyErrorType::NotFound.into()),
+    LocalOnlyPublic | LocalOnlyPrivate => Err(StudyCycleErrorType::NotFound.into()),
   }
 }
 

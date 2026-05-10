@@ -2,13 +2,13 @@ use crate::check_report_reason;
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use either::Either;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   plugins::plugin_hook_after,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_local_user_valid, slur_regex},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     community::Community,
     community_report::{CommunityReport, CommunityReportForm},
@@ -16,21 +16,21 @@ use lemmy_db_schema::{
   },
   traits::Reportable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_report_combined::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_report_combined::{
   ReportCombinedViewInternal,
   api::{CommunityReportResponse, CreateCommunityReport},
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_email::admin::send_new_report_email_to_admins;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_email::admin::send_new_report_email_to_admins;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn create_community_report(
   Json(data): Json<CreateCommunityReport>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityReportResponse>> {
+) -> StudyCycleResult<Json<CommunityReportResponse>> {
   check_local_user_valid(&local_user_view)?;
   let reason = data.reason.trim().to_string();
   let slur_regex = slur_regex(&context).await?;

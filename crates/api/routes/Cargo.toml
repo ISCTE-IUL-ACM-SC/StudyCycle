@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_api_routes"
+name = "studycycle_api_routes"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -21,8 +21,8 @@ workspace = true
 default = []
 
 [dependencies]
-lemmy_api = { workspace = true }
-lemmy_api_crud = { workspace = true }
-lemmy_utils = { workspace = true }
-lemmy_routes = { workspace = true }
+studycycle_api = { workspace = true }
+studycycle_api_crud = { workspace = true }
+studycycle_utils = { workspace = true }
+studycycle_routes = { workspace = true }
 actix-web = { workspace = true }

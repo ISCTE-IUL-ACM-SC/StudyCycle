@@ -1,7 +1,7 @@
 //! The content in this file is mostly copy-pasted from library code:
 //! https://github.com/jacob-pro/actix-extensible-rate-limit/blob/master/src/backend/memory.rs
 
-use crate::rate_limit::{ActionType, BucketConfig, input::LemmyInput};
+use crate::rate_limit::{ActionType, BucketConfig, input::StudyCycleInput};
 use actix_extensible_rate_limit::backend::{
   Backend,
   Decision,
@@ -20,8 +20,8 @@ use std::{
 /// A Fixed Window rate limiter [Backend] that uses [Dashmap](dashmap::DashMap) to store keys
 /// in memory.
 #[derive(Clone)]
-pub struct LemmyBackend {
-  map: Arc<DashMap<LemmyInput, Value>>,
+pub struct StudyCycleBackend {
+  map: Arc<DashMap<StudyCycleInput, Value>>,
   gc_handle: Option<Arc<JoinHandle<()>>>,
   pub(super) configs: Arc<RwLock<EnumMap<ActionType, BucketConfig>>>,
 }
@@ -31,23 +31,23 @@ struct Value {
   count: u64,
 }
 
-impl LemmyBackend {
+impl StudyCycleBackend {
   pub(crate) fn new(configs: EnumMap<ActionType, BucketConfig>, enable_gc: bool) -> Self {
-    let map = Arc::new(DashMap::<LemmyInput, Value>::new());
+    let map = Arc::new(DashMap::<StudyCycleInput, Value>::new());
     let gc_handle = enable_gc.then(|| {
-      Arc::new(LemmyBackend::garbage_collector(
+      Arc::new(StudyCycleBackend::garbage_collector(
         map.clone(),
         Duration::from_secs(DEFAULT_GC_INTERVAL_SECONDS),
       ))
     });
-    LemmyBackend {
+    StudyCycleBackend {
       map,
       gc_handle,
       configs: Arc::new(RwLock::new(configs)),
     }
   }
 
-  fn garbage_collector(map: Arc<DashMap<LemmyInput, Value>>, interval: Duration) -> JoinHandle<()> {
+  fn garbage_collector(map: Arc<DashMap<StudyCycleInput, Value>>, interval: Duration) -> JoinHandle<()> {
     assert!(
       interval.as_secs_f64() > 0f64,
       "GC interval must be non-zero"
@@ -62,15 +62,15 @@ impl LemmyBackend {
   }
 }
 
-impl Backend<LemmyInput> for LemmyBackend {
+impl Backend<StudyCycleInput> for StudyCycleBackend {
   type Output = SimpleOutput;
-  type RollbackToken = LemmyInput;
+  type RollbackToken = StudyCycleInput;
   type Error = Infallible;
 
   #[expect(clippy::expect_used)]
   async fn request(
     &self,
-    input: LemmyInput,
+    input: StudyCycleInput,
   ) -> Result<(Decision, Self::Output, Self::RollbackToken), Self::Error> {
     #[expect(clippy::expect_used)]
     let config = self.configs.read().expect("read rwlock")[input.1];
@@ -120,7 +120,7 @@ impl Backend<LemmyInput> for LemmyBackend {
   }
 }
 
-impl Drop for LemmyBackend {
+impl Drop for StudyCycleBackend {
   fn drop(&mut self) {
     if let Some(handle) = &self.gc_handle {
       handle.abort();
@@ -132,7 +132,7 @@ impl Drop for LemmyBackend {
 mod tests {
   use super::*;
   use crate::{
-    error::LemmyResult,
+    error::StudyCycleResult,
     rate_limit::{ActionType, input::raw_ip_key},
   };
   use enum_map::enum_map;
@@ -174,11 +174,11 @@ mod tests {
   }
 
   #[actix_web::test]
-  async fn test_allow_deny() -> LemmyResult<()> {
+  async fn test_allow_deny() -> StudyCycleResult<()> {
     tokio::time::pause();
-    let backend = LemmyBackend::new(test_config(MINUTE_SECS, 5), true);
+    let backend = StudyCycleBackend::new(test_config(MINUTE_SECS, 5), true);
     let key = raw_ip_key(Some("127.0.0.2"));
-    let input = LemmyInput(key, ActionType::Message);
+    let input = StudyCycleInput(key, ActionType::Message);
     for _ in 0..5 {
       // First 5 should be allowed
       let (allow, _, _) = backend.request(input).await?;
@@ -191,10 +191,10 @@ mod tests {
   }
 
   #[actix_web::test]
-  async fn test_reset() -> LemmyResult<()> {
+  async fn test_reset() -> StudyCycleResult<()> {
     tokio::time::pause();
-    let backend = LemmyBackend::new(test_config(MINUTE_SECS, 1), false);
-    let input = LemmyInput(raw_ip_key(Some("127.0.0.3")), ActionType::Message);
+    let backend = StudyCycleBackend::new(test_config(MINUTE_SECS, 1), false);
+    let input = StudyCycleInput(raw_ip_key(Some("127.0.0.3")), ActionType::Message);
     // Make first request, should be allowed
     let (decision, _, _) = backend.request(input).await?;
     assert!(decision.is_allowed());
@@ -211,11 +211,11 @@ mod tests {
   }
 
   #[actix_web::test]
-  async fn test_garbage_collection() -> LemmyResult<()> {
+  async fn test_garbage_collection() -> StudyCycleResult<()> {
     tokio::time::pause();
-    let backend = LemmyBackend::new(test_config(MINUTE_SECS, 1), true);
-    let key1 = LemmyInput(raw_ip_key(Some("127.0.0.4")), ActionType::Message);
-    let key2 = LemmyInput(raw_ip_key(Some("127.0.0.5")), ActionType::Post);
+    let backend = StudyCycleBackend::new(test_config(MINUTE_SECS, 1), true);
+    let key1 = StudyCycleInput(raw_ip_key(Some("127.0.0.4")), ActionType::Message);
+    let key2 = StudyCycleInput(raw_ip_key(Some("127.0.0.5")), ActionType::Post);
     backend.request(key1).await?;
     backend.request(key2).await?;
     assert!(backend.map.contains_key(&key1));
@@ -229,11 +229,11 @@ mod tests {
   }
 
   #[actix_web::test]
-  async fn test_output() -> LemmyResult<()> {
+  async fn test_output() -> StudyCycleResult<()> {
     tokio::time::pause();
-    let backend = LemmyBackend::new(test_config(MINUTE_SECS, 2), true);
+    let backend = StudyCycleBackend::new(test_config(MINUTE_SECS, 2), true);
     let key = raw_ip_key(Some("127.0.0.6"));
-    let input = LemmyInput(key, ActionType::Message);
+    let input = StudyCycleInput(key, ActionType::Message);
     // First of 2 should be allowed.
     let (decision, output, _) = backend.request(input).await?;
     assert!(decision.is_allowed());
@@ -256,11 +256,11 @@ mod tests {
   }
 
   #[actix_web::test]
-  async fn test_rollback() -> LemmyResult<()> {
+  async fn test_rollback() -> StudyCycleResult<()> {
     tokio::time::pause();
-    let backend = LemmyBackend::new(test_config(MINUTE_SECS, 5), true);
+    let backend = StudyCycleBackend::new(test_config(MINUTE_SECS, 5), true);
     let key = raw_ip_key(Some("127.0.0.7"));
-    let input = LemmyInput(key, ActionType::Message);
+    let input = StudyCycleInput(key, ActionType::Message);
     let (_, output, rollback) = backend.request(input).await?;
     assert_eq!(output.remaining, 4);
     backend.rollback(rollback).await?;

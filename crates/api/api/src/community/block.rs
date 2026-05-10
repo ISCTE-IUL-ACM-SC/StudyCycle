@@ -1,31 +1,31 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_local_user_valid,
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     actor_language::CommunityLanguage,
     community::{CommunityActions, CommunityBlockForm},
   },
   traits::{Blockable, Followable},
 };
-use lemmy_db_views_community::{
+use studycycle_db_views_community::{
   CommunityView,
   api::{BlockCommunity, CommunityResponse},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_diesel_utils::connection::get_conn;
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_diesel_utils::connection::get_conn;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn user_block_community(
   Json(data): Json<BlockCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityResponse>> {
+) -> StudyCycleResult<Json<CommunityResponse>> {
   check_local_user_valid(&local_user_view)?;
   let community_id = data.community_id;
   let person_id = local_user_view.person.id;

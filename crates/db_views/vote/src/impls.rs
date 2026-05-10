@@ -2,19 +2,19 @@ use crate::{VoteView, VoteViewComment, VoteViewPost};
 use diesel::{BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::{CommentId, PostId},
   source::{comment::CommentActions, post::PostActions},
   utils::limit_fetch,
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   aliases::creator_community_actions,
   joins::{creator_home_instance_actions_join, creator_local_instance_actions_join},
   schema::{comment, comment_actions, community_actions, person, post, post_actions},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -24,7 +24,7 @@ use lemmy_diesel_utils::{
     paginate_response,
   },
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 use serde::{Deserialize, Serialize};
 
 impl VoteView {
@@ -34,8 +34,8 @@ impl VoteView {
     page_cursor: Option<PaginationCursor>,
     limit: Option<i64>,
     local_instance_id: InstanceId,
-  ) -> LemmyResult<PagedResponse<Self>> {
-    use lemmy_db_schema::source::post::post_actions_keys as key;
+  ) -> StudyCycleResult<PagedResponse<Self>> {
+    use studycycle_db_schema::source::post::post_actions_keys as key;
     let limit = limit_fetch(limit, None)?;
 
     let creator_community_actions_join = creator_community_actions.on(
@@ -75,7 +75,7 @@ impl VoteView {
     let res = query
       .load::<VoteViewPost>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
     paginate_vote_response(res, limit, page_cursor)
   }
 
@@ -85,8 +85,8 @@ impl VoteView {
     page_cursor: Option<PaginationCursor>,
     limit: Option<i64>,
     local_instance_id: InstanceId,
-  ) -> LemmyResult<PagedResponse<Self>> {
-    use lemmy_db_schema::source::comment::comment_actions_keys as key;
+  ) -> StudyCycleResult<PagedResponse<Self>> {
+    use studycycle_db_schema::source::comment::comment_actions_keys as key;
     let limit = limit_fetch(limit, None)?;
 
     let creator_community_actions_join = creator_community_actions.on(
@@ -126,7 +126,7 @@ impl VoteView {
     let res = query
       .load::<VoteViewComment>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)?;
+      .with_studycycle_type(StudyCycleErrorType::NotFound)?;
     paginate_vote_response(res, limit, page_cursor)
   }
 }
@@ -140,7 +140,7 @@ fn paginate_vote_response<
   data: Vec<T>,
   limit: i64,
   page_cursor: Option<PaginationCursor>,
-) -> LemmyResult<PagedResponse<VoteView>>
+) -> StudyCycleResult<PagedResponse<VoteView>>
 where
   T: PaginationCursorConversion + Serialize + for<'a> Deserialize<'a>,
   VoteView: From<T>,
@@ -162,7 +162,7 @@ impl PaginationCursorConversion for VoteViewPost {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     let [creator_id, post_id] = cursor.multi()?;
     PostActions::read(pool, PostId(post_id), PersonId(creator_id)).await
   }
@@ -177,7 +177,7 @@ impl PaginationCursorConversion for VoteViewComment {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     let [creator_id, comment_id] = cursor.multi()?;
     CommentActions::read(pool, CommentId(comment_id), PersonId(creator_id)).await
   }
@@ -186,7 +186,7 @@ impl PaginationCursorConversion for VoteViewComment {
 #[cfg(test)]
 mod tests {
   use crate::VoteView;
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     source::{
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
       community::{Community, CommunityActions, CommunityInsertForm, CommunityPersonBanForm},
@@ -196,15 +196,15 @@ mod tests {
     },
     traits::{Bannable, Likeable},
   };
-  use lemmy_db_schema_file::InstanceId;
-  use lemmy_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_db_schema_file::InstanceId;
+  use studycycle_diesel_utils::{connection::build_db_pool_for_tests, traits::Crud};
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn post_and_comment_vote_views() -> LemmyResult<()> {
+  async fn post_and_comment_vote_views() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

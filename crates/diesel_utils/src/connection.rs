@@ -15,8 +15,8 @@ use diesel_async::{
   scoped_futures::ScopedBoxFuture,
 };
 use futures_util::{FutureExt, future::BoxFuture};
-use lemmy_utils::{
-  error::{LemmyError, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleError, StudyCycleResult},
   settings::SETTINGS,
 };
 use rustls::{
@@ -65,16 +65,16 @@ pub async fn get_conn<'a, 'b: 'a>(pool: &'a mut DbPool<'b>) -> Result<DbConn<'a>
 }
 
 impl DbConn<'_> {
-  pub async fn run_transaction<'a, R, F>(&mut self, callback: F) -> LemmyResult<R>
+  pub async fn run_transaction<'a, R, F>(&mut self, callback: F) -> StudyCycleResult<R>
   where
-    F: for<'r> FnOnce(&'r mut AsyncPgConnection) -> ScopedBoxFuture<'a, 'r, LemmyResult<R>>
+    F: for<'r> FnOnce(&'r mut AsyncPgConnection) -> ScopedBoxFuture<'a, 'r, StudyCycleResult<R>>
       + Send
       + 'a,
     R: Send + 'a,
   {
     self
       .deref_mut()
-      .transaction::<_, LemmyError, _>(callback)
+      .transaction::<_, StudyCycleError, _>(callback)
       .await
   }
 }
@@ -157,7 +157,7 @@ macro_rules! try_join_with_pool {
   }};
 }
 
-pub fn build_db_pool() -> LemmyResult<ActualDbPool> {
+pub fn build_db_pool() -> StudyCycleResult<ActualDbPool> {
   let db_url = SETTINGS.get_database_url_with_options()?;
   // diesel-async does not support any TLS connections out of the box, so we need to manually
   // provide a setup function which handles creating the connection

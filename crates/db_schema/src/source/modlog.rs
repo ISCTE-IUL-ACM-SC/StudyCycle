@@ -3,8 +3,8 @@ use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::modlog;
-use lemmy_db_schema_file::{InstanceId, PersonId, enums::ModlogKind};
+use studycycle_db_schema_file::schema::modlog;
+use studycycle_db_schema_file::{InstanceId, PersonId, enums::ModlogKind};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

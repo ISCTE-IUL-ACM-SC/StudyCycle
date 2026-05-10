@@ -15,13 +15,13 @@ use activitypub_federation::{
   traits::Object,
 };
 use chrono::Utc;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   notify::notify_private_message,
   plugins::{plugin_hook_after, plugin_hook_before},
   utils::{check_private_messages_enabled, get_url_blocklist, process_markdown, slur_regex},
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   source::{
     instance::{Instance, InstanceActions},
     person::{Person, PersonActions},
@@ -29,12 +29,12 @@ use lemmy_db_schema::{
   },
   traits::Blockable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_private_message::PrivateMessageView;
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
-  error::{LemmyError, LemmyErrorType, LemmyResult},
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_private_message::PrivateMessageView;
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
+  error::{StudyCycleError, StudyCycleErrorType, StudyCycleResult},
   utils::markdown::markdown_to_html,
 };
 use semver::{Version, VersionReq};
@@ -59,9 +59,9 @@ impl From<DbPrivateMessage> for ApubPrivateMessage {
 
 #[async_trait::async_trait]
 impl Object for ApubPrivateMessage {
-  type DataType = LemmyContext;
+  type DataType = StudyCycleContext;
   type Kind = PrivateMessage;
-  type Error = LemmyError;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     self.ap_id.inner()
@@ -70,7 +70,7 @@ impl Object for ApubPrivateMessage {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> StudyCycleResult<Option<Self>> {
     Ok(
       DbPrivateMessage::read_from_apub_id(&mut context.pool(), object_id.into())
         .await?
@@ -78,16 +78,16 @@ impl Object for ApubPrivateMessage {
     )
   }
 
-  async fn delete(&self, _context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(&self, _context: &Data<Self::DataType>) -> StudyCycleResult<()> {
     // do nothing, because pm can't be fetched over http
-    Err(LemmyErrorType::NotFound.into())
+    Err(StudyCycleErrorType::NotFound.into())
   }
 
   fn is_deleted(&self) -> bool {
     self.removed || self.deleted
   }
 
-  async fn into_json(self, context: &Data<Self::DataType>) -> LemmyResult<PrivateMessage> {
+  async fn into_json(self, context: &Data<Self::DataType>) -> StudyCycleResult<PrivateMessage> {
     let creator_id = self.creator_id;
     let creator = Person::read(&mut context.pool(), creator_id).await?;
 
@@ -97,10 +97,10 @@ impl Object for ApubPrivateMessage {
     let instance = Instance::read(&mut context.pool(), recipient.instance_id).await?;
     let mut kind = PrivateMessageType::Note;
 
-    // Deprecated: For Lemmy versions before 0.20, send private messages with old type
+    // Deprecated: For StudyCycle versions before 0.20, send private messages with old type
     if let (Some(software), Some(version)) = (instance.software, &instance.version) {
       let req = VersionReq::parse("<0.20")?;
-      if software == "lemmy" && req.matches(&Version::parse(version)?) {
+      if software == "studycycle" && req.matches(&Version::parse(version)?) {
         kind = PrivateMessageType::ChatMessage
       }
     }
@@ -123,7 +123,7 @@ impl Object for ApubPrivateMessage {
     note: &PrivateMessage,
     expected_domain: &Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     verify_domains_match(note.id.inner(), expected_domain)?;
     verify_domains_match(note.attributed_to.inner(), note.id.inner())?;
     verify_is_remote_object(&note.id, context)?;
@@ -137,7 +137,7 @@ impl Object for ApubPrivateMessage {
   async fn from_json(
     note: PrivateMessage,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<ApubPrivateMessage> {
+  ) -> StudyCycleResult<ApubPrivateMessage> {
     let creator = note.attributed_to.dereference(context).await?;
     let recipient = note.to[0].dereference(context).await?;
     PersonActions::read_block(&mut context.pool(), recipient.id, creator.id).await?;
@@ -182,22 +182,22 @@ mod tests {
   use super::*;
   use crate::{
     objects::{instance::ApubSite, person::ApubPerson},
-    utils::test::{file_to_json_object, parse_lemmy_instance},
+    utils::test::{file_to_json_object, parse_studycycle_instance},
   };
   use assert_json_diff::assert_json_include;
-  use lemmy_db_schema::test_data::TestData;
+  use studycycle_db_schema::test_data::TestData;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   async fn prepare_comment_test(
     url: &Url,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<(ApubPerson, ApubPerson, ApubSite)> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<(ApubPerson, ApubPerson, ApubSite)> {
     let context2 = context.clone();
-    let lemmy_person = file_to_json_object("../apub/assets/lemmy/objects/person.json")?;
-    let site = parse_lemmy_instance(&context2).await?;
-    ApubPerson::verify(&lemmy_person, url, &context2).await?;
-    let person1 = ApubPerson::from_json(lemmy_person, &context2).await?;
+    let studycycle_person = file_to_json_object("../apub/assets/studycycle/objects/person.json")?;
+    let site = parse_studycycle_instance(&context2).await?;
+    ApubPerson::verify(&studycycle_person, url, &context2).await?;
+    let person1 = ApubPerson::from_json(studycycle_person, &context2).await?;
     let pleroma_person = file_to_json_object("../apub/assets/pleroma/objects/person.json")?;
     let pleroma_url = Url::parse("https://queer.hacktivis.me/users/lanodan")?;
     ApubPerson::verify(&pleroma_person, &pleroma_url, &context2).await?;
@@ -207,13 +207,13 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_pm() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_studycycle_pm() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
     let url = Url::parse("https://enterprise.lemmy.ml/private_message/1621")?;
     prepare_comment_test(&url, &context).await?;
     let json: PrivateMessage =
-      file_to_json_object("../apub/assets/lemmy/objects/private_message.json")?;
+      file_to_json_object("../apub/assets/studycycle/objects/private_message.json")?;
     ApubPrivateMessage::verify(&json, &url, &context).await?;
     let pm = ApubPrivateMessage::from_json(json.clone(), &context).await?;
 
@@ -231,8 +231,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_pleroma_pm() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_pleroma_pm() -> StudyCycleResult<()> {
+    let context = StudyCycleContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
     let url = Url::parse("https://enterprise.lemmy.ml/private_message/1621")?;
     prepare_comment_test(&url, &context).await?;

@@ -1,21 +1,21 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
-use lemmy_db_schema::source::oauth_provider::{AdminOAuthProvider, OAuthProviderUpdateForm};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::EditOAuthProvider;
-use lemmy_diesel_utils::{
+use studycycle_api_utils::{context::StudyCycleContext, utils::is_admin};
+use studycycle_db_schema::source::oauth_provider::{AdminOAuthProvider, OAuthProviderUpdateForm};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::api::EditOAuthProvider;
+use studycycle_diesel_utils::{
   traits::Crud,
   utils::{diesel_required_string_update, diesel_required_url_update},
 };
-use lemmy_utils::error::LemmyError;
+use studycycle_utils::error::StudyCycleError;
 
 pub async fn edit_oauth_provider(
   Json(data): Json<EditOAuthProvider>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> Result<Json<AdminOAuthProvider>, LemmyError> {
+) -> Result<Json<AdminOAuthProvider>, StudyCycleError> {
   // Make sure user is an admin
   is_admin(&local_user_view)?;
 

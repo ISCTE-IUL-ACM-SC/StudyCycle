@@ -2,9 +2,9 @@ use super::convert_published_time;
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
+use studycycle_api_utils::{
   build_response::build_post_response,
-  context::LemmyContext,
+  context::StudyCycleContext,
   notify::NotifyData,
   plugins::{plugin_hook_after, plugin_hook_before},
   request::generate_post_link_metadata,
@@ -19,25 +19,25 @@ use lemmy_api_utils::{
     update_post_tags,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   impls::actor_language::validate_post_language,
   source::{
     community::Community,
     post::{Post, PostUpdateForm},
   },
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::{
   PostView,
   api::{EditPost, PostResponse},
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_diesel_utils::{
+use studycycle_db_views_site::SiteView;
+use studycycle_diesel_utils::{
   traits::Crud,
   utils::{diesel_string_update, diesel_url_update},
 };
-use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+use studycycle_utils::{
+  error::{StudyCycleErrorType, StudyCycleResult},
   utils::{
     slurs::check_slurs,
     validation::{
@@ -53,9 +53,9 @@ use std::ops::Deref;
 
 pub async fn edit_post(
   Json(data): Json<EditPost>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> StudyCycleResult<Json<PostResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   let local_instance_id = local_user_view.person.instance_id;
   let url = diesel_url_update(data.url.as_deref())?;
@@ -124,7 +124,7 @@ pub async fn edit_post(
 
   // Verify that only the creator can edit
   if !Post::is_post_creator(local_user_view.person.id, orig_post.post.creator_id) {
-    return Err(LemmyErrorType::NoPostEditAllowed.into());
+    return Err(StudyCycleErrorType::NoPostEditAllowed.into());
   }
 
   // handle changes to scheduled_publish_time

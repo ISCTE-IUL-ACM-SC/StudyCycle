@@ -3,8 +3,8 @@ use crate::site::{application_question_check, site_default_post_listing_type_che
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{
     get_url_blocklist,
     is_admin,
@@ -13,7 +13,7 @@ use lemmy_api_utils::{
     slur_regex,
   },
 };
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::MultiCommunityId,
   source::{
     actor_language::SiteLanguage,
@@ -24,18 +24,18 @@ use lemmy_db_schema::{
     site::{Site, SiteUpdateForm},
   },
 };
-use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
+use studycycle_db_schema_file::enums::RegistrationMode;
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{
   SiteView,
   api::{EditSite, SiteResponse},
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   traits::Crud,
   utils::{diesel_opt_number_update, diesel_string_update},
 };
-use lemmy_utils::{
-  error::LemmyResult,
+use studycycle_utils::{
+  error::StudyCycleResult,
   utils::{
     slurs::check_slurs_opt,
     validation::{
@@ -50,9 +50,9 @@ use lemmy_utils::{
 
 pub async fn edit_site(
   Json(data): Json<EditSite>,
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SiteResponse>> {
+) -> StudyCycleResult<Json<SiteResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let local_site = site_view.local_site;
   let site = site_view.site;
@@ -172,7 +172,7 @@ pub async fn edit_site(
 
   if let Some(url_blocklist) = data.blocked_urls.clone() {
     // If this validation changes it must be synced with
-    // lemmy_utils::utils::markdown::create_url_blocklist_test_regex_set.
+    // studycycle_utils::utils::markdown::create_url_blocklist_test_regex_set.
     let parsed_urls = check_urls_are_valid(&url_blocklist)?;
     LocalSiteUrlBlocklist::replace(&mut context.pool(), parsed_urls).await?;
   }
@@ -210,7 +210,7 @@ pub async fn edit_site(
   Ok(Json(SiteResponse { site_view }))
 }
 
-fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSite) -> LemmyResult<()> {
+fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSite) -> StudyCycleResult<()> {
   // Check that the slur regex compiles, and return the regex if valid...
   // Prioritize using new slur regex from the request; if not provided, use the existing regex.
   let slur_regex = build_and_check_regex(
@@ -251,17 +251,17 @@ fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSite) -> Lemm
 mod tests {
 
   use crate::site::update::validate_update_payload;
-  use lemmy_db_schema::source::local_site::LocalSite;
-  use lemmy_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
-  use lemmy_db_views_site::api::EditSite;
-  use lemmy_utils::error::LemmyErrorType;
+  use studycycle_db_schema::source::local_site::LocalSite;
+  use studycycle_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
+  use studycycle_db_views_site::api::EditSite;
+  use studycycle_utils::error::StudyCycleErrorType;
 
   #[test]
   fn test_validate_invalid_update_payload() {
     let invalid_payloads = [
       (
         "EditSite name matches LocalSite slur filter",
-        &LemmyErrorType::Slurs,
+        &StudyCycleErrorType::Slurs,
         &LocalSite {
           private_instance: true,
           slur_filter_regex: Some(String::from("(foo|bar)")),
@@ -276,7 +276,7 @@ mod tests {
       ),
       (
         "EditSite name matches new slur filter",
-        &LemmyErrorType::Slurs,
+        &StudyCycleErrorType::Slurs,
         &LocalSite {
           private_instance: true,
           slur_filter_regex: Some(String::from("(foo|bar)")),
@@ -292,7 +292,7 @@ mod tests {
       ),
       (
         "EditSite listing type is Subscribed, which is invalid",
-        &LemmyErrorType::InvalidDefaultPostListingType,
+        &StudyCycleErrorType::InvalidDefaultPostListingType,
         &LocalSite {
           private_instance: true,
           federation_enabled: false,
@@ -307,7 +307,7 @@ mod tests {
       ),
       (
         "EditSite requires application, but neither it nor LocalSite has an application question",
-        &LemmyErrorType::ApplicationQuestionRequired,
+        &StudyCycleErrorType::ApplicationQuestionRequired,
         &LocalSite {
           private_instance: true,
           federation_enabled: false,

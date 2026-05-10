@@ -13,29 +13,29 @@ use activitypub_federation::{
   kinds::activity::UndoType,
   traits::Activity,
 };
-use lemmy_api_utils::{context::LemmyContext, notify::notify_mod_action};
-use lemmy_apub_objects::{
+use studycycle_api_utils::{context::StudyCycleContext, notify::notify_mod_action};
+use studycycle_apub_objects::{
   objects::{PostOrComment, community::ApubCommunity},
   utils::{
     functions::{generate_to, verify_mod_action, verify_visibility},
     protocol::InCommunity,
   },
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   activity::ActivitySendTargets,
   comment::Comment,
   modlog::{Modlog, ModlogInsertForm},
   person::Person,
   post::{Post, PostUpdateForm},
 };
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::error::{StudyCycleError, StudyCycleResult};
 use url::Url;
 
 #[async_trait::async_trait]
 impl Activity for LockPageOrNote {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -90,8 +90,8 @@ impl Activity for LockPageOrNote {
 
 #[async_trait::async_trait]
 impl Activity for UndoLockPageOrNote {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = StudyCycleContext;
+  type Error = StudyCycleError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -152,8 +152,8 @@ pub(crate) async fn send_lock(
   actor: Person,
   locked: bool,
   reason: String,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<()> {
   let community: ApubCommunity = post_or_comment_community(&object, &context).await?.into();
   let id = generate_activity_id(LockType::Lock, &context)?;
   let community_id = community.ap_id.inner().clone();

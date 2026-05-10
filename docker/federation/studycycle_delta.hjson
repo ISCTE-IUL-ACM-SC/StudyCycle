@@ -1,0 +1,16 @@
+{
+  hostname: studycycle-delta:8571
+  port: 8571
+  tls_enabled: false
+  setup: {
+    admin_username: studycycle_delta
+    admin_password: studycyclestudycycle
+    site_name: studycycle-delta
+  }
+  database: {
+    connection: "postgres://studycycle:password@postgres_delta:5432/studycycle"
+  }
+  pictrs: {
+    api_key: "my-pictrs-key"
+  }
+}

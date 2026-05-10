@@ -1,30 +1,30 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
-  context::LemmyContext,
+use studycycle_api_utils::{
+  context::StudyCycleContext,
   utils::{check_expire_time, is_admin},
 };
-use lemmy_db_schema::source::{
+use studycycle_db_schema::source::{
   federation_blocklist::{FederationBlockList, FederationBlockListForm},
   instance::Instance,
   modlog::{Modlog, ModlogInsertForm},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{FederatedInstanceView, api::AdminBlockInstanceParams};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::{FederatedInstanceView, api::AdminBlockInstanceParams};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 
 pub async fn admin_block_instance(
   Json(data): Json<AdminBlockInstanceParams>,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<FederatedInstanceView>> {
+  context: Data<StudyCycleContext>,
+) -> StudyCycleResult<Json<FederatedInstanceView>> {
   is_admin(&local_user_view)?;
 
   let expires_at = check_expire_time(data.expires_at)?;
 
   let allowlist = Instance::allowlist(&mut context.pool()).await?;
   if !allowlist.is_empty() {
-    return Err(LemmyErrorType::CannotCombineFederationBlocklistAndAllowlist.into());
+    return Err(StudyCycleErrorType::CannotCombineFederationBlocklistAndAllowlist.into());
   }
 
   let instance_id = Instance::read_or_create(&mut context.pool(), &data.instance)

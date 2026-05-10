@@ -1,22 +1,22 @@
-use crate::{context::LemmyContext, utils::is_mod_or_admin};
+use crate::{context::StudyCycleContext, utils::is_mod_or_admin};
 use actix_web::web::Json;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   newtypes::{CommentId, CommunityId, PostId},
   source::actor_language::CommunityLanguage,
 };
-use lemmy_db_schema_file::InstanceId;
-use lemmy_db_views_comment::{CommentView, api::CommentResponse};
-use lemmy_db_views_community::{CommunityView, api::CommunityResponse};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{PostView, api::PostResponse};
-use lemmy_utils::error::LemmyResult;
+use studycycle_db_schema_file::InstanceId;
+use studycycle_db_views_comment::{CommentView, api::CommentResponse};
+use studycycle_db_views_community::{CommunityView, api::CommunityResponse};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_post::{PostView, api::PostResponse};
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn build_comment_response(
-  context: &LemmyContext,
+  context: &StudyCycleContext,
   comment_id: CommentId,
   local_user_view: Option<LocalUserView>,
   local_instance_id: InstanceId,
-) -> LemmyResult<CommentResponse> {
+) -> StudyCycleResult<CommentResponse> {
   let local_user = local_user_view.map(|l| l.local_user);
   let comment_view = CommentView::read(
     &mut context.pool(),
@@ -29,10 +29,10 @@ pub async fn build_comment_response(
 }
 
 pub async fn build_community_response(
-  context: &LemmyContext,
+  context: &StudyCycleContext,
   local_user_view: LocalUserView,
   community_id: CommunityId,
-) -> LemmyResult<Json<CommunityResponse>> {
+) -> StudyCycleResult<Json<CommunityResponse>> {
   let is_mod_or_admin = is_mod_or_admin(&mut context.pool(), &local_user_view, community_id)
     .await
     .is_ok();
@@ -53,11 +53,11 @@ pub async fn build_community_response(
 }
 
 pub async fn build_post_response(
-  context: &LemmyContext,
+  context: &StudyCycleContext,
   community_id: CommunityId,
   local_user_view: LocalUserView,
   post_id: PostId,
-) -> LemmyResult<Json<PostResponse>> {
+) -> StudyCycleResult<Json<PostResponse>> {
   let is_mod_or_admin = is_mod_or_admin(&mut context.pool(), &local_user_view, community_id)
     .await
     .is_ok();

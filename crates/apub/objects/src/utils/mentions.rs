@@ -8,11 +8,11 @@ use activitypub_federation::{
   kinds::link::MentionType,
   traits::Object,
 };
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::source::{comment::Comment, community::Community, person::Person, post::Post};
-use lemmy_diesel_utils::{connection::DbPool, traits::Crud};
-use lemmy_utils::{
-  error::{LemmyResult, UntranslatedError},
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::source::{comment::Comment, community::Community, person::Person, post::Post};
+use studycycle_diesel_utils::{connection::DbPool, traits::Crud};
+use studycycle_utils::{
+  error::{StudyCycleResult, UntranslatedError},
   utils::mention::scrape_text_for_mentions,
 };
 use url::Url;
@@ -29,8 +29,8 @@ pub(crate) async fn collect_non_local_mentions(
   content: Option<&str>,
   parent_creator: Option<ApubPerson>,
   community: &Community,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<MentionsAndAddresses> {
+  context: &Data<StudyCycleContext>,
+) -> StudyCycleResult<MentionsAndAddresses> {
   let mut addressed_ccs: Vec<Url> = vec![];
   let mut mentions = vec![];
 
@@ -60,7 +60,7 @@ pub(crate) async fn collect_non_local_mentions(
 
   for mention in scraped {
     let identifier = format!("{}@{}", mention.name, mention.domain);
-    let person = webfinger_resolve_actor::<LemmyContext, ApubPerson>(&identifier, context).await;
+    let person = webfinger_resolve_actor::<StudyCycleContext, ApubPerson>(&identifier, context).await;
     if let Ok(person) = person {
       addressed_ccs.push(person.ap_id.to_string().parse()?);
 
@@ -74,7 +74,7 @@ pub(crate) async fn collect_non_local_mentions(
   }
 
   // HACK: Mastodon replies are only sent to the parent by default, not to the community. This
-  //       means they are not visible to most Lemmy instances. This workaround adds a community
+  //       means they are not visible to most StudyCycle instances. This workaround adds a community
   //       mention which automatically gets copied into Mastodon replies, and ensures correct
   //       federation.
   //       https://lemmy.ml/post/44552705/24563597
@@ -102,7 +102,7 @@ pub(crate) async fn collect_non_local_mentions(
 pub(crate) async fn get_comment_parent_creator(
   pool: &mut DbPool<'_>,
   comment: &Comment,
-) -> LemmyResult<ApubPerson> {
+) -> StudyCycleResult<ApubPerson> {
   let parent_creator_id = if let Some(parent_comment_id) = comment.parent_comment_id() {
     let parent_comment = Comment::read(pool, parent_comment_id).await?;
     parent_comment.creator_id

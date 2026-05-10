@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_api_utils"
+name = "studycycle_api_utils"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -10,7 +10,7 @@ documentation.workspace = true
 repository.workspace = true
 
 [lib]
-name = "lemmy_api_utils"
+name = "studycycle_api_utils"
 path = "src/lib.rs"
 doctest = false
 
@@ -19,40 +19,40 @@ workspace = true
 
 [features]
 full = [
-  "lemmy_db_schema/full",
-  "lemmy_db_views_community/full",
-  "lemmy_db_views_community_follower_approval/full",
-  "lemmy_db_views_community_moderator/full",
-  "lemmy_db_views_local_image/full",
-  "lemmy_db_views_local_user/full",
-  "lemmy_db_views_site/full",
-  "lemmy_db_views_private_message/full",
-  "lemmy_db_views_comment/full",
-  "lemmy_db_views_post/full",
-  "lemmy_db_views_notification/full",
-  "lemmy_db_views_registration_applications/full",
+  "studycycle_db_schema/full",
+  "studycycle_db_views_community/full",
+  "studycycle_db_views_community_follower_approval/full",
+  "studycycle_db_views_community_moderator/full",
+  "studycycle_db_views_local_image/full",
+  "studycycle_db_views_local_user/full",
+  "studycycle_db_views_site/full",
+  "studycycle_db_views_private_message/full",
+  "studycycle_db_views_comment/full",
+  "studycycle_db_views_post/full",
+  "studycycle_db_views_notification/full",
+  "studycycle_db_views_registration_applications/full",
 ]
 
 [dependencies]
-lemmy_db_schema = { workspace = true }
-lemmy_db_schema_file = { workspace = true }
-lemmy_db_views_community = { workspace = true }
-lemmy_db_views_community_follower_approval = { workspace = true }
-lemmy_db_views_community_moderator = { workspace = true }
-lemmy_db_views_local_image = { workspace = true }
-lemmy_db_views_local_user = { workspace = true }
-lemmy_db_views_site = { workspace = true }
-lemmy_db_views_private_message = { workspace = true }
-lemmy_db_views_comment = { workspace = true }
-lemmy_db_views_post = { workspace = true }
-lemmy_db_views_notification = { workspace = true }
-lemmy_db_views_registration_applications = { workspace = true }
-lemmy_email = { workspace = true }
+studycycle_db_schema = { workspace = true }
+studycycle_db_schema_file = { workspace = true }
+studycycle_db_views_community = { workspace = true }
+studycycle_db_views_community_follower_approval = { workspace = true }
+studycycle_db_views_community_moderator = { workspace = true }
+studycycle_db_views_local_image = { workspace = true }
+studycycle_db_views_local_user = { workspace = true }
+studycycle_db_views_site = { workspace = true }
+studycycle_db_views_private_message = { workspace = true }
+studycycle_db_views_comment = { workspace = true }
+studycycle_db_views_post = { workspace = true }
+studycycle_db_views_notification = { workspace = true }
+studycycle_db_views_registration_applications = { workspace = true }
+studycycle_email = { workspace = true }
 anyhow = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
-lemmy_utils = { workspace = true }
+studycycle_utils = { workspace = true }
 extism = { workspace = true }
 extism-convert = { workspace = true }
 extism-manifest = "1.20.0"
@@ -77,11 +77,11 @@ regex = { workspace = true }
 jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
 either.workspace = true
 derive-new.workspace = true
-lemmy_diesel_utils = { workspace = true }
+studycycle_diesel_utils = { workspace = true }
 rustls = { workspace = true }
 
 [dev-dependencies]
 serial_test = { workspace = true }
 pretty_assertions = { workspace = true }
-lemmy_db_views_notification = { workspace = true, features = ["full"] }
+studycycle_db_views_notification = { workspace = true, features = ["full"] }
 diesel_ltree = { workspace = true }

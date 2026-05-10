@@ -6,13 +6,13 @@ ARG RUST_RELEASE_MODE=debug
 ARG BUILDER_IMAGE=lukemathwalker/cargo-chef:latest-rust-${RUST_VERSION}
 ARG RUNNER_IMAGE=debian:sid-slim
 
-ARG UNAME=lemmy
+ARG UNAME=studycycle
 ARG UID=1000
 ARG GID=1000
 
 # Chef
 FROM ${BUILDER_IMAGE} AS chef
-WORKDIR /lemmy
+WORKDIR /studycycle
 
 # Planner
 FROM chef AS planner
@@ -27,7 +27,7 @@ ARG RUST_RELEASE_MODE
 ARG RUSTFLAGS
 ARG CI_PIPELINE_EVENT
 
-COPY --from=planner /lemmy/recipe.json recipe.json
+COPY --from=planner /studycycle/recipe.json recipe.json
 # Build dependencies - this is the caching Docker layer!
 RUN if [ "${RUST_RELEASE_MODE}" = "release" ]; \
   then \
@@ -43,10 +43,10 @@ COPY . .
 RUN if [ "${RUST_RELEASE_MODE}" = "release" ]; \
   then \
   cargo build --features "${CARGO_BUILD_FEATURES}" --release; \
-  mv target/release/lemmy_server .; \
+  mv target/release/studycycle_server .; \
   else \
   cargo build --features "${CARGO_BUILD_FEATURES}"; \
-  mv target/debug/lemmy_server .; \
+  mv target/debug/studycycle_server .; \
   fi 
 
 # Runner
@@ -55,12 +55,12 @@ FROM ${RUNNER_IMAGE} AS runner
 # Add system packages that are needed: federation needs CA certificates, curl can be used for healthchecks
 RUN apt update && apt install -y libssl-dev libpq-dev ca-certificates curl git
 
-COPY --from=builder --chmod=0755 /lemmy/lemmy_server /usr/local/bin
+COPY --from=builder --chmod=0755 /studycycle/studycycle_server /usr/local/bin
 
-LABEL org.opencontainers.image.authors="The Lemmy Authors"
-LABEL org.opencontainers.image.source="https://github.com/LemmyNet/lemmy"
+LABEL org.opencontainers.image.authors="ISCTE-IUL ACM Student Chapter"
+LABEL org.opencontainers.image.source="https://github.com/ISCTE-IUL-ACM-SC/StudyCycle"
 LABEL org.opencontainers.image.licenses="AGPL-3.0-or-later"
-LABEL org.opencontainers.image.description="A link aggregator and forum for the fediverse"
+LABEL org.opencontainers.image.description="A federated platform for students to share study material"
 
 ARG UNAME
 ARG GID
@@ -70,6 +70,6 @@ RUN groupadd -g ${GID} -o ${UNAME} && \
   useradd -m -u ${UID} -g ${GID} -o -s /bin/bash ${UNAME}
 USER $UNAME
 
-ENTRYPOINT ["lemmy_server"]
+ENTRYPOINT ["studycycle_server"]
 EXPOSE 8536
 STOPSIGNAL SIGTERM

@@ -19,12 +19,12 @@ use activitypub_federation::{
   },
 };
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::source::{community::Community, post::Post};
-use lemmy_diesel_utils::traits::Crud;
-use lemmy_utils::{
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::source::{community::Community, post::Post};
+use studycycle_diesel_utils::traits::Crud;
+use studycycle_utils::{
   MAX_COMMENT_DEPTH_LIMIT,
-  error::{LemmyErrorType, LemmyResult},
+  error::{StudyCycleErrorType, StudyCycleResult},
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -51,7 +51,7 @@ pub struct Note {
   pub(crate) updated: Option<DateTime<Utc>>,
   #[serde(default)]
   pub tag: Vec<ApubTag>,
-  // lemmy extension
+  // studycycle extension
   pub distinguished: Option<bool>,
   pub(crate) language: Option<LanguageTag>,
   pub(crate) audience: Option<ObjectId<ApubCommunity>>,
@@ -63,8 +63,8 @@ pub struct Note {
 impl Note {
   pub async fn get_parents(
     &self,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<(ApubPost, Option<ApubComment>)> {
+    context: &Data<StudyCycleContext>,
+  ) -> StudyCycleResult<(ApubPost, Option<ApubComment>)> {
     // We use recursion here to fetch the entire comment chain up to the top-level parent. This is
     // necessary because we need to know the post and parent comment in order to insert a new
     // comment. However it can also lead to too much resource consumption when fetching many
@@ -81,7 +81,7 @@ impl Note {
     // recursion, there must be the beginning of at least one `async` block or `async fn`,
     // otherwise there might be multiple levels of recursion before the first poll.
     if context.request_count() > MAX_COMMENT_DEPTH_LIMIT.try_into()? {
-      return Err(LemmyErrorType::MaxCommentDepthReached.into());
+      return Err(StudyCycleErrorType::MaxCommentDepthReached.into());
     }
     let parent = tokio::spawn({
       let in_reply_to = self.in_reply_to.clone();
@@ -103,7 +103,7 @@ impl Note {
 }
 
 impl InCommunity for Note {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<StudyCycleContext>) -> StudyCycleResult<ApubCommunity> {
     if let Some(audience) = &self.audience {
       return audience.dereference(context).await;
     }

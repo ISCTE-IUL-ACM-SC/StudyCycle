@@ -25,13 +25,13 @@ use diesel::{
   upsert::excluded,
 };
 use diesel_async::{RunQueryDsl, scoped_futures::ScopedFutureExt};
-use lemmy_db_schema_file::schema::{community_tag, post_community_tag};
-use lemmy_diesel_utils::{
+use studycycle_db_schema_file::schema::{community_tag, post_community_tag};
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   dburl::DbUrl,
   traits::Crud,
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 use std::collections::HashSet;
 
 impl Crud for CommunityTag {
@@ -39,26 +39,26 @@ impl Crud for CommunityTag {
   type UpdateForm = CommunityTagUpdateForm;
   type IdType = CommunityTagId;
 
-  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(community_tag::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 
   async fn update(
     pool: &mut DbPool<'_>,
     pid: CommunityTagId,
     form: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(community_tag::table.find(pid))
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntUpdate)
   }
 }
 
@@ -66,21 +66,21 @@ impl CommunityTag {
   pub async fn read_for_community(
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     community_tag::table
       .filter(community_tag::community_id.eq(community_id))
       .filter(community_tag::deleted.eq(false))
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   pub async fn update_many(
     pool: &mut DbPool<'_>,
     mut forms: Vec<CommunityTagInsertForm>,
     existing_tags: Vec<CommunityTag>,
-  ) -> LemmyResult<()> {
+  ) -> StudyCycleResult<()> {
     let conn = &mut get_conn(pool).await?;
     let new_tag_ids = forms
       .iter()
@@ -127,7 +127,7 @@ impl CommunityTag {
   pub async fn read_for_post(
     pool: &mut DbPool<'_>,
     post_id: PostId,
-  ) -> LemmyResult<Vec<CommunityTag>> {
+  ) -> StudyCycleResult<Vec<CommunityTag>> {
     let conn = &mut get_conn(pool).await?;
     post_community_tag::table
       .inner_join(community_tag::table)
@@ -136,10 +136,10 @@ impl CommunityTag {
       .select(community_tag::all_columns)
       .get_results(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
-  pub async fn read_apub(pool: &mut DbPool<'_>, ap_id: &DbUrl) -> LemmyResult<CommunityTag> {
+  pub async fn read_apub(pool: &mut DbPool<'_>, ap_id: &DbUrl) -> StudyCycleResult<CommunityTag> {
     let conn = &mut get_conn(pool).await?;
     community_tag::table
       .filter(community_tag::ap_id.eq(ap_id))
@@ -147,7 +147,7 @@ impl CommunityTag {
       .select(community_tag::all_columns)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 }
 
@@ -178,7 +178,7 @@ impl PostCommunityTag {
     pool: &mut DbPool<'_>,
     post: &Post,
     community_tag_ids: &[CommunityTagId],
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     conn
@@ -187,7 +187,7 @@ impl PostCommunityTag {
           delete(post_community_tag::table.filter(post_community_tag::post_id.eq(post.id)))
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::Deleted)?;
+            .with_studycycle_type(StudyCycleErrorType::Deleted)?;
 
           let forms = community_tag_ids
             .iter()
@@ -201,7 +201,7 @@ impl PostCommunityTag {
             .returning(Self::as_select())
             .get_results(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntCreate)
+            .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
         }
         .scope_boxed()
       })

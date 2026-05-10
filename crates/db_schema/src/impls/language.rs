@@ -2,18 +2,18 @@ use super::actor_language::UNDETERMINED_ID;
 use crate::{diesel::ExpressionMethods, newtypes::LanguageId, source::language::Language};
 use diesel::{QueryDsl, dsl::count};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{language, post};
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::{
+use studycycle_db_schema_file::schema::{language, post};
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::{
   CacheLock,
   build_cache,
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult},
 };
 use std::sync::LazyLock;
 
 impl Language {
   /// Returns list of all available languages, with most used languages first
-  pub async fn read_all(pool: &mut DbPool<'_>) -> LemmyResult<Vec<Self>> {
+  pub async fn read_all(pool: &mut DbPool<'_>) -> StudyCycleResult<Vec<Self>> {
     static CACHE: CacheLock<Vec<Language>> = LazyLock::new(build_cache);
     CACHE
       .try_get_with((), async move {
@@ -27,20 +27,20 @@ impl Language {
           .await
       })
       .await
-      .map_err(|_e| LemmyErrorType::NotFound.into())
+      .map_err(|_e| StudyCycleErrorType::NotFound.into())
   }
 
-  pub async fn read_from_id(pool: &mut DbPool<'_>, id_: LanguageId) -> LemmyResult<Self> {
+  pub async fn read_from_id(pool: &mut DbPool<'_>, id_: LanguageId) -> StudyCycleResult<Self> {
     let conn = &mut get_conn(pool).await?;
     language::table
       .find(id_)
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_studycycle_type(StudyCycleErrorType::NotFound)
   }
 
   /// Attempts to find the given language code and return its ID.
-  pub async fn read_id_from_code(pool: &mut DbPool<'_>, code_: &str) -> LemmyResult<LanguageId> {
+  pub async fn read_id_from_code(pool: &mut DbPool<'_>, code_: &str) -> StudyCycleResult<LanguageId> {
     let conn = &mut get_conn(pool).await?;
     let res = language::table
       .filter(language::code.eq(code_))
@@ -58,14 +58,14 @@ impl Language {
 mod tests {
 
   use crate::source::language::Language;
-  use lemmy_diesel_utils::connection::build_db_pool_for_tests;
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_diesel_utils::connection::build_db_pool_for_tests;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_languages() -> LemmyResult<()> {
+  async fn test_languages() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_apub_objects"
+name = "studycycle_apub_objects"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -11,7 +11,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "lemmy_apub_objects"
+name = "studycycle_apub_objects"
 path = "src/lib.rs"
 doctest = false
 
@@ -22,15 +22,15 @@ full = []
 workspace = true
 
 [dependencies]
-lemmy_db_views_community_moderator = { workspace = true, features = ["full"] }
-lemmy_db_views_local_user = { workspace = true, features = ["full"] }
-lemmy_db_views_site = { workspace = true, features = ["full"] }
-lemmy_db_views_private_message = { workspace = true, features = ["full"] }
-lemmy_utils = { workspace = true, features = ["full"] }
-lemmy_db_schema = { workspace = true, features = ["full"] }
-lemmy_api_utils = { workspace = true, features = ["full"] }
+studycycle_db_views_community_moderator = { workspace = true, features = ["full"] }
+studycycle_db_views_local_user = { workspace = true, features = ["full"] }
+studycycle_db_views_site = { workspace = true, features = ["full"] }
+studycycle_db_views_private_message = { workspace = true, features = ["full"] }
+studycycle_utils = { workspace = true, features = ["full"] }
+studycycle_db_schema = { workspace = true, features = ["full"] }
+studycycle_api_utils = { workspace = true, features = ["full"] }
 activitypub_federation = { workspace = true }
-lemmy_db_schema_file = { workspace = true }
+studycycle_db_schema_file = { workspace = true }
 chrono = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true }
@@ -50,7 +50,7 @@ stringreader = "0.1.1"
 semver = "1.0.27"
 either = "1.15.0"
 assert-json-diff = "2.0.2"
-lemmy_diesel_utils = { workspace = true }
+studycycle_diesel_utils = { workspace = true }
 regex = { workspace = true }
 
 [dev-dependencies]

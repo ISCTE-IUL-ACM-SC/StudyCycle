@@ -1,5 +1,5 @@
 use crate::{NotificationData, NotificationView, impls::NotificationQuery};
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   assert_length,
   source::{
     comment::{Comment, CommentInsertForm},
@@ -12,12 +12,12 @@ use lemmy_db_schema::{
     private_message::{PrivateMessage, PrivateMessageInsertForm},
   },
 };
-use lemmy_db_schema_file::enums::NotificationType;
-use lemmy_diesel_utils::{
+use studycycle_db_schema_file::enums::NotificationType;
+use studycycle_diesel_utils::{
   connection::{DbPool, build_db_pool_for_tests},
   traits::Crud,
 };
-use lemmy_utils::error::LemmyResult;
+use studycycle_utils::error::StudyCycleResult;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 
@@ -26,7 +26,7 @@ struct Data {
   bob: Person,
 }
 
-async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+async fn init_data(pool: &mut DbPool<'_>) -> StudyCycleResult<Data> {
   let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
 
   let alice_form = PersonInsertForm::test_form(instance.id, "alice2");
@@ -38,14 +38,14 @@ async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
   Ok(Data { alice, bob })
 }
 
-async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
   Instance::delete(pool, data.bob.instance_id).await?;
   Ok(())
 }
 
 #[tokio::test]
 #[serial]
-async fn test_private_message() -> LemmyResult<()> {
+async fn test_private_message() -> StudyCycleResult<()> {
   let pool = &build_db_pool_for_tests();
   let pool = &mut pool.into();
   let data = init_data(pool).await?;
@@ -77,7 +77,7 @@ async fn test_private_message() -> LemmyResult<()> {
 
 #[tokio::test]
 #[serial]
-async fn test_post() -> LemmyResult<()> {
+async fn test_post() -> StudyCycleResult<()> {
   let pool = &build_db_pool_for_tests();
   let pool = &mut pool.into();
   let data = init_data(pool).await?;
@@ -148,7 +148,7 @@ async fn test_post() -> LemmyResult<()> {
 
 #[tokio::test]
 #[serial]
-async fn test_modlog() -> LemmyResult<()> {
+async fn test_modlog() -> StudyCycleResult<()> {
   let pool = &build_db_pool_for_tests();
   let pool = &mut pool.into();
   let data = init_data(pool).await?;

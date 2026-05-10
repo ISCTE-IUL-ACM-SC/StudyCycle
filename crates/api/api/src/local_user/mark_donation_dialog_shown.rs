@@ -1,15 +1,15 @@
 use actix_web::web::{Data, Json};
 use chrono::Utc;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_db_schema::source::local_user::{LocalUser, LocalUserUpdateForm};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::LemmyResult;
+use studycycle_api_utils::context::StudyCycleContext;
+use studycycle_db_schema::source::local_user::{LocalUser, LocalUserUpdateForm};
+use studycycle_db_views_local_user::LocalUserView;
+use studycycle_db_views_site::api::SuccessResponse;
+use studycycle_utils::error::StudyCycleResult;
 
 pub async fn mark_donation_dialog_shown(
-  context: Data<LemmyContext>,
+  context: Data<StudyCycleContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> StudyCycleResult<Json<SuccessResponse>> {
   let form = LocalUserUpdateForm {
     last_donation_notification_at: Some(Utc::now()),
     ..Default::default()

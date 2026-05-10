@@ -11,22 +11,22 @@ use chrono::{DateTime, Utc};
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::modlog;
-use lemmy_db_schema_file::{InstanceId, PersonId, enums::ModlogKind};
-use lemmy_diesel_utils::connection::{DbPool, get_conn};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use studycycle_db_schema_file::schema::modlog;
+use studycycle_db_schema_file::{InstanceId, PersonId, enums::ModlogKind};
+use studycycle_diesel_utils::connection::{DbPool, get_conn};
+use studycycle_utils::error::{StudyCycleErrorExt, StudyCycleErrorType, StudyCycleResult};
 
 impl Modlog {
   pub async fn create<'a>(
     pool: &mut DbPool<'_>,
     form: &[ModlogInsertForm<'a>],
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> StudyCycleResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     insert_into(modlog::table)
       .values(form)
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreate)
+      .with_studycycle_type(StudyCycleErrorType::CouldntCreate)
   }
 }
 

@@ -10,14 +10,14 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use studycycle_db_schema::{
   LikeType,
   PersonContentType,
   source::combined::person_liked::{PersonLikedCombined, person_liked_combined_keys as key},
   traits::InternalToCombinedView,
   utils::limit_fetch,
 };
-use lemmy_db_schema_file::{
+use studycycle_db_schema_file::{
   InstanceId,
   PersonId,
   joins::{
@@ -36,11 +36,11 @@ use lemmy_db_schema_file::{
   },
   schema::{comment, person, person_liked_combined, post},
 };
-use lemmy_db_views_post_comment_combined::{
+use studycycle_db_views_post_comment_combined::{
   PostCommentCombinedView,
   PostCommentCombinedViewInternal,
 };
-use lemmy_diesel_utils::{
+use studycycle_diesel_utils::{
   connection::{DbPool, get_conn},
   pagination::{
     CursorData,
@@ -50,7 +50,7 @@ use lemmy_diesel_utils::{
     paginate_response,
   },
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use studycycle_utils::error::{StudyCycleErrorType, StudyCycleResult};
 use serde::Deserialize;
 
 #[derive(Default)]
@@ -80,7 +80,7 @@ impl PaginationCursorConversion for PostCommentCombinedViewWrapper {
   async fn from_cursor(
     cursor: CursorData,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::PaginatedType> {
+  ) -> StudyCycleResult<Self::PaginatedType> {
     let conn = &mut get_conn(pool).await?;
     let (prefix, id) = cursor.id_and_prefix()?;
 
@@ -91,7 +91,7 @@ impl PaginationCursorConversion for PostCommentCombinedViewWrapper {
     query = match prefix {
       'C' => query.filter(person_liked_combined::comment_id.eq(id)),
       'P' => query.filter(person_liked_combined::post_id.eq(id)),
-      _ => return Err(LemmyErrorType::CouldntParsePaginationToken.into()),
+      _ => return Err(StudyCycleErrorType::CouldntParsePaginationToken.into()),
     };
     let token = query.first(conn).await?;
 
@@ -146,7 +146,7 @@ impl PersonLikedCombinedQuery {
     self,
     pool: &mut DbPool<'_>,
     user: &LocalUserView,
-  ) -> LemmyResult<PagedResponse<PostCommentCombinedView>> {
+  ) -> StudyCycleResult<PagedResponse<PostCommentCombinedView>> {
     let my_person_id = user.local_user.person_id;
     let local_instance_id = user.person.instance_id;
 
@@ -209,7 +209,7 @@ impl PersonLikedCombinedQuery {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use crate::{LocalUserView, impls::PersonLikedCombinedQuery};
-  use lemmy_db_schema::{
+  use studycycle_db_schema::{
     LikeType,
     source::{
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
@@ -221,12 +221,12 @@ mod tests {
     },
     traits::Likeable,
   };
-  use lemmy_db_views_post_comment_combined::PostCommentCombinedView;
-  use lemmy_diesel_utils::{
+  use studycycle_db_views_post_comment_combined::PostCommentCombinedView;
+  use studycycle_diesel_utils::{
     connection::{DbPool, build_db_pool_for_tests},
     traits::Crud,
   };
-  use lemmy_utils::error::LemmyResult;
+  use studycycle_utils::error::StudyCycleResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -240,7 +240,7 @@ mod tests {
     sara_comment_2: Comment,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> StudyCycleResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld").await?;
 
     let timmy_form = PersonInsertForm::test_form(instance.id, "timmy_pcv");
@@ -297,7 +297,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> StudyCycleResult<()> {
     Instance::delete(pool, data.instance.id).await?;
 
     Ok(())
@@ -305,7 +305,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_combined() -> LemmyResult<()> {
+  async fn test_combined() -> StudyCycleResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
